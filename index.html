@@ -116,6 +116,9 @@ button{font-family:inherit;cursor:pointer;border:none;outline:none;-webkit-user-
     Telefonu ters çevir, ekranı kapatma.
   </div>
   <div class="reset-row">
+    <button class="reset-btn" id="testSndBtn" onclick="testSound()" style="border-color:#0074D9;color:#0074D9">🔇 Sesi Test Et</button>
+  </div>
+  <div class="reset-row">
     <button class="reset-btn" onclick="resetAllData()">Tüm Verileri Sıfırla</button>
   </div>
 </div>
@@ -212,37 +215,61 @@ function resetAllData(){if(confirm("Tüm antrenman verileri silinecek. Emin misi
   
   Dosyalar: 1dk.mp3, 30s.mp3, 15s.mp3, 5s.mp3
 */
-let audioCtx=null;
-const audioBuf={};
+const SND={
+  '60':null,'30':null,'15':null,'5':null
+};
 let audioReady=false;
 
-async function loadAllSounds(){
+function createSounds(){
+  SND['60']=new Audio('1dk.mp3');
+  SND['30']=new Audio('30s.mp3');
+  SND['15']=new Audio('15s.mp3');
+  SND['5']=new Audio('5s.mp3');
+  Object.values(SND).forEach(a=>{
+    a.preload='auto';
+    a.setAttribute('playsinline','');
+    a.load();
+  });
+}
+createSounds();
+
+// iOS: user gesture sırasında her Audio'yu sessizce çal→durdur = kilit açılır
+function unlockSounds(){
   if(audioReady)return;
-  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-  if(audioCtx.state==='suspended')await audioCtx.resume();
-  const files={'60':'1dk.mp3','30':'30s.mp3','15':'15s.mp3','5':'5s.mp3'};
-  await Promise.all(Object.entries(files).map(async([k,url])=>{
-    try{
-      const r=await fetch(url);
-      const a=await r.arrayBuffer();
-      audioBuf[k]=await audioCtx.decodeAudioData(a);
-    }catch(e){console.warn('Ses yüklenemedi:',url)}
-  }));
-  // iOS unlock: sessiz buffer çal
-  const b=audioCtx.createBuffer(1,1,22050);
-  const s=audioCtx.createBufferSource();
-  s.buffer=b;s.connect(audioCtx.destination);s.start(0);
-  audioReady=true;
+  const promises=Object.values(SND).map(a=>{
+    a.muted=true;
+    a.volume=0;
+    return a.play().then(()=>{
+      a.pause();
+      a.currentTime=0;
+      a.muted=false;
+      a.volume=1;
+    }).catch(()=>{});
+  });
+  Promise.all(promises).then(()=>{audioReady=true;updateTestBtn()});
 }
 
 function playAt(sec){
   const k=String(sec);
-  if(!audioBuf[k]||!audioCtx)return;
-  if(audioCtx.state==='suspended')audioCtx.resume();
-  const src=audioCtx.createBufferSource();
-  src.buffer=audioBuf[k];
-  src.connect(audioCtx.destination);
-  src.start(0);
+  if(!SND[k])return;
+  // Her çalmada yeni Audio oluştur — iOS'ta tekrar çalma sorununu çözer
+  const a=new Audio(SND[k].src);
+  a.volume=1;
+  a.play().catch(()=>{
+    // Fallback: orijinal elementi dene
+    SND[k].currentTime=0;
+    SND[k].play().catch(()=>{});
+  });
+}
+
+function updateTestBtn(){
+  const b=document.getElementById('testSndBtn');
+  if(b)b.textContent=audioReady?'🔊 Sesi Test Et (Hazır)':'🔇 Sesi Test Et';
+}
+
+function testSound(){
+  unlockSounds();
+  setTimeout(()=>{playAt(5)},300);
 }
 
 /* ═══════════════════ WAKE LOCK ═══════════════════ */
@@ -281,7 +308,7 @@ function renderMenu(){
 function goMenu(){clearInterval(timerInterval);isResting=false;releaseWakeLock();renderMenu()}
 
 async function startDay(dayKey){
-  await loadAllSounds();
+  unlockSounds();
   requestWakeLock();
   curDay=dayKey;exIdx=0;setIdx=0;reps=10;
   sessionLog={};isResting=false;
@@ -347,6 +374,7 @@ function renderQuickBtns(){
 }
 
 function logSet(){
+  unlockSounds();
   const ex=WORKOUTS[curDay].exercises[exIdx];
   sessionLog[`${exIdx}-${setIdx}`]=reps;renderSetDots();
   if(setIdx>=ex.sets-1&&exIdx>=WORKOUTS[curDay].exercises.length-1){finishWorkout();return}
