@@ -1,439 +1,850 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Workout Tracker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{background:#0d0d0d;color:#eee;font-family:'JetBrains Mono','SF Mono','Fira Code',monospace;min-height:100vh;min-height:100dvh;overflow-x:hidden}
-button{font-family:inherit;cursor:pointer;border:none;outline:none;-webkit-user-select:none;user-select:none}
-.hide{display:none!important}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workout Tracker</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #171a21;
+      --panel-2: #1f2430;
+      --text: #f3f4f6;
+      --muted: #a1a1aa;
+      --accent: #4f46e5;
+      --accent-2: #22c55e;
+      --danger: #ef4444;
+      --border: #2b3240;
+      --shadow: 0 10px 30px rgba(0,0,0,.25);
+      --radius: 18px;
+    }
 
-/* ── MENU ── */
-#menuScreen{display:flex;flex-direction:column;align-items:center;padding:16px;min-height:100vh}
-.logo{font-size:48px;margin-top:32px}
-.main-title{font-size:36px;font-weight:900;letter-spacing:8px;margin-top:8px;color:#fff}
-.main-sub{color:#666;font-size:13px;margin-top:8px;letter-spacing:2px;text-transform:uppercase}
-.day-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:400px;margin-top:32px}
-.day-card{background:#141414;border-radius:12px;padding:20px 16px;text-align:left;color:#eee;border-left:4px solid #555;transition:transform .12s}
-.day-card:active{transform:scale(.97)}
-.day-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.day-icon{font-size:28px}
-.day-num{font-size:11px;color:#555;letter-spacing:1px;text-transform:uppercase}
-.day-name{font-size:20px;font-weight:800;margin-bottom:4px}
-.day-ex-count{font-size:12px;color:#666}
-.last-date{font-size:11px;color:#444;margin-top:8px}
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #0b0d12 0%, #121722 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
 
-/* ── WORKOUT ── */
-#workoutScreen{display:flex;flex-direction:column;align-items:center;padding:16px;min-height:100vh}
-.top-bar{display:flex;align-items:center;width:100%;max-width:480px;gap:12px;margin-bottom:8px}
-.back-btn-sm{background:none;border:1px solid #333;color:#888;padding:6px 12px;border-radius:8px;font-size:13px;white-space:nowrap}
-.top-bar-title{font-size:15px;font-weight:700;letter-spacing:1px}
-.progress-bar{width:100%;max-width:480px;height:3px;background:#1a1a1a;border-radius:2px;margin-bottom:20px;overflow:hidden}
-.progress-fill{height:100%;border-radius:2px;transition:width .4s ease}
-.ex-header{text-align:center;margin-bottom:20px;width:100%;max-width:480px}
-.ex-count{font-size:11px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
-.ex-name{font-size:22px;font-weight:800;margin:4px 0;line-height:1.2}
-.ex-meta{font-size:13px;color:#666;margin-top:4px}
-.note-box{background:#1a1500;border:1px solid #332800;border-radius:8px;padding:8px 12px;font-size:12px;color:#cc9900;margin-top:12px;text-align:left}
+    .container {
+      width: min(1100px, calc(100% - 24px));
+      margin: 24px auto 48px;
+    }
 
-/* Set indicators */
-.set-indicators{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;justify-content:center}
-.set-dot{border-radius:10px;padding:8px 14px;min-width:60px;text-align:center;transition:all .2s;border:2px solid #333;background:#1a1a1a}
-.set-dot.done{border-color:transparent}
-.set-dot.active{background:#333}
-.set-dot-label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px}
-.set-dot-value{font-size:20px;font-weight:900;margin-top:2px}
-.set-dot-prev{font-size:10px;color:#555;margin-top:2px}
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
 
-/* Rep input */
-.rep-input-area{display:flex;flex-direction:column;align-items:center;width:100%;max-width:480px}
-.rep-label{font-size:15px;font-weight:700;margin-bottom:4px;color:#ccc}
-.prev-hint{font-size:13px;color:#666;margin-bottom:16px}
-.prev-hint strong{color:#aaa}
-.rep-stepper{display:flex;align-items:center;gap:24px;margin-bottom:16px}
-.step-btn{width:64px;height:64px;border-radius:50%;border:2px solid #333;background:#1a1a1a;color:#fff;font-size:32px;display:flex;align-items:center;justify-content:center;transition:background .15s;line-height:1}
-.step-btn:active{background:#333}
-.rep-display{font-size:64px;font-weight:900;min-width:80px;text-align:center;color:#fff}
-.quick-reps{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;justify-content:center}
-.quick-btn{border-radius:8px;padding:8px 16px;font-size:14px;font-weight:700;background:#222;color:#888;transition:all .15s}
-.quick-btn.active{color:#000}
-.log-btn{border-radius:14px;padding:16px 40px;font-size:16px;font-weight:800;color:#000;letter-spacing:1px;width:100%;max-width:360px;transition:transform .12s}
-.log-btn:active{transform:scale(.97)}
+    h1 {
+      font-size: clamp(1.8rem, 3vw, 2.5rem);
+      margin: 0;
+      letter-spacing: -.03em;
+    }
 
-/* Rest timer */
-.rest-area{display:flex;flex-direction:column;align-items:center;margin-top:16px}
-.rest-label{font-size:14px;letter-spacing:6px;color:#FF4136;font-weight:800;margin-bottom:20px;text-transform:uppercase}
-.timer-wrap{position:relative;width:200px;height:200px;display:flex;align-items:center;justify-content:center}
-.timer-wrap svg{position:absolute;top:0;left:0}
-.timer-text{font-size:48px;font-weight:900;letter-spacing:2px;color:#fff;z-index:1}
-.skip-btn{margin-top:24px;background:none;border:2px solid;padding:10px 32px;border-radius:12px;font-size:15px;font-weight:700}
+    .sub {
+      color: var(--muted);
+      margin-top: 6px;
+      font-size: .95rem;
+    }
 
-/* Completed */
-#completedScreen{display:flex;flex-direction:column;align-items:center;padding:16px;min-height:100vh}
-.comp-icon{font-size:64px;margin-top:40px}
-.comp-title{font-size:28px;font-weight:900;margin:16px 0 4px}
-.comp-sub{color:#666;font-size:14px;margin-bottom:24px}
-.summary-box{background:#141414;border-radius:12px;padding:16px;text-align:left;width:100%;max-width:480px}
-.summary-row{padding:10px 0;border-bottom:1px solid #1a1a1a}
-.summary-row:last-child{border:none}
-.summary-ex{font-size:13px;font-weight:700;margin-bottom:6px}
-.summary-reps{display:flex;gap:6px;flex-wrap:wrap}
-.summary-badge{background:#222;border-radius:6px;padding:4px 10px;font-size:14px;font-weight:800;color:#fff}
-.back-btn-big{margin-top:24px;background:none;border:2px solid #333;color:#ccc;padding:12px 32px;border-radius:12px;font-size:15px;font-weight:700}
+    .card {
+      background: rgba(23, 26, 33, .92);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
 
-/* Reset */
-.reset-row{margin-top:24px}
-.reset-btn{background:none;border:1px solid #222;color:#444;padding:8px 16px;border-radius:8px;font-size:11px;letter-spacing:1px;text-transform:uppercase}
-.reset-btn:active{color:#FF4136;border-color:#FF4136}
-</style>
+    .top-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .menu-title, .section-title {
+      font-size: .95rem;
+      color: var(--muted);
+      margin: 0 0 12px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+    }
+
+    .day-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .day-btn, .action-btn, .rep-btn, .small-btn {
+      border: 0;
+      border-radius: 14px;
+      cursor: pointer;
+      color: var(--text);
+      transition: .18s ease;
+    }
+
+    .day-btn {
+      width: 100%;
+      text-align: left;
+      padding: 14px 16px;
+      background: var(--panel-2);
+      border: 1px solid transparent;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+    }
+
+    .day-btn:hover { transform: translateY(-1px); border-color: #3a4254; }
+    .day-btn.active {
+      background: linear-gradient(135deg, rgba(79,70,229,.25), rgba(34,197,94,.15));
+      border-color: rgba(99,102,241,.7);
+    }
+
+    .badge {
+      font-size: .75rem;
+      color: #cbd5e1;
+      background: rgba(255,255,255,.06);
+      padding: 6px 9px;
+      border-radius: 999px;
+    }
+
+    .session-top {
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .session-title {
+      margin: 0;
+      font-size: clamp(1.4rem, 2.5vw, 2rem);
+    }
+
+    .session-meta {
+      color: var(--muted);
+      font-size: .95rem;
+      margin-top: 6px;
+    }
+
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .action-btn, .small-btn {
+      background: var(--accent);
+      padding: 12px 16px;
+      font-weight: 700;
+    }
+
+    .action-btn:hover, .small-btn:hover, .rep-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+    }
+
+    .action-btn.secondary, .small-btn.secondary { background: #374151; }
+    .action-btn.green, .small-btn.green { background: var(--accent-2); color: #07130c; }
+    .action-btn.red, .small-btn.red { background: var(--danger); }
+
+    .exercise-card {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.02);
+      border-radius: 16px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+
+    .exercise-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .exercise-name {
+      margin: 0 0 6px;
+      font-size: 1.1rem;
+    }
+
+    .exercise-detail {
+      color: var(--muted);
+      font-size: .95rem;
+      line-height: 1.4;
+    }
+
+    .set-progress {
+      font-size: .95rem;
+      font-weight: 700;
+      color: #cbd5e1;
+      background: rgba(255,255,255,.05);
+      padding: 8px 10px;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+
+    .set-box {
+      margin-top: 14px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .previous-line {
+      color: #93c5fd;
+      font-size: .92rem;
+      font-weight: 600;
+      background: rgba(59,130,246,.12);
+      border: 1px solid rgba(59,130,246,.22);
+      padding: 10px 12px;
+      border-radius: 12px;
+    }
+
+    .rep-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .rep-btn {
+      background: #2b3240;
+      min-width: 62px;
+      padding: 11px 12px;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+
+    .rep-btn.selected {
+      background: rgba(34,197,94,.18);
+      border-color: rgba(34,197,94,.65);
+      color: #dcfce7;
+    }
+
+    .rep-display {
+      min-width: 120px;
+      text-align: center;
+      padding: 12px;
+      border-radius: 14px;
+      background: #0f1622;
+      border: 1px solid #334155;
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
+    .rest-card {
+      margin-top: 16px;
+      padding: 18px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(79,70,229,.16), rgba(59,130,246,.12));
+      border: 1px solid rgba(99,102,241,.35);
+    }
+
+    .timer {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 900;
+      letter-spacing: -.04em;
+      margin: 4px 0 6px;
+    }
+
+    .muted { color: var(--muted); }
+
+    .completed {
+      margin-top: 18px;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+
+    .completed-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .completed-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      color: #e5e7eb;
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      font-size: .9rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .empty {
+      display: grid;
+      place-items: center;
+      min-height: 420px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed #3a4254;
+      border-radius: 18px;
+      padding: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .top-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .rep-btn { min-width: 52px; padding: 10px 8px; }
+      .action-btn, .small-btn { width: 100%; }
+      .action-row { width: 100%; }
+      .rep-display { width: 100%; }
+    }
+  </style>
 </head>
 <body>
-
-<!-- MENU -->
-<div id="menuScreen">
-  <div class="logo">⚡</div>
-  <h1 class="main-title">WORKOUT</h1>
-  <p class="main-sub">Antrenman gününü seç</p>
-  <div class="day-grid" id="dayGrid"></div>
-  <div class="reset-row">
-    <button class="reset-btn" onclick="resetAllData()">Tüm Verileri Sıfırla</button>
-  </div>
-</div>
-
-<!-- WORKOUT -->
-<div id="workoutScreen" class="hide">
-  <div class="top-bar">
-    <button class="back-btn-sm" onclick="goMenu()">← Menü</button>
-    <div class="top-bar-title" id="topTitle"></div>
-  </div>
-  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-  <div class="ex-header">
-    <div class="ex-count" id="exCount"></div>
-    <h2 class="ex-name" id="exName"></h2>
-    <div class="ex-meta" id="exMeta"></div>
-    <div class="note-box hide" id="noteBox"></div>
-  </div>
-  <div class="set-indicators" id="setIndicators"></div>
-
-  <!-- Rep Input -->
-  <div class="rep-input-area" id="repArea">
-    <div class="rep-label" id="repLabel"></div>
-    <div class="prev-hint hide" id="prevHint"></div>
-    <div class="rep-stepper">
-      <button class="step-btn" onclick="changeReps(-1)">−</button>
-      <div class="rep-display" id="repDisplay">10</div>
-      <button class="step-btn" onclick="changeReps(1)">+</button>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>Workout Tracker</h1>
+        <div class="sub">GitHub Pages üstünde çalışacak tek dosyalık, set bazlı, sesli geri sayımlı antrenman uygulaması.</div>
+      </div>
+      <div class="action-row">
+        <button class="small-btn secondary" id="voiceToggleBtn">Ses: Açık</button>
+        <button class="small-btn secondary" id="resetAllBtn">Tüm Kayıtları Sil</button>
+      </div>
     </div>
-    <div class="quick-reps" id="quickReps"></div>
-    <button class="log-btn" id="logBtn" onclick="logSet()">✓ Kaydet & Dinlenmeye Geç</button>
-  </div>
 
-  <!-- Rest Timer -->
-  <div class="rest-area hide" id="restArea">
-    <div class="rest-label">DİNLENME</div>
-    <div class="timer-wrap">
-      <svg width="200" height="200" viewBox="0 0 200 200">
-        <circle cx="100" cy="100" r="90" fill="none" stroke="#222" stroke-width="8"/>
-        <circle id="timerArc" cx="100" cy="100" r="90" fill="none" stroke="#FF4136" stroke-width="8"
-          stroke-dasharray="565.49" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 100 100)"
-          style="transition:stroke-dashoffset 1s linear"/>
-      </svg>
-      <div class="timer-text" id="timerText">0:00</div>
+    <div class="top-grid">
+      <div class="card">
+        <p class="menu-title">Antrenman Günleri</p>
+        <div class="day-list" id="dayList"></div>
+        <div class="footer-note">
+          Mantık basit: günü seç, her sette yaptığın tekrarı sayı butonlarıyla işaretle, sonra <b>Dinlenmeye Geç</b> de. Sonraki aynı günde geçen antrenmandaki tekrarların otomatik görünür.
+        </div>
+      </div>
+
+      <div class="card" id="sessionArea"></div>
     </div>
-    <button class="skip-btn" id="skipBtn" onclick="skipRest()">Atla →</button>
   </div>
-</div>
 
-<!-- COMPLETED -->
-<div id="completedScreen" class="hide">
-  <div class="comp-icon">🎉</div>
-  <h2 class="comp-title">Antrenman Tamamlandı!</h2>
-  <p class="comp-sub" id="compSub"></p>
-  <div class="summary-box" id="summaryBox"></div>
-  <button class="back-btn-big" onclick="goMenu()">← Ana Menü</button>
-</div>
+  <script>
+    const STORAGE_KEY = "workout_app_v1";
+    const SETTINGS_KEY = "workout_app_settings_v1";
 
-<script>
-/* ═══════════════════ DATA ═══════════════════ */
-const WORKOUTS = {
-  push: {
-    day:1, name:"İtiş", icon:"💪", color:"#FF4136",
-    exercises:[
-      {name:"Dips",sets:4,repRange:"6-12",rest:180},
-      {name:"Decline Push-up / Weighted Push-up",sets:4,repRange:"8-15",rest:120},
-      {name:"Overhead DB Triceps Extension",sets:3,repRange:"10-15",rest:75},
-      {name:"Dumbbell Lateral Raise",sets:3,repRange:"12-20",rest:90}
-    ]
-  },
-  neck: {
-    day:2, name:"Boyun", icon:"🦴", color:"#FF851B",
-    exercises:[
-      {name:"Neck Flexion (Ön)",sets:5,repRange:"15-25",rest:90},
-      {name:"Neck Extension (Arka)",sets:5,repRange:"15-25",rest:90}
-    ],
-    note:"Failure'a abanma. 1-2 tekrar cepte bırak."
-  },
-  pull: {
-    day:4, name:"Çekiş", icon:"🏋️", color:"#0074D9",
-    exercises:[
-      {name:"Pull-up / Chin-up",sets:4,repRange:"6-12",rest:180},
-      {name:"Body Row / Inverted Row",sets:4,repRange:"8-15",rest:120},
-      {name:"Dumbbell Shrug",sets:4,repRange:"10-20",rest:90},
-      {name:"Rear Delt Fly",sets:2,repRange:"12-20",rest:60},
-      {name:"DB Curl / Hammer Curl",sets:3,repRange:"8-15",rest:60}
-    ]
-  },
-  leg: {
-    day:5, name:"Bacak", icon:"🦵", color:"#2ECC40",
-    exercises:[
-      {name:"Squat",sets:4,repRange:"15-30",rest:180},
-      {name:"Deep Lunge / Bulgarian Split Squat",sets:4,repRange:"10-20",rest:90},
-      {name:"DB Romanian Deadlift",sets:3,repRange:"10-20",rest:120},
-      {name:"Standing / Single-leg Calf Raise",sets:4,repRange:"12-25",rest:90}
-    ]
-  }
-};
+    const WORKOUTS = {
+      push: {
+        id: "push",
+        label: "İtiş",
+        schedule: "Dips, şınav, triceps, lateral raise",
+        exercises: [
+          { name: "Dips", sets: 4, min: 6, max: 12, rest: 180 },
+          { name: "Decline push-up / weighted push-up", sets: 4, min: 8, max: 15, rest: 120 },
+          { name: "Overhead dumbbell triceps extension", sets: 3, min: 10, max: 15, rest: 75 },
+          { name: "Dumbbell lateral raise", sets: 3, min: 12, max: 20, rest: 90 },
+        ],
+      },
+      neck: {
+        id: "neck",
+        label: "Boyun",
+        schedule: "Ön ve arka boyun",
+        exercises: [
+          { name: "Neck flexion (ön)", sets: 5, min: 15, max: 25, rest: 90 },
+          { name: "Neck extension (arka)", sets: 5, min: 15, max: 25, rest: 90 },
+        ],
+      },
+      pull: {
+        id: "pull",
+        label: "Çekiş",
+        schedule: "Barfiks, row, shrug, rear delt, curl",
+        exercises: [
+          { name: "Pull-up / chin-up", sets: 4, min: 6, max: 12, rest: 180 },
+          { name: "Body row / inverted row", sets: 4, min: 8, max: 15, rest: 120 },
+          { name: "Dumbbell shrug", sets: 4, min: 10, max: 20, rest: 90 },
+          { name: "Rear delt fly", sets: 2, min: 12, max: 20, rest: 60 },
+          { name: "Dumbbell curl veya hammer curl", sets: 3, min: 8, max: 15, rest: 60 },
+        ],
+      },
+      legs: {
+        id: "legs",
+        label: "Bacak",
+        schedule: "Squat, split squat/lunge, RDL, calf",
+        exercises: [
+          { name: "Squat", sets: 4, min: 15, max: 30, rest: 180 },
+          { name: "Deep lunge / Bulgarian split squat", sets: 4, min: 10, max: 20, rest: 90 },
+          { name: "Dumbbell Romanian deadlift", sets: 3, min: 10, max: 20, rest: 120 },
+          { name: "Standing calf raise / single-leg calf raise", sets: 4, min: 12, max: 25, rest: 90 },
+        ],
+      },
+    };
 
-/* ═══════════════════ STATE ═══════════════════ */
-let curDay=null, exIdx=0, setIdx=0, reps=10;
-let sessionLog={}, isResting=false, restTime=0, restTotal=0;
-let timerInterval=null;
-const CIRC=2*Math.PI*90; // ~565.49
+    let appData = loadData();
+    let settings = loadSettings();
+    let selectedWorkoutId = null;
+    let currentSession = null;
+    let restInterval = null;
+    let lastAnnouncedSecond = null;
+    let voiceUnlocked = false;
 
-/* ═══════════════════ STORAGE ═══════════════════ */
-function loadLogs(){ try{return JSON.parse(localStorage.getItem("wk-logs"))||{}}catch(e){return{}} }
-function saveLogs(logs){ localStorage.setItem("wk-logs",JSON.stringify(logs)); }
-function getPrev(dayKey,eI,sI){ const l=loadLogs()[dayKey]; return l?l[`${eI}-${sI}`]??null:null; }
-function resetAllData(){ if(confirm("Tüm antrenman verileri silinecek. Emin misin?")){localStorage.removeItem("wk-logs");renderMenu();} }
+    const dayListEl = document.getElementById("dayList");
+    const sessionAreaEl = document.getElementById("sessionArea");
+    const voiceToggleBtn = document.getElementById("voiceToggleBtn");
+    const resetAllBtn = document.getElementById("resetAllBtn");
 
-/* ═══════════════════ SPEECH ═══════════════════ */
-function speak(txt){
-  if(!('speechSynthesis' in window))return;
-  speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(txt);
-  u.lang='tr-TR'; u.rate=1.1; u.volume=1;
-  speechSynthesis.speak(u);
-}
-
-/* ═══════════════════ SCREENS ═══════════════════ */
-function show(id){
-  ['menuScreen','workoutScreen','completedScreen'].forEach(s=>{
-    document.getElementById(s).classList.toggle('hide',s!==id);
-  });
-}
-
-/* ── MENU ── */
-function renderMenu(){
-  show('menuScreen');
-  const grid=document.getElementById('dayGrid');
-  const logs=loadLogs();
-  grid.innerHTML='';
-  Object.entries(WORKOUTS).forEach(([key,w])=>{
-    const prev=logs[key];
-    const lastDate=prev?.date?new Date(prev.date).toLocaleDateString('tr-TR'):null;
-    const card=document.createElement('button');
-    card.className='day-card';
-    card.style.borderLeftColor=w.color;
-    card.onclick=()=>startDay(key);
-    card.innerHTML=`
-      <div class="day-card-top"><span class="day-icon">${w.icon}</span><span class="day-num">Gün ${w.day}</span></div>
-      <div class="day-name">${w.name}</div>
-      <div class="day-ex-count">${w.exercises.length} hareket</div>
-      ${lastDate?`<div class="last-date">Son: ${lastDate}</div>`:''}
-    `;
-    grid.appendChild(card);
-  });
-}
-
-function goMenu(){
-  clearInterval(timerInterval);
-  isResting=false;
-  renderMenu();
-}
-
-/* ── START DAY ── */
-function startDay(dayKey){
-  curDay=dayKey; exIdx=0; setIdx=0; reps=10;
-  sessionLog={}; isResting=false;
-  show('workoutScreen');
-  renderWorkout();
-}
-
-/* ── RENDER WORKOUT ── */
-function renderWorkout(){
-  const w=WORKOUTS[curDay], ex=w.exercises[exIdx];
-  // top bar
-  document.getElementById('topTitle').innerHTML=`<span style="color:${w.color}">${w.icon}</span> Gün ${w.day} — ${w.name}`;
-  // progress
-  const pf=document.getElementById('progressFill');
-  pf.style.width=`${(exIdx/w.exercises.length)*100}%`;
-  pf.style.background=w.color;
-  // exercise header
-  document.getElementById('exCount').textContent=`Hareket ${exIdx+1}/${w.exercises.length}`;
-  document.getElementById('exName').textContent=ex.name;
-  document.getElementById('exMeta').textContent=`${ex.sets} set × ${ex.repRange} tekrar · Dinlenme: ${ex.rest}sn`;
-  // note
-  const nb=document.getElementById('noteBox');
-  if(w.note&&exIdx===0){nb.classList.remove('hide');nb.textContent='⚠️ '+w.note;}
-  else nb.classList.add('hide');
-  // set indicators
-  renderSetDots();
-  // rep area
-  showRepInput();
-  // color accents
-  document.getElementById('logBtn').style.background=w.color;
-  document.getElementById('timerArc').setAttribute('stroke',w.color);
-  document.getElementById('skipBtn').style.borderColor=w.color;
-  document.getElementById('skipBtn').style.color=w.color;
-}
-
-function renderSetDots(){
-  const w=WORKOUTS[curDay], ex=w.exercises[exIdx];
-  const wrap=document.getElementById('setIndicators');
-  wrap.innerHTML='';
-  for(let i=0;i<ex.sets;i++){
-    const done=sessionLog[`${exIdx}-${i}`]!==undefined;
-    const active=i===setIdx&&!done;
-    const prev=getPrev(curDay,exIdx,i);
-    const d=document.createElement('div');
-    d.className='set-dot'+(done?' done':'')+(active?' active':'');
-    if(done){d.style.background=w.color;d.style.borderColor='transparent';}
-    if(active)d.style.borderColor=w.color;
-    let inner=`<div class="set-dot-label">Set ${i+1}</div>`;
-    if(done) inner+=`<div class="set-dot-value">${sessionLog[`${exIdx}-${i}`]}</div>`;
-    else if(prev!==null) inner+=`<div class="set-dot-prev">Ön: ${prev}</div>`;
-    d.innerHTML=inner;
-    wrap.appendChild(d);
-  }
-}
-
-/* ── REP INPUT ── */
-function showRepInput(){
-  document.getElementById('repArea').classList.remove('hide');
-  document.getElementById('restArea').classList.add('hide');
-  document.getElementById('repLabel').textContent=`Set ${setIdx+1} — Kaç tekrar yaptın?`;
-  const prev=getPrev(curDay,exIdx,setIdx);
-  const ph=document.getElementById('prevHint');
-  if(prev!==null){ph.classList.remove('hide');ph.innerHTML=`Geçen sefer: <strong>${prev}</strong> tekrar`;}
-  else ph.classList.add('hide');
-  reps=prev||10;
-  updateRepDisplay();
-  renderQuickBtns();
-}
-
-function updateRepDisplay(){document.getElementById('repDisplay').textContent=reps;}
-
-function changeReps(d){reps=Math.max(0,reps+d);updateRepDisplay();renderQuickBtns();}
-
-function setRepsTo(n){reps=n;updateRepDisplay();renderQuickBtns();}
-
-function renderQuickBtns(){
-  const w=WORKOUTS[curDay];
-  const wrap=document.getElementById('quickReps');
-  wrap.innerHTML='';
-  [5,8,10,12,15,20,25,30].forEach(n=>{
-    const b=document.createElement('button');
-    b.className='quick-btn'+(reps===n?' active':'');
-    if(reps===n)b.style.background=w.color;
-    b.textContent=n;
-    b.onclick=()=>setRepsTo(n);
-    wrap.appendChild(b);
-  });
-}
-
-/* ── LOG SET ── */
-function logSet(){
-  const w=WORKOUTS[curDay], ex=w.exercises[exIdx];
-  sessionLog[`${exIdx}-${setIdx}`]=reps;
-  renderSetDots();
-
-  const isLastSet=setIdx>=ex.sets-1;
-  const isLastEx=exIdx>=w.exercises.length-1;
-
-  if(isLastSet&&isLastEx){
-    finishWorkout();
-    return;
-  }
-  startRest(ex.rest);
-}
-
-/* ── REST TIMER ── */
-function startRest(duration){
-  isResting=true; restTime=duration; restTotal=duration;
-  document.getElementById('repArea').classList.add('hide');
-  document.getElementById('restArea').classList.remove('hide');
-  updateTimerUI();
-  speak("Dinlenme başladı");
-
-  clearInterval(timerInterval);
-  timerInterval=setInterval(()=>{
-    restTime--;
-    if(restTime<=0){
-      clearInterval(timerInterval);
-      isResting=false;
-      speak("Süre doldu! Hazır ol!");
-      advanceSet();
-      renderWorkout();
-      return;
+    function loadData() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { history: {}, lastSessions: {} };
+      } catch {
+        return { history: {}, lastSessions: {} };
+      }
     }
-    if(restTime<=5&&restTime>0) speak(String(restTime));
-    else if(restTime%15===0&&restTime>5) speak(`${restTime} saniye kaldı`);
-    updateTimerUI();
-  },1000);
-}
 
-function updateTimerUI(){
-  const pct=(restTotal-restTime)/restTotal;
-  document.getElementById('timerArc').setAttribute('stroke-dashoffset', CIRC*(1-pct));
-  const m=Math.floor(restTime/60), s=restTime%60;
-  document.getElementById('timerText').textContent=`${m}:${String(s).padStart(2,'0')}`;
-}
-
-function skipRest(){
-  clearInterval(timerInterval);
-  isResting=false; restTime=0;
-  advanceSet();
-  renderWorkout();
-}
-
-function advanceSet(){
-  const ex=WORKOUTS[curDay].exercises[exIdx];
-  if(setIdx<ex.sets-1){setIdx++;}
-  else if(exIdx<WORKOUTS[curDay].exercises.length-1){exIdx++;setIdx=0;}
-  reps=10;
-}
-
-/* ── FINISH ── */
-function finishWorkout(){
-  const w=WORKOUTS[curDay];
-  const logs=loadLogs();
-  logs[curDay]={...sessionLog, date:new Date().toISOString()};
-  saveLogs(logs);
-
-  show('completedScreen');
-  document.getElementById('compSub').textContent=`${w.name} günü bitti`;
-  const box=document.getElementById('summaryBox');
-  box.innerHTML='';
-  w.exercises.forEach((ex,eI)=>{
-    const row=document.createElement('div');
-    row.className='summary-row';
-    let badges='';
-    for(let sI=0;sI<ex.sets;sI++){
-      const v=sessionLog[`${eI}-${sI}`]??'-';
-      badges+=`<span class="summary-badge">${v}</span>`;
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
     }
-    row.innerHTML=`<div class="summary-ex">${ex.name}</div><div class="summary-reps">${badges}</div>`;
-    box.appendChild(row);
-  });
-  speak("Tebrikler! Antrenman tamamlandı!");
-}
 
-/* ═══════════════════ INIT ═══════════════════ */
-renderMenu();
-</script>
+    function loadSettings() {
+      try {
+        return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || { voiceEnabled: true };
+      } catch {
+        return { voiceEnabled: true };
+      }
+    }
+
+    function saveSettings() {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    }
+
+    function formatDateTime(date) {
+      return new Intl.DateTimeFormat("tr-TR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(date);
+    }
+
+    function formatSeconds(total) {
+      const min = Math.floor(total / 60).toString().padStart(2, "0");
+      const sec = Math.floor(total % 60).toString().padStart(2, "0");
+      return `${min}:${sec}`;
+    }
+
+    function getWorkoutHistory(id) {
+      return appData.history[id] || [];
+    }
+
+    function getLastCompletedSession(id) {
+      return appData.lastSessions[id] || null;
+    }
+
+    function unlockVoice() {
+      if (!('speechSynthesis' in window)) return;
+      if (voiceUnlocked) return;
+      voiceUnlocked = true;
+      const u = new SpeechSynthesisUtterance("");
+      window.speechSynthesis.speak(u);
+    }
+
+    function speak(text) {
+      if (!settings.voiceEnabled) return;
+      if (!('speechSynthesis' in window)) return;
+      unlockVoice();
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "tr-TR";
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function buildInitialSession(workoutId) {
+      const workout = WORKOUTS[workoutId];
+      return {
+        workoutId,
+        startedAt: new Date().toISOString(),
+        exerciseIndex: 0,
+        setIndex: 0,
+        restRemaining: 0,
+        inRest: false,
+        selectedRep: null,
+        completed: [],
+        exercises: workout.exercises.map(ex => ({
+          name: ex.name,
+          sets: ex.sets,
+          min: ex.min,
+          max: ex.max,
+          rest: ex.rest,
+          reps: Array(ex.sets).fill(null),
+        })),
+      };
+    }
+
+    function renderDayList() {
+      dayListEl.innerHTML = "";
+      Object.values(WORKOUTS).forEach(workout => {
+        const btn = document.createElement("button");
+        btn.className = `day-btn ${selectedWorkoutId === workout.id ? 'active' : ''}`;
+        const count = getWorkoutHistory(workout.id).length;
+        btn.innerHTML = `
+          <span>
+            <div>${workout.label}</div>
+            <div class="muted" style="font-size:.86rem;font-weight:500;margin-top:4px;">${workout.schedule}</div>
+          </span>
+          <span class="badge">${count} kayıt</span>
+        `;
+        btn.onclick = () => {
+          unlockVoice();
+          selectedWorkoutId = workout.id;
+          currentSession = buildInitialSession(workout.id);
+          stopRestTimer();
+          renderDayList();
+          renderSession();
+        };
+        dayListEl.appendChild(btn);
+      });
+    }
+
+    function getCurrentExercise() {
+      if (!currentSession) return null;
+      return currentSession.exercises[currentSession.exerciseIndex] || null;
+    }
+
+    function getPreviousRep(workoutId, exerciseName, setIdx) {
+      const prev = getLastCompletedSession(workoutId);
+      if (!prev) return null;
+      const ex = prev.exercises.find(e => e.name === exerciseName);
+      if (!ex) return null;
+      return ex.reps?.[setIdx] ?? null;
+    }
+
+    function renderSession() {
+      if (!selectedWorkoutId || !currentSession) {
+        sessionAreaEl.innerHTML = `
+          <div class="empty">
+            <div>
+              <h2 style="margin-top:0;color:#fff;">Bir gün seç</h2>
+              <p>İtiş, Boyun, Çekiş veya Bacak günlerinden birini seç. Sonra her sette kaç tekrar yaptığını gir, geri sayım otomatik başlasın.</p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const workout = WORKOUTS[selectedWorkoutId];
+      const exercise = getCurrentExercise();
+
+      if (!exercise) {
+        renderCompletedWorkout();
+        return;
+      }
+
+      const prevRep = getPreviousRep(selectedWorkoutId, exercise.name, currentSession.setIndex);
+      const repsHtml = buildRepButtons(exercise.min, exercise.max, currentSession.selectedRep);
+
+      sessionAreaEl.innerHTML = `
+        <div class="session-top">
+          <div>
+            <h2 class="session-title">${workout.label} Günü</h2>
+            <div class="session-meta">${workout.schedule}</div>
+          </div>
+          <div class="action-row">
+            <button class="action-btn secondary" id="restartDayBtn">Bu Günü Sıfırla</button>
+          </div>
+        </div>
+
+        <div class="exercise-card">
+          <div class="exercise-top">
+            <div>
+              <h3 class="exercise-name">${exercise.name}</h3>
+              <div class="exercise-detail">Hedef tekrar aralığı: <b>${exercise.min}-${exercise.max}</b> | Dinlenme: <b>${formatSeconds(exercise.rest)}</b></div>
+            </div>
+            <div class="set-progress">Set ${currentSession.setIndex + 1} / ${exercise.sets}</div>
+          </div>
+
+          <div class="set-box">
+            ${prevRep !== null ? `<div class="previous-line">Geçen ${workout.label.toLowerCase()} gününde bu sette: <b>${prevRep} tekrar</b></div>` : `<div class="previous-line">Bu set için önceki kayıt yok. Bugün şov zamanı.</div>`}
+
+            <div class="rep-controls">
+              <div class="rep-display">${currentSession.selectedRep ?? '-'}</div>
+              ${repsHtml}
+            </div>
+
+            <div class="action-row">
+              <button class="action-btn green" id="saveSetBtn">Seti Kaydet ve Dinlenmeye Geç</button>
+              <button class="action-btn secondary" id="minusBtn">-1</button>
+              <button class="action-btn secondary" id="plusBtn">+1</button>
+              <button class="action-btn red" id="clearRepBtn">Temizle</button>
+            </div>
+          </div>
+        </div>
+
+        ${currentSession.inRest ? `
+          <div class="rest-card">
+            <div class="section-title" style="margin-bottom:8px;color:#c7d2fe;">Dinlenme</div>
+            <div class="timer" id="timerDisplay">${formatSeconds(currentSession.restRemaining)}</div>
+            <div class="muted">Her 15 saniyede bir süre anons edilir. Son 5 saniyede geri sayım başlar.</div>
+            <div class="action-row" style="margin-top:12px;">
+              <button class="action-btn green" id="skipRestBtn">Dinlenmeyi Bitir</button>
+              <button class="action-btn secondary" id="add15Btn">+15 sn</button>
+              <button class="action-btn secondary" id="sub15Btn">-15 sn</button>
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="completed">
+          <div class="section-title">Bu Oturumda Kaydedilenler</div>
+          <div class="completed-grid">
+            ${renderCompletedSetsPreview()}
+          </div>
+        </div>
+      `;
+
+      bindSessionEvents();
+    }
+
+    function buildRepButtons(min, max, selected) {
+      const numbers = [];
+      for (let i = min; i <= max; i++) {
+        numbers.push(`<button class="rep-btn ${selected === i ? 'selected' : ''}" data-rep="${i}">${i}</button>`);
+      }
+      return numbers.join("");
+    }
+
+    function renderCompletedSetsPreview() {
+      const lines = [];
+      currentSession.completed.forEach(item => {
+        lines.push(`
+          <div class="completed-item">
+            <span>${item.exercise} — Set ${item.set}</span>
+            <b>${item.reps} tekrar</b>
+          </div>
+        `);
+      });
+      return lines.length ? lines.join("") : `<div class="muted">Henüz set kaydı yok.</div>`;
+    }
+
+    function bindSessionEvents() {
+      document.querySelectorAll(".rep-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          currentSession.selectedRep = Number(btn.dataset.rep);
+          renderSession();
+        });
+      });
+
+      const plusBtn = document.getElementById("plusBtn");
+      const minusBtn = document.getElementById("minusBtn");
+      const clearRepBtn = document.getElementById("clearRepBtn");
+      const saveSetBtn = document.getElementById("saveSetBtn");
+      const restartDayBtn = document.getElementById("restartDayBtn");
+
+      if (plusBtn) plusBtn.onclick = () => {
+        const ex = getCurrentExercise();
+        currentSession.selectedRep = Math.min((currentSession.selectedRep ?? ex.min) + 1, ex.max + 20);
+        renderSession();
+      };
+
+      if (minusBtn) minusBtn.onclick = () => {
+        currentSession.selectedRep = Math.max((currentSession.selectedRep ?? 1) - 1, 1);
+        renderSession();
+      };
+
+      if (clearRepBtn) clearRepBtn.onclick = () => {
+        currentSession.selectedRep = null;
+        renderSession();
+      };
+
+      if (restartDayBtn) restartDayBtn.onclick = () => {
+        if (!confirm("Bu günün mevcut oturumunu sıfırlamak istediğine emin misin?")) return;
+        stopRestTimer();
+        currentSession = buildInitialSession(selectedWorkoutId);
+        renderSession();
+      };
+
+      if (saveSetBtn) saveSetBtn.onclick = saveCurrentSet;
+
+      const skipRestBtn = document.getElementById("skipRestBtn");
+      const add15Btn = document.getElementById("add15Btn");
+      const sub15Btn = document.getElementById("sub15Btn");
+
+      if (skipRestBtn) skipRestBtn.onclick = finishRestAndAdvance;
+      if (add15Btn) add15Btn.onclick = () => adjustRest(15);
+      if (sub15Btn) sub15Btn.onclick = () => adjustRest(-15);
+    }
+
+    function saveCurrentSet() {
+      const exercise = getCurrentExercise();
+      if (currentSession.selectedRep === null) {
+        alert("Önce bu sette yaptığın tekrar sayısını seç.");
+        return;
+      }
+
+      const rep = currentSession.selectedRep;
+      exercise.reps[currentSession.setIndex] = rep;
+      currentSession.completed.push({
+        exercise: exercise.name,
+        set: currentSession.setIndex + 1,
+        reps: rep,
+      });
+      currentSession.selectedRep = null;
+      currentSession.inRest = true;
+      currentSession.restRemaining = exercise.rest;
+      lastAnnouncedSecond = null;
+      startRestTimer();
+      speak(`Dinlenme başladı. ${currentSession.restRemaining} saniye.`);
+      renderSession();
+    }
+
+    function startRestTimer() {
+      stopRestTimer();
+      restInterval = setInterval(() => {
+        if (!currentSession || !currentSession.inRest) {
+          stopRestTimer();
+          return;
+        }
+
+        currentSession.restRemaining -= 1;
+
+        if (currentSession.restRemaining <= 0) {
+          currentSession.restRemaining = 0;
+          updateTimerUI();
+          stopRestTimer();
+          speak("Dinlenme bitti.");
+          finishRestAndAdvance();
+          return;
+        }
+
+        handleVoiceAnnouncements(currentSession.restRemaining);
+        updateTimerUI();
+      }, 1000);
+    }
+
+    function stopRestTimer() {
+      if (restInterval) clearInterval(restInterval);
+      restInterval = null;
+    }
+
+    function handleVoiceAnnouncements(seconds) {
+      if ([60, 45, 30, 15].includes(seconds) && seconds !== lastAnnouncedSecond) {
+        lastAnnouncedSecond = seconds;
+        speak(`${seconds} saniye kaldı.`);
+        return;
+      }
+      if (seconds <= 5 && seconds >= 1 && seconds !== lastAnnouncedSecond) {
+        lastAnnouncedSecond = seconds;
+        speak(String(seconds));
+      }
+    }
+
+    function updateTimerUI() {
+      const timerDisplay = document.getElementById("timerDisplay");
+      if (timerDisplay) timerDisplay.textContent = formatSeconds(currentSession.restRemaining);
+    }
+
+    function adjustRest(delta) {
+      if (!currentSession?.inRest) return;
+      currentSession.restRemaining = Math.max(1, currentSession.restRemaining + delta);
+      lastAnnouncedSecond = null;
+      updateTimerUI();
+    }
+
+    function finishRestAndAdvance() {
+      stopRestTimer();
+      currentSession.inRest = false;
+      currentSession.restRemaining = 0;
+      lastAnnouncedSecond = null;
+
+      const exercise = getCurrentExercise();
+      if (currentSession.setIndex < exercise.sets - 1) {
+        currentSession.setIndex += 1;
+      } else {
+        currentSession.exerciseIndex += 1;
+        currentSession.setIndex = 0;
+      }
+      renderSession();
+    }
+
+    function renderCompletedWorkout() {
+      const workout = WORKOUTS[selectedWorkoutId];
+      const finishedAt = new Date();
+      sessionAreaEl.innerHTML = `
+        <div class="session-top">
+          <div>
+            <h2 class="session-title">${workout.label} Günü Tamamlandı</h2>
+            <div class="session-meta">Bitiriş: ${formatDateTime(finishedAt)}</div>
+          </div>
+          <div class="action-row">
+            <button class="action-btn green" id="saveWorkoutBtn">Antrenmanı Kaydet</button>
+            <button class="action-btn secondary" id="discardWorkoutBtn">Kaydetmeden Kapat</button>
+          </div>
+        </div>
+        <div class="completed-grid">
+          ${currentSession.exercises.map(ex => `
+            <div class="completed-item">
+              <span>${ex.name}</span>
+              <b>${ex.reps.map(r => r ?? '-').join(' / ')}</b>
+            </div>
+          `).join('')}
+        </div>
+        <div class="footer-note">Kaydettiğinde bu veriler localStorage'a yazılır. Aynı antrenman gününü bir daha açtığında önceki set tekrarların otomatik görünür.</div>
+      `;
+
+      document.getElementById("saveWorkoutBtn").onclick = saveWorkoutSession;
+      document.getElementById("discardWorkoutBtn").onclick = () => {
+        currentSession = buildInitialSession(selectedWorkoutId);
+        renderSession();
+      };
+    }
+
+    function saveWorkoutSession() {
+      const workoutId = selectedWorkoutId;
+      const entry = {
+        workoutId,
+        savedAt: new Date().toISOString(),
+        exercises: currentSession.exercises,
+      };
+
+      if (!appData.history[workoutId]) appData.history[workoutId] = [];
+      appData.history[workoutId].push(entry);
+      appData.lastSessions[workoutId] = entry;
+      saveData();
+
+      alert("Antrenman kaydedildi.");
+      currentSession = buildInitialSession(selectedWorkoutId);
+      renderDayList();
+      renderSession();
+    }
+
+    voiceToggleBtn.onclick = () => {
+      settings.voiceEnabled = !settings.voiceEnabled;
+      saveSettings();
+      voiceToggleBtn.textContent = `Ses: ${settings.voiceEnabled ? 'Açık' : 'Kapalı'}`;
+      unlockVoice();
+    };
+
+    resetAllBtn.onclick = () => {
+      if (!confirm("Tüm antrenman geçmişini silmek istediğine emin misin?")) return;
+      localStorage.removeItem(STORAGE_KEY);
+      appData = loadData();
+      currentSession = selectedWorkoutId ? buildInitialSession(selectedWorkoutId) : null;
+      renderDayList();
+      renderSession();
+    };
+
+    document.addEventListener("click", unlockVoice, { once: false });
+    voiceToggleBtn.textContent = `Ses: ${settings.voiceEnabled ? 'Açık' : 'Kapalı'}`;
+    renderDayList();
+    renderSession();
+  </script>
 </body>
 </html>
