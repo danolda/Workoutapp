@@ -266,6 +266,43 @@ function playAt(secondsLeft){
   SND[key].play().catch(()=>{});
 }
 
+/* ═══════════════════ EKRAN AÇIK & ARKA PLAN ═══════════════════ */
+/*
+  1) Wake Lock API — ekranın kararmasını engeller
+  2) Sessiz ses döngüsü — tarayıcı arka planda timer'ı durdurmasın
+*/
+let wakeLock=null;
+
+async function requestWakeLock(){
+  try{
+    if('wakeLock' in navigator){
+      wakeLock=await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release',()=>{wakeLock=null;});
+    }
+  }catch(e){}
+}
+function releaseWakeLock(){
+  if(wakeLock){wakeLock.release();wakeLock=null;}
+}
+// Sayfa tekrar görünür olunca wake lock yenile
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&isResting) requestWakeLock();
+});
+
+// Sessiz ses döngüsü — arka planda JS'i canlı tutar
+let silentAudio=null;
+function startSilentLoop(){
+  if(silentAudio)return;
+  // 1 saniyelik sessiz WAV (base64)
+  silentAudio=new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+  silentAudio.loop=true;
+  silentAudio.volume=0.01;
+  silentAudio.play().catch(()=>{});
+}
+function stopSilentLoop(){
+  if(silentAudio){silentAudio.pause();silentAudio=null;}
+}
+
 /* ═══════════════════ SCREENS ═══════════════════ */
 function show(id){
   ['menuScreen','workoutScreen','completedScreen'].forEach(s=>{
@@ -299,12 +336,15 @@ function renderMenu(){
 function goMenu(){
   clearInterval(timerInterval);
   isResting=false;
+  releaseWakeLock();
+  stopSilentLoop();
   renderMenu();
 }
 
 /* ── START DAY ── */
 function startDay(dayKey){
   unlockSounds();
+  requestWakeLock();
   curDay=dayKey; exIdx=0; setIdx=0; reps=10;
   sessionLog={}; isResting=false;
   show('workoutScreen');
@@ -416,6 +456,7 @@ function startRest(duration){
   document.getElementById('repArea').classList.add('hide');
   document.getElementById('restArea').classList.remove('hide');
   updateTimerUI();
+  startSilentLoop();
 
   clearInterval(timerInterval);
   timerInterval=setInterval(()=>{
@@ -423,6 +464,7 @@ function startRest(duration){
     if(restTime<=0){
       clearInterval(timerInterval);
       isResting=false;
+      stopSilentLoop();
       advanceSet();
       renderWorkout();
       return;
@@ -446,6 +488,7 @@ function updateTimerUI(){
 function skipRest(){
   clearInterval(timerInterval);
   isResting=false; restTime=0;
+  stopSilentLoop();
   advanceSet();
   renderWorkout();
 }
