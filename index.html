@@ -219,7 +219,6 @@ const WORKOUTS = {
 /* ═══════════════════ STATE ═══════════════════ */
 let curDay=null, exIdx=0, setIdx=0, reps=10;
 let sessionLog={}, isResting=false, restTime=0, restTotal=0;
-let timerInterval=null;
 const CIRC=2*Math.PI*90; // ~565.49
 
 /* ═══════════════════ STORAGE ═══════════════════ */
@@ -267,10 +266,6 @@ function playAt(secondsLeft){
 }
 
 /* ═══════════════════ EKRAN AÇIK & ARKA PLAN ═══════════════════ */
-/*
-  1) Wake Lock API — ekranın kararmasını engeller
-  2) Sessiz ses döngüsü — tarayıcı arka planda timer'ı durdurmasın
-*/
 let wakeLock=null;
 
 async function requestWakeLock(){
@@ -284,23 +279,48 @@ async function requestWakeLock(){
 function releaseWakeLock(){
   if(wakeLock){wakeLock.release();wakeLock=null;}
 }
-// Sayfa tekrar görünür olunca wake lock yenile
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'&&isResting) requestWakeLock();
 });
 
-// Sessiz ses döngüsü — arka planda JS'i canlı tutar
+// ── Web Worker Timer (arka planda durmuyor) ──
+const workerCode=`
+let tid=null;
+self.onmessage=function(e){
+  if(e.data==='start'){
+    if(tid)clearInterval(tid);
+    tid=setInterval(()=>self.postMessage('tick'),1000);
+  }
+  if(e.data==='stop'){
+    if(tid){clearInterval(tid);tid=null;}
+  }
+};`;
+const workerBlob=new Blob([workerCode],{type:'application/javascript'});
+const timerWorker=new Worker(URL.createObjectURL(workerBlob));
+
+// ── Sessiz ses döngüsü (tarayıcıyı uyutmaz) ──
 let silentAudio=null;
 function startSilentLoop(){
   if(silentAudio)return;
-  // 1 saniyelik sessiz WAV (base64)
-  silentAudio=new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+  // 10 saniyelik sessiz WAV üret
+  const sr=8000, dur=10, samples=sr*dur;
+  const buf=new ArrayBuffer(44+samples*2);
+  const v=new DataView(buf);
+  function ws(o,s){for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));}
+  ws(0,'RIFF');v.setUint32(4,36+samples*2,true);ws(8,'WAVE');
+  ws(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);
+  v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);
+  v.setUint16(32,2,true);v.setUint16(34,16,true);
+  ws(36,'data');v.setUint32(40,samples*2,true);
+  // samples zaten 0 — sessiz
+  const blob=new Blob([buf],{type:'audio/wav'});
+  silentAudio=new Audio(URL.createObjectURL(blob));
   silentAudio.loop=true;
   silentAudio.volume=0.01;
   silentAudio.play().catch(()=>{});
 }
 function stopSilentLoop(){
-  if(silentAudio){silentAudio.pause();silentAudio=null;}
+  if(silentAudio){silentAudio.pause();silentAudio.src='';silentAudio=null;}
 }
 
 /* ═══════════════════ SCREENS ═══════════════════ */
@@ -334,7 +354,7 @@ function renderMenu(){
 }
 
 function goMenu(){
-  clearInterval(timerInterval);
+  timerWorker.postMessage('stop');
   isResting=false;
   releaseWakeLock();
   stopSilentLoop();
@@ -451,31 +471,45 @@ function logSet(){
 }
 
 /* ── REST TIMER ── */
+let restEndTime=0; // absolute timestamp
+const spokenMarkers=new Set();
+
 function startRest(duration){
-  isResting=true; restTime=duration; restTotal=duration;
+  isResting=true; restTotal=duration;
+  restEndTime=Date.now()+duration*1000;
+  spokenMarkers.clear();
   document.getElementById('repArea').classList.add('hide');
   document.getElementById('restArea').classList.remove('hide');
-  updateTimerUI();
   startSilentLoop();
+  updateRestFromTime();
 
-  clearInterval(timerInterval);
-  timerInterval=setInterval(()=>{
-    restTime--;
-    if(restTime<=0){
-      clearInterval(timerInterval);
-      isResting=false;
-      stopSilentLoop();
-      advanceSet();
-      renderWorkout();
-      return;
+  timerWorker.onmessage=function(){
+    if(!isResting)return;
+    updateRestFromTime();
+  };
+  timerWorker.postMessage('start');
+}
+
+function updateRestFromTime(){
+  const remaining=Math.max(0,Math.ceil((restEndTime-Date.now())/1000));
+  restTime=remaining;
+
+  if(remaining<=0){
+    timerWorker.postMessage('stop');
+    isResting=false;
+    stopSilentLoop();
+    advanceSet();
+    renderWorkout();
+    return;
+  }
+  // MP3 tetikle (her marker sadece 1 kere)
+  [60,30,15,5].forEach(m=>{
+    if(remaining===m && !spokenMarkers.has(m)){
+      spokenMarkers.add(m);
+      playAt(m);
     }
-    // MP3 tetikle
-    if(restTime===60) playAt(60);
-    else if(restTime===30) playAt(30);
-    else if(restTime===15) playAt(15);
-    else if(restTime===5) playAt(5);
-    updateTimerUI();
-  },1000);
+  });
+  updateTimerUI();
 }
 
 function updateTimerUI(){
@@ -486,7 +520,7 @@ function updateTimerUI(){
 }
 
 function skipRest(){
-  clearInterval(timerInterval);
+  timerWorker.postMessage('stop');
   isResting=false; restTime=0;
   stopSilentLoop();
   advanceSet();
