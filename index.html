@@ -236,47 +236,34 @@ function resetAllData(){ if(confirm("Tüm antrenman verileri silinecek. Emin mis
   • 15s.mp3  → "On beş saniye kaldı"
   • 5s.mp3   → "Beş, dört, üç, iki, bir" (geri sayım)
 */
-const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-const audioBuffers={};
-let audioUnlocked=false;
+const SND={
+  '60': new Audio('1dk.mp3'),
+  '30': new Audio('30s.mp3'),
+  '15': new Audio('15s.mp3'),
+  '5':  new Audio('5s.mp3')
+};
+Object.values(SND).forEach(a=>{a.preload='auto';a.load();});
 
-// Fetch & decode MP3 → AudioBuffer
-async function loadSound(key,url){
-  try{
-    const res=await fetch(url);
-    const arr=await res.arrayBuffer();
-    audioBuffers[key]=await audioCtx.decodeAudioData(arr);
-  }catch(e){console.warn('Ses yüklenemedi:',url,e);}
+// Mobil: her Audio'yu kullanıcı dokunuşunda sessizce çalıp durdur → kilit açılır
+let soundsUnlocked=false;
+function unlockSounds(){
+  if(soundsUnlocked)return;
+  soundsUnlocked=true;
+  Object.values(SND).forEach(a=>{
+    a.muted=true;
+    a.play().then(()=>{
+      a.pause();
+      a.muted=false;
+      a.currentTime=0;
+    }).catch(()=>{});
+  });
 }
-// Hepsini yükle
-Promise.all([
-  loadSound('60','1dk.mp3'),
-  loadSound('30','30s.mp3'),
-  loadSound('15','15s.mp3'),
-  loadSound('5','5s.mp3')
-]);
-
-// Mobil: ilk dokunuşta AudioContext'i aç
-function unlockAudio(){
-  if(audioUnlocked)return;
-  audioCtx.resume().then(()=>{audioUnlocked=true;});
-  // Sessiz buffer çal — iOS için gerekli
-  const b=audioCtx.createBuffer(1,1,22050);
-  const s=audioCtx.createBufferSource();
-  s.buffer=b;s.connect(audioCtx.destination);s.start(0);
-}
-document.addEventListener('touchstart',unlockAudio,{once:false});
-document.addEventListener('touchend',unlockAudio,{once:false});
-document.addEventListener('click',unlockAudio,{once:false});
 
 function playAt(secondsLeft){
   const key=String(secondsLeft);
-  if(!audioBuffers[key])return;
-  if(audioCtx.state==='suspended')audioCtx.resume();
-  const source=audioCtx.createBufferSource();
-  source.buffer=audioBuffers[key];
-  source.connect(audioCtx.destination);
-  source.start(0);
+  if(!SND[key])return;
+  SND[key].currentTime=0;
+  SND[key].play().catch(()=>{});
 }
 
 /* ═══════════════════ SCREENS ═══════════════════ */
@@ -317,6 +304,7 @@ function goMenu(){
 
 /* ── START DAY ── */
 function startDay(dayKey){
+  unlockSounds();
   curDay=dayKey; exIdx=0; setIdx=0; reps=10;
   sessionLog={}; isResting=false;
   show('workoutScreen');
@@ -407,6 +395,7 @@ function renderQuickBtns(){
 
 /* ── LOG SET ── */
 function logSet(){
+  unlockSounds();
   const w=WORKOUTS[curDay], ex=w.exercises[exIdx];
   sessionLog[`${exIdx}-${setIdx}`]=reps;
   renderSetDots();
