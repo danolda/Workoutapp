@@ -6,7 +6,6 @@
 <title>Workout Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
-<script src="https://code.responsivevoice.org/responsivevoice.js?key=pxaocVc4"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{background:#0d0d0d;color:#eee;font-family:'JetBrains Mono','SF Mono','Fira Code',monospace;min-height:100vh;min-height:100dvh;overflow-x:hidden}
@@ -211,49 +210,28 @@ function saveLogs(logs){ localStorage.setItem("wk-logs",JSON.stringify(logs)); }
 function getPrev(dayKey,eI,sI){ const l=loadLogs()[dayKey]; return l?l[`${eI}-${sI}`]??null:null; }
 function resetAllData(){ if(confirm("Tüm antrenman verileri silinecek. Emin misin?")){localStorage.removeItem("wk-logs");renderMenu();} }
 
-/* ═══════════════════ SPEECH ═══════════════════ */
+/* ═══════════════════ SES (MP3) ═══════════════════ */
 /*
-  Birincil: ResponsiveVoice.js — doğal Türkçe ses
-  Yedek:    Web Speech API (RV yüklenemezse)
+  4 adet MP3 dosyası — HTML ile aynı klasörde olmalı:
+  • 1dk.mp3  → "Bir dakika kaldı"
+  • 30s.mp3  → "Otuz saniye kaldı"
+  • 15s.mp3  → "On beş saniye kaldı"
+  • 5s.mp3   → "Beş, dört, üç, iki, bir" (geri sayım)
 */
-const NUM_TR={
-  0:'sıfır',1:'bir',2:'iki',3:'üç',4:'dört',5:'beş',
-  6:'altı',7:'yedi',8:'sekiz',9:'dokuz',10:'on',
-  11:'on bir',12:'on iki',13:'on üç',14:'on dört',15:'on beş',
-  16:'on altı',17:'on yedi',18:'on sekiz',19:'on dokuz',20:'yirmi',
-  25:'yirmi beş',30:'otuz',35:'otuz beş',40:'kırk',45:'kırk beş',
-  50:'elli',55:'elli beş',60:'altmış',75:'yetmiş beş',
-  90:'doksan',105:'yüz beş',120:'yüz yirmi',
-  135:'yüz otuz beş',150:'yüz elli',165:'yüz altmış beş',180:'üç dakika'
+const SND={
+  '60': new Audio('1dk.mp3'),
+  '30': new Audio('30s.mp3'),
+  '15': new Audio('15s.mp3'),
+  '5':  new Audio('5s.mp3')
 };
-function numToTR(n){
-  if(NUM_TR[n]!==undefined)return NUM_TR[n];
-  if(n>=100){const y=Math.floor(n/60);const s=n%60;return(y>0?y+' dakika ':'')+(s>0?numToTR(s)+' saniye':'');}
-  const tens=['','on','yirmi','otuz','kırk','elli','altmış','yetmiş','seksen','doksan'];
-  const t=Math.floor(n/10), b=n%10;
-  return (tens[t]||'')+(b>0?' '+(NUM_TR[b]||''):'');
-}
+// Preload
+Object.values(SND).forEach(a=>{a.preload='auto';a.volume=1;});
 
-function speak(txt){
-  // Sayıları Türkçe kelimelere çevir
-  const processed=txt.replace(/\d+/g,m=>numToTR(parseInt(m)));
-
-  // ResponsiveVoice varsa onu kullan
-  if(typeof responsiveVoice!=='undefined' && responsiveVoice.voiceSupport()){
-    responsiveVoice.cancel();
-    responsiveVoice.speak(processed,"Turkish Female",{rate:0.95,volume:1});
-    return;
-  }
-  // Yedek: Web Speech API
-  if('speechSynthesis' in window){
-    speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(processed);
-    u.lang='tr-TR';u.rate=1.05;u.volume=1;
-    // Türkçe ses bul
-    const voices=speechSynthesis.getVoices();
-    const trV=voices.find(v=>v.lang==='tr-TR')||voices.find(v=>v.lang.startsWith('tr'));
-    if(trV)u.voice=trV;
-    speechSynthesis.speak(u);
+function playAt(secondsLeft){
+  const key=String(secondsLeft);
+  if(SND[key]){
+    SND[key].currentTime=0;
+    SND[key].play().catch(()=>{});
   }
 }
 
@@ -405,7 +383,6 @@ function startRest(duration){
   document.getElementById('repArea').classList.add('hide');
   document.getElementById('restArea').classList.remove('hide');
   updateTimerUI();
-  speak("Dinlenme başladı");
 
   clearInterval(timerInterval);
   timerInterval=setInterval(()=>{
@@ -413,13 +390,15 @@ function startRest(duration){
     if(restTime<=0){
       clearInterval(timerInterval);
       isResting=false;
-      speak("Süre doldu! Hazır ol!");
       advanceSet();
       renderWorkout();
       return;
     }
-    if(restTime<=5&&restTime>0) speak(String(restTime));
-    else if(restTime%15===0&&restTime>5) speak(`${restTime} saniye kaldı`);
+    // MP3 tetikle
+    if(restTime===60) playAt(60);
+    else if(restTime===30) playAt(30);
+    else if(restTime===15) playAt(15);
+    else if(restTime===5) playAt(5);
     updateTimerUI();
   },1000);
 }
@@ -467,7 +446,6 @@ function finishWorkout(){
     row.innerHTML=`<div class="summary-ex">${ex.name}</div><div class="summary-reps">${badges}</div>`;
     box.appendChild(row);
   });
-  speak("Tebrikler! Antrenman tamamlandı!");
 }
 
 /* ═══════════════════ INIT ═══════════════════ */
