@@ -6,6 +6,7 @@
 <title>Workout Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+<script src="https://code.responsivevoice.org/responsivevoice.js?key=pxaocVc4"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{background:#0d0d0d;color:#eee;font-family:'JetBrains Mono','SF Mono','Fira Code',monospace;min-height:100vh;min-height:100dvh;overflow-x:hidden}
@@ -212,38 +213,9 @@ function resetAllData(){ if(confirm("Tüm antrenman verileri silinecek. Emin mis
 
 /* ═══════════════════ SPEECH ═══════════════════ */
 /*
-  Birincil: Google Translate TTS — doğal Türkçe ses
-  Yedek:    Web Speech API (cihazda TR ses varsa)
+  Birincil: ResponsiveVoice.js — doğal Türkçe ses
+  Yedek:    Web Speech API (RV yüklenemezse)
 */
-let ttsAudio=null;
-let useFallback=false;
-
-function speakGoogle(txt){
-  return new Promise((resolve,reject)=>{
-    if(ttsAudio){ttsAudio.pause();ttsAudio=null;}
-    const url=`https://translate.google.com/translate_tts?ie=UTF-8&tl=tr&client=tw-ob&q=${encodeURIComponent(txt)}`;
-    ttsAudio=new Audio(url);
-    ttsAudio.volume=1;
-    ttsAudio.onended=resolve;
-    ttsAudio.onerror=()=>{useFallback=true;reject()};
-    ttsAudio.play().catch(()=>{useFallback=true;reject()});
-  });
-}
-
-// Web Speech API yedek
-let trVoice=null;
-function findTurkishVoice(){
-  if(!('speechSynthesis' in window))return;
-  const voices=speechSynthesis.getVoices();
-  trVoice=voices.find(v=>v.lang==='tr-TR')
-    ||voices.find(v=>v.lang.startsWith('tr'))
-    ||null;
-}
-if('speechSynthesis' in window){
-  findTurkishVoice();
-  speechSynthesis.onvoiceschanged=findTurkishVoice;
-}
-
 const NUM_TR={
   0:'sıfır',1:'bir',2:'iki',3:'üç',4:'dört',5:'beş',
   6:'altı',7:'yedi',8:'sekiz',9:'dokuz',10:'on',
@@ -262,20 +234,27 @@ function numToTR(n){
   return (tens[t]||'')+(b>0?' '+(NUM_TR[b]||''):'');
 }
 
-function speakFallback(txt){
-  if(!('speechSynthesis' in window))return;
-  speechSynthesis.cancel();
-  const processed=txt.replace(/\d+/g,m=>numToTR(parseInt(m)));
-  const u=new SpeechSynthesisUtterance(processed);
-  u.lang='tr-TR';
-  if(trVoice)u.voice=trVoice;
-  u.rate=1.05;u.volume=1;
-  speechSynthesis.speak(u);
-}
-
 function speak(txt){
-  if(useFallback){speakFallback(txt);return;}
-  speakGoogle(txt).catch(()=>speakFallback(txt));
+  // Sayıları Türkçe kelimelere çevir
+  const processed=txt.replace(/\d+/g,m=>numToTR(parseInt(m)));
+
+  // ResponsiveVoice varsa onu kullan
+  if(typeof responsiveVoice!=='undefined' && responsiveVoice.voiceSupport()){
+    responsiveVoice.cancel();
+    responsiveVoice.speak(processed,"Turkish Female",{rate:0.95,volume:1});
+    return;
+  }
+  // Yedek: Web Speech API
+  if('speechSynthesis' in window){
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(processed);
+    u.lang='tr-TR';u.rate=1.05;u.volume=1;
+    // Türkçe ses bul
+    const voices=speechSynthesis.getVoices();
+    const trV=voices.find(v=>v.lang==='tr-TR')||voices.find(v=>v.lang.startsWith('tr'));
+    if(trV)u.voice=trV;
+    speechSynthesis.speak(u);
+  }
 }
 
 /* ═══════════════════ SCREENS ═══════════════════ */
