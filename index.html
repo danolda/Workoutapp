@@ -1,0 +1,455 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+
+const WORKOUTS = {
+  push: {
+    day: 1,
+    name: "İtiş",
+    icon: "💪",
+    color: "#FF4136",
+    exercises: [
+      { name: "Dips", sets: 4, repRange: "6-12", rest: 180 },
+      { name: "Decline Push-up / Weighted Push-up", sets: 4, repRange: "8-15", rest: 120 },
+      { name: "Overhead DB Triceps Extension", sets: 3, repRange: "10-15", rest: 75 },
+      { name: "Dumbbell Lateral Raise", sets: 3, repRange: "12-20", rest: 90 },
+    ],
+  },
+  neck: {
+    day: 2,
+    name: "Boyun",
+    icon: "🦴",
+    color: "#FF851B",
+    exercises: [
+      { name: "Neck Flexion (Ön)", sets: 5, repRange: "15-25", rest: 90 },
+      { name: "Neck Extension (Arka)", sets: 5, repRange: "15-25", rest: 90 },
+    ],
+    note: "Failure'a abanma. 1-2 tekrar cepte bırak.",
+  },
+  pull: {
+    day: 4,
+    name: "Çekiş",
+    icon: "🏋️",
+    color: "#0074D9",
+    exercises: [
+      { name: "Pull-up / Chin-up", sets: 4, repRange: "6-12", rest: 180 },
+      { name: "Body Row / Inverted Row", sets: 4, repRange: "8-15", rest: 120 },
+      { name: "Dumbbell Shrug", sets: 4, repRange: "10-20", rest: 90 },
+      { name: "Rear Delt Fly", sets: 2, repRange: "12-20", rest: 60 },
+      { name: "DB Curl / Hammer Curl", sets: 3, repRange: "8-15", rest: 60 },
+    ],
+  },
+  leg: {
+    day: 5,
+    name: "Bacak",
+    icon: "🦵",
+    color: "#2ECC40",
+    exercises: [
+      { name: "Squat", sets: 4, repRange: "15-30", rest: 180 },
+      { name: "Deep Lunge / Bulgarian Split Squat", sets: 4, repRange: "10-20", rest: 90 },
+      { name: "DB Romanian Deadlift", sets: 3, repRange: "10-20", rest: 120 },
+      { name: "Standing / Single-leg Calf Raise", sets: 4, repRange: "12-25", rest: 90 },
+    ],
+  },
+};
+
+function speak(text) {
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "tr-TR";
+    u.rate = 1.1;
+    u.volume = 1;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+export default function WorkoutTracker() {
+  const [screen, setScreen] = useState("menu");
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [exIdx, setExIdx] = useState(0);
+  const [setIdx, setSetIdx] = useState(0);
+  const [reps, setReps] = useState(10);
+  const [isResting, setIsResting] = useState(false);
+  const [restTime, setRestTime] = useState(0);
+  const [sessionLog, setSessionLog] = useState({});
+  const [prevLog, setPrevLog] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [completed, setCompleted] = useState(false);
+  const timerRef = useRef(null);
+  const spokenRef = useRef(new Set());
+
+  // Load previous data
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await window.storage.get("workout-logs");
+        if (r && r.value) setPrevLog(JSON.parse(r.value));
+      } catch {}
+      setLoading(false);
+    })();
+  }, []);
+
+  // Save session log
+  const saveLog = useCallback(async (dayKey, log) => {
+    try {
+      const existing = { ...prevLog };
+      existing[dayKey] = { ...log, date: new Date().toISOString() };
+      await window.storage.set("workout-logs", JSON.stringify(existing));
+      setPrevLog(existing);
+    } catch (e) {
+      console.error("Save error:", e);
+    }
+  }, [prevLog]);
+
+  // Timer logic
+  useEffect(() => {
+    if (!isResting || restTime <= 0) return;
+    timerRef.current = setInterval(() => {
+      setRestTime((prev) => {
+        const next = prev - 1;
+        if (next <= 0) {
+          clearInterval(timerRef.current);
+          speak("Süre doldu! Hazır ol!");
+          setIsResting(false);
+          return 0;
+        }
+        if (next <= 5 && next > 0) speak(String(next));
+        else if (next % 15 === 0 && next > 5) speak(`${next} saniye kaldı`);
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [isResting, restTime > 0]);
+
+  const workout = selectedDay ? WORKOUTS[selectedDay] : null;
+  const exercise = workout ? workout.exercises[exIdx] : null;
+
+  const startDay = (dayKey) => {
+    setSelectedDay(dayKey);
+    setExIdx(0);
+    setSetIdx(0);
+    setReps(10);
+    setSessionLog({});
+    setCompleted(false);
+    setIsResting(false);
+    setScreen("workout");
+  };
+
+  const getPrevReps = (eIdx, sIdx) => {
+    if (!selectedDay || !prevLog[selectedDay]) return null;
+    const p = prevLog[selectedDay];
+    const key = `${eIdx}-${sIdx}`;
+    return p[key] ?? null;
+  };
+
+  const getCurrentReps = (eIdx, sIdx) => {
+    const key = `${eIdx}-${sIdx}`;
+    return sessionLog[key] ?? null;
+  };
+
+  const logAndRest = () => {
+    const key = `${exIdx}-${setIdx}`;
+    const newLog = { ...sessionLog, [key]: reps };
+    setSessionLog(newLog);
+
+    const isLastSet = setIdx >= exercise.sets - 1;
+    const isLastExercise = exIdx >= workout.exercises.length - 1;
+
+    if (isLastSet && isLastExercise) {
+      saveLog(selectedDay, newLog);
+      setCompleted(true);
+      speak("Tebrikler! Antrenman tamamlandı!");
+      return;
+    }
+
+    setIsResting(true);
+    setRestTime(exercise.rest);
+    spokenRef.current = new Set();
+    speak("Dinlenme başladı");
+  };
+
+  const skipRest = () => {
+    clearInterval(timerRef.current);
+    setIsResting(false);
+    setRestTime(0);
+    advanceSet();
+  };
+
+  const advanceSet = useCallback(() => {
+    if (setIdx < exercise.sets - 1) {
+      setSetIdx((p) => p + 1);
+      setReps(10);
+    } else if (exIdx < workout.exercises.length - 1) {
+      setExIdx((p) => p + 1);
+      setSetIdx(0);
+      setReps(10);
+    }
+  }, [setIdx, exIdx, exercise, workout]);
+
+  useEffect(() => {
+    if (!isResting && restTime === 0 && screen === "workout" && !completed) {
+      const key = `${exIdx}-${setIdx}`;
+      if (sessionLog[key] !== undefined) advanceSet();
+    }
+  }, [isResting, restTime, screen, completed]);
+
+  const formatTime = (s) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  const restPercent = exercise ? ((exercise.rest - restTime) / exercise.rest) * 100 : 0;
+
+  if (loading) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.loadingText}>Yükleniyor...</div>
+      </div>
+    );
+  }
+
+  // MENU
+  if (screen === "menu") {
+    return (
+      <div style={styles.container}>
+        <div style={styles.header}>
+          <div style={styles.logo}>⚡</div>
+          <h1 style={styles.title}>WORKOUT</h1>
+          <p style={styles.subtitle}>Antrenman gününü seç</p>
+        </div>
+        <div style={styles.dayGrid}>
+          {Object.entries(WORKOUTS).map(([key, w]) => {
+            const prev = prevLog[key];
+            const lastDate = prev?.date ? new Date(prev.date).toLocaleDateString("tr-TR") : null;
+            return (
+              <button key={key} style={{ ...styles.dayCard, borderLeft: `4px solid ${w.color}` }} onClick={() => startDay(key)}>
+                <div style={styles.dayCardTop}>
+                  <span style={styles.dayIcon}>{w.icon}</span>
+                  <span style={styles.dayNumber}>Gün {w.day}</span>
+                </div>
+                <div style={styles.dayName}>{w.name}</div>
+                <div style={styles.dayExCount}>{w.exercises.length} hareket</div>
+                {lastDate && <div style={styles.lastDate}>Son: {lastDate}</div>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // COMPLETED
+  if (completed) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.completedBox}>
+          <div style={{ fontSize: 64 }}>🎉</div>
+          <h2 style={styles.completedTitle}>Antrenman Tamamlandı!</h2>
+          <p style={styles.completedSub}>{workout.name} günü bitti</p>
+          <div style={styles.summaryBox}>
+            {workout.exercises.map((ex, eI) => (
+              <div key={eI} style={styles.summaryRow}>
+                <div style={styles.summaryExName}>{ex.name}</div>
+                <div style={styles.summaryReps}>
+                  {Array.from({ length: ex.sets }, (_, sI) => (
+                    <span key={sI} style={styles.summaryBadge}>{sessionLog[`${eI}-${sI}`] ?? "-"}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <button style={styles.backBtn} onClick={() => { setScreen("menu"); setCompleted(false); }}>
+            ← Ana Menü
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // WORKOUT
+  return (
+    <div style={styles.container}>
+      {/* Top bar */}
+      <div style={styles.topBar}>
+        <button style={styles.backBtnSmall} onClick={() => { clearInterval(timerRef.current); setIsResting(false); setScreen("menu"); }}>
+          ← Menü
+        </button>
+        <div style={styles.topBarTitle}>
+          <span style={{ color: workout.color }}>{workout.icon}</span> Gün {workout.day} — {workout.name}
+        </div>
+      </div>
+
+      {/* Progress */}
+      <div style={styles.progressBar}>
+        <div style={{ ...styles.progressFill, width: `${((exIdx * 100) / workout.exercises.length)}%`, background: workout.color }} />
+      </div>
+
+      {/* Exercise info */}
+      <div style={styles.exerciseHeader}>
+        <div style={styles.exerciseCount}>Hareket {exIdx + 1}/{workout.exercises.length}</div>
+        <h2 style={styles.exerciseName}>{exercise.name}</h2>
+        <div style={styles.exerciseMeta}>
+          {exercise.sets} set × {exercise.repRange} tekrar · Dinlenme: {exercise.rest}sn
+        </div>
+        {workout.note && exIdx === 0 && <div style={styles.noteBox}>⚠️ {workout.note}</div>}
+      </div>
+
+      {/* Set indicators */}
+      <div style={styles.setIndicators}>
+        {Array.from({ length: exercise.sets }, (_, i) => {
+          const done = getCurrentReps(exIdx, i) !== null;
+          const active = i === setIdx && !done;
+          const prev = getPrevReps(exIdx, i);
+          return (
+            <div key={i} style={{ ...styles.setDot, background: done ? workout.color : active ? "#333" : "#1a1a1a", border: active ? `2px solid ${workout.color}` : "2px solid #333" }}>
+              <div style={styles.setDotLabel}>Set {i + 1}</div>
+              {done && <div style={styles.setDotValue}>{getCurrentReps(exIdx, i)}</div>}
+              {!done && prev !== null && <div style={styles.setDotPrev}>Ön: {prev}</div>}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Rest Timer */}
+      {isResting ? (
+        <div style={styles.restContainer}>
+          <div style={styles.restLabel}>DİNLENME</div>
+          <div style={styles.timerCircleOuter}>
+            <svg width="200" height="200" viewBox="0 0 200 200">
+              <circle cx="100" cy="100" r="90" fill="none" stroke="#222" strokeWidth="8" />
+              <circle cx="100" cy="100" r="90" fill="none" stroke={workout.color} strokeWidth="8"
+                strokeDasharray={`${2 * Math.PI * 90}`}
+                strokeDashoffset={`${2 * Math.PI * 90 * (1 - restPercent / 100)}`}
+                strokeLinecap="round"
+                transform="rotate(-90 100 100)"
+                style={{ transition: "stroke-dashoffset 1s linear" }} />
+            </svg>
+            <div style={styles.timerText}>{formatTime(restTime)}</div>
+          </div>
+          <button style={{ ...styles.skipBtn, borderColor: workout.color, color: workout.color }} onClick={skipRest}>
+            Atla →
+          </button>
+        </div>
+      ) : (
+        /* Rep input */
+        <div style={styles.repInputContainer}>
+          <div style={styles.repLabel}>Set {setIdx + 1} — Kaç tekrar yaptın?</div>
+          {getPrevReps(exIdx, setIdx) !== null && (
+            <div style={styles.prevRepHint}>Geçen sefer: <strong>{getPrevReps(exIdx, setIdx)}</strong> tekrar</div>
+          )}
+          <div style={styles.repStepper}>
+            <button style={styles.stepBtn} onClick={() => setReps((r) => Math.max(0, r - 1))}>
+              <span style={styles.stepBtnText}>−</span>
+            </button>
+            <div style={styles.repDisplay}>{reps}</div>
+            <button style={styles.stepBtn} onClick={() => setReps((r) => r + 1)}>
+              <span style={styles.stepBtnText}>+</span>
+            </button>
+          </div>
+          <div style={styles.quickReps}>
+            {[5, 8, 10, 12, 15, 20].map((n) => (
+              <button key={n} style={{ ...styles.quickBtn, background: reps === n ? workout.color : "#222", color: reps === n ? "#000" : "#888" }} onClick={() => setReps(n)}>
+                {n}
+              </button>
+            ))}
+          </div>
+          <button style={{ ...styles.logBtn, background: workout.color }} onClick={logAndRest}>
+            ✓ Kaydet & Dinlenmeye Geç
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const styles = {
+  container: {
+    minHeight: "100vh",
+    background: "#0d0d0d",
+    color: "#eee",
+    fontFamily: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    padding: "16px",
+    boxSizing: "border-box",
+  },
+  loadingText: { color: "#666", marginTop: 100, fontSize: 18 },
+
+  // Menu
+  header: { textAlign: "center", marginTop: 32, marginBottom: 32 },
+  logo: { fontSize: 48, marginBottom: 8 },
+  title: { fontSize: 36, fontWeight: 900, letterSpacing: 8, margin: 0, color: "#fff" },
+  subtitle: { color: "#666", fontSize: 14, marginTop: 8, letterSpacing: 2, textTransform: "uppercase" },
+  dayGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, width: "100%", maxWidth: 400 },
+  dayCard: {
+    background: "#141414",
+    border: "none",
+    borderRadius: 12,
+    padding: "20px 16px",
+    textAlign: "left",
+    cursor: "pointer",
+    transition: "transform 0.15s",
+    color: "#eee",
+    fontFamily: "inherit",
+  },
+  dayCardTop: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
+  dayIcon: { fontSize: 28 },
+  dayNumber: { fontSize: 11, color: "#555", letterSpacing: 1, textTransform: "uppercase" },
+  dayName: { fontSize: 20, fontWeight: 800, marginBottom: 4 },
+  dayExCount: { fontSize: 12, color: "#666" },
+  lastDate: { fontSize: 11, color: "#444", marginTop: 8 },
+
+  // Top bar
+  topBar: { display: "flex", alignItems: "center", width: "100%", maxWidth: 480, marginBottom: 8, gap: 12 },
+  backBtnSmall: { background: "none", border: "1px solid #333", color: "#888", padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontFamily: "inherit", whiteSpace: "nowrap" },
+  topBarTitle: { fontSize: 15, fontWeight: 700, letterSpacing: 1 },
+
+  // Progress
+  progressBar: { width: "100%", maxWidth: 480, height: 3, background: "#1a1a1a", borderRadius: 2, marginBottom: 20, overflow: "hidden" },
+  progressFill: { height: "100%", borderRadius: 2, transition: "width 0.4s ease" },
+
+  // Exercise
+  exerciseHeader: { textAlign: "center", marginBottom: 20, width: "100%", maxWidth: 480 },
+  exerciseCount: { fontSize: 11, color: "#555", letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 },
+  exerciseName: { fontSize: 22, fontWeight: 800, margin: "4px 0", lineHeight: 1.2 },
+  exerciseMeta: { fontSize: 13, color: "#666", marginTop: 4 },
+  noteBox: { background: "#1a1500", border: "1px solid #332800", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "#cc9900", marginTop: 12, textAlign: "left" },
+
+  // Set indicators
+  setIndicators: { display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap", justifyContent: "center" },
+  setDot: { borderRadius: 10, padding: "8px 14px", minWidth: 60, textAlign: "center", transition: "all 0.2s" },
+  setDotLabel: { fontSize: 10, color: "#888", textTransform: "uppercase", letterSpacing: 1 },
+  setDotValue: { fontSize: 20, fontWeight: 900, marginTop: 2 },
+  setDotPrev: { fontSize: 10, color: "#555", marginTop: 2 },
+
+  // Rest
+  restContainer: { display: "flex", flexDirection: "column", alignItems: "center", marginTop: 16 },
+  restLabel: { fontSize: 14, letterSpacing: 6, color: "#FF4136", fontWeight: 800, marginBottom: 20, textTransform: "uppercase" },
+  timerCircleOuter: { position: "relative", width: 200, height: 200, display: "flex", alignItems: "center", justifyContent: "center" },
+  timerText: { position: "absolute", fontSize: 48, fontWeight: 900, letterSpacing: 2, color: "#fff" },
+  skipBtn: { marginTop: 24, background: "none", border: "2px solid", padding: "10px 32px", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" },
+
+  // Rep input
+  repInputContainer: { display: "flex", flexDirection: "column", alignItems: "center", width: "100%", maxWidth: 480 },
+  repLabel: { fontSize: 15, fontWeight: 700, marginBottom: 4, color: "#ccc" },
+  prevRepHint: { fontSize: 13, color: "#666", marginBottom: 16 },
+  repStepper: { display: "flex", alignItems: "center", gap: 24, marginBottom: 16 },
+  stepBtn: { width: 64, height: 64, borderRadius: "50%", border: "2px solid #333", background: "#1a1a1a", color: "#fff", fontSize: 32, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit", transition: "background 0.15s" },
+  stepBtnText: { lineHeight: 1, marginTop: -2 },
+  repDisplay: { fontSize: 64, fontWeight: 900, minWidth: 80, textAlign: "center", color: "#fff" },
+  quickReps: { display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap", justifyContent: "center" },
+  quickBtn: { border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s" },
+  logBtn: { border: "none", borderRadius: 14, padding: "16px 40px", fontSize: 16, fontWeight: 800, cursor: "pointer", color: "#000", fontFamily: "inherit", letterSpacing: 1, width: "100%", maxWidth: 360 },
+
+  // Completed
+  completedBox: { textAlign: "center", marginTop: 40, width: "100%", maxWidth: 480 },
+  completedTitle: { fontSize: 28, fontWeight: 900, margin: "16px 0 4px" },
+  completedSub: { color: "#666", fontSize: 14, marginBottom: 24 },
+  summaryBox: { background: "#141414", borderRadius: 12, padding: 16, textAlign: "left" },
+  summaryRow: { padding: "10px 0", borderBottom: "1px solid #1a1a1a" },
+  summaryExName: { fontSize: 13, fontWeight: 700, marginBottom: 6 },
+  summaryReps: { display: "flex", gap: 6 },
+  summaryBadge: { background: "#222", borderRadius: 6, padding: "4px 10px", fontSize: 14, fontWeight: 800, color: "#fff" },
+  backBtn: { marginTop: 24, background: "none", border: "2px solid #333", color: "#ccc", padding: "12px 32px", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" },
+};
