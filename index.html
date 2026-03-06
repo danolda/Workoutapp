@@ -1,455 +1,439 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Workout Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:#0d0d0d;color:#eee;font-family:'JetBrains Mono','SF Mono','Fira Code',monospace;min-height:100vh;min-height:100dvh;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;border:none;outline:none;-webkit-user-select:none;user-select:none}
+.hide{display:none!important}
 
+/* ── MENU ── */
+#menuScreen{display:flex;flex-direction:column;align-items:center;padding:16px;min-height:100vh}
+.logo{font-size:48px;margin-top:32px}
+.main-title{font-size:36px;font-weight:900;letter-spacing:8px;margin-top:8px;color:#fff}
+.main-sub{color:#666;font-size:13px;margin-top:8px;letter-spacing:2px;text-transform:uppercase}
+.day-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:400px;margin-top:32px}
+.day-card{background:#141414;border-radius:12px;padding:20px 16px;text-align:left;color:#eee;border-left:4px solid #555;transition:transform .12s}
+.day-card:active{transform:scale(.97)}
+.day-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.day-icon{font-size:28px}
+.day-num{font-size:11px;color:#555;letter-spacing:1px;text-transform:uppercase}
+.day-name{font-size:20px;font-weight:800;margin-bottom:4px}
+.day-ex-count{font-size:12px;color:#666}
+.last-date{font-size:11px;color:#444;margin-top:8px}
+
+/* ── WORKOUT ── */
+#workoutScreen{display:flex;flex-direction:column;align-items:center;padding:16px;min-height:100vh}
+.top-bar{display:flex;align-items:center;width:100%;max-width:480px;gap:12px;margin-bottom:8px}
+.back-btn-sm{background:none;border:1px solid #333;color:#888;padding:6px 12px;border-radius:8px;font-size:13px;white-space:nowrap}
+.top-bar-title{font-size:15px;font-weight:700;letter-spacing:1px}
+.progress-bar{width:100%;max-width:480px;height:3px;background:#1a1a1a;border-radius:2px;margin-bottom:20px;overflow:hidden}
+.progress-fill{height:100%;border-radius:2px;transition:width .4s ease}
+.ex-header{text-align:center;margin-bottom:20px;width:100%;max-width:480px}
+.ex-count{font-size:11px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.ex-name{font-size:22px;font-weight:800;margin:4px 0;line-height:1.2}
+.ex-meta{font-size:13px;color:#666;margin-top:4px}
+.note-box{background:#1a1500;border:1px solid #332800;border-radius:8px;padding:8px 12px;font-size:12px;color:#cc9900;margin-top:12px;text-align:left}
+
+/* Set indicators */
+.set-indicators{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;justify-content:center}
+.set-dot{border-radius:10px;padding:8px 14px;min-width:60px;text-align:center;transition:all .2s;border:2px solid #333;background:#1a1a1a}
+.set-dot.done{border-color:transparent}
+.set-dot.active{background:#333}
+.set-dot-label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px}
+.set-dot-value{font-size:20px;font-weight:900;margin-top:2px}
+.set-dot-prev{font-size:10px;color:#555;margin-top:2px}
+
+/* Rep input */
+.rep-input-area{display:flex;flex-direction:column;align-items:center;width:100%;max-width:480px}
+.rep-label{font-size:15px;font-weight:700;margin-bottom:4px;color:#ccc}
+.prev-hint{font-size:13px;color:#666;margin-bottom:16px}
+.prev-hint strong{color:#aaa}
+.rep-stepper{display:flex;align-items:center;gap:24px;margin-bottom:16px}
+.step-btn{width:64px;height:64px;border-radius:50%;border:2px solid #333;background:#1a1a1a;color:#fff;font-size:32px;display:flex;align-items:center;justify-content:center;transition:background .15s;line-height:1}
+.step-btn:active{background:#333}
+.rep-display{font-size:64px;font-weight:900;min-width:80px;text-align:center;color:#fff}
+.quick-reps{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;justify-content:center}
+.quick-btn{border-radius:8px;padding:8px 16px;font-size:14px;font-weight:700;background:#222;color:#888;transition:all .15s}
+.quick-btn.active{color:#000}
+.log-btn{border-radius:14px;padding:16px 40px;font-size:16px;font-weight:800;color:#000;letter-spacing:1px;width:100%;max-width:360px;transition:transform .12s}
+.log-btn:active{transform:scale(.97)}
+
+/* Rest timer */
+.rest-area{display:flex;flex-direction:column;align-items:center;margin-top:16px}
+.rest-label{font-size:14px;letter-spacing:6px;color:#FF4136;font-weight:800;margin-bottom:20px;text-transform:uppercase}
+.timer-wrap{position:relative;width:200px;height:200px;display:flex;align-items:center;justify-content:center}
+.timer-wrap svg{position:absolute;top:0;left:0}
+.timer-text{font-size:48px;font-weight:900;letter-spacing:2px;color:#fff;z-index:1}
+.skip-btn{margin-top:24px;background:none;border:2px solid;padding:10px 32px;border-radius:12px;font-size:15px;font-weight:700}
+
+/* Completed */
+#completedScreen{display:flex;flex-direction:column;align-items:center;padding:16px;min-height:100vh}
+.comp-icon{font-size:64px;margin-top:40px}
+.comp-title{font-size:28px;font-weight:900;margin:16px 0 4px}
+.comp-sub{color:#666;font-size:14px;margin-bottom:24px}
+.summary-box{background:#141414;border-radius:12px;padding:16px;text-align:left;width:100%;max-width:480px}
+.summary-row{padding:10px 0;border-bottom:1px solid #1a1a1a}
+.summary-row:last-child{border:none}
+.summary-ex{font-size:13px;font-weight:700;margin-bottom:6px}
+.summary-reps{display:flex;gap:6px;flex-wrap:wrap}
+.summary-badge{background:#222;border-radius:6px;padding:4px 10px;font-size:14px;font-weight:800;color:#fff}
+.back-btn-big{margin-top:24px;background:none;border:2px solid #333;color:#ccc;padding:12px 32px;border-radius:12px;font-size:15px;font-weight:700}
+
+/* Reset */
+.reset-row{margin-top:24px}
+.reset-btn{background:none;border:1px solid #222;color:#444;padding:8px 16px;border-radius:8px;font-size:11px;letter-spacing:1px;text-transform:uppercase}
+.reset-btn:active{color:#FF4136;border-color:#FF4136}
+</style>
+</head>
+<body>
+
+<!-- MENU -->
+<div id="menuScreen">
+  <div class="logo">⚡</div>
+  <h1 class="main-title">WORKOUT</h1>
+  <p class="main-sub">Antrenman gününü seç</p>
+  <div class="day-grid" id="dayGrid"></div>
+  <div class="reset-row">
+    <button class="reset-btn" onclick="resetAllData()">Tüm Verileri Sıfırla</button>
+  </div>
+</div>
+
+<!-- WORKOUT -->
+<div id="workoutScreen" class="hide">
+  <div class="top-bar">
+    <button class="back-btn-sm" onclick="goMenu()">← Menü</button>
+    <div class="top-bar-title" id="topTitle"></div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="ex-header">
+    <div class="ex-count" id="exCount"></div>
+    <h2 class="ex-name" id="exName"></h2>
+    <div class="ex-meta" id="exMeta"></div>
+    <div class="note-box hide" id="noteBox"></div>
+  </div>
+  <div class="set-indicators" id="setIndicators"></div>
+
+  <!-- Rep Input -->
+  <div class="rep-input-area" id="repArea">
+    <div class="rep-label" id="repLabel"></div>
+    <div class="prev-hint hide" id="prevHint"></div>
+    <div class="rep-stepper">
+      <button class="step-btn" onclick="changeReps(-1)">−</button>
+      <div class="rep-display" id="repDisplay">10</div>
+      <button class="step-btn" onclick="changeReps(1)">+</button>
+    </div>
+    <div class="quick-reps" id="quickReps"></div>
+    <button class="log-btn" id="logBtn" onclick="logSet()">✓ Kaydet & Dinlenmeye Geç</button>
+  </div>
+
+  <!-- Rest Timer -->
+  <div class="rest-area hide" id="restArea">
+    <div class="rest-label">DİNLENME</div>
+    <div class="timer-wrap">
+      <svg width="200" height="200" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="90" fill="none" stroke="#222" stroke-width="8"/>
+        <circle id="timerArc" cx="100" cy="100" r="90" fill="none" stroke="#FF4136" stroke-width="8"
+          stroke-dasharray="565.49" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 100 100)"
+          style="transition:stroke-dashoffset 1s linear"/>
+      </svg>
+      <div class="timer-text" id="timerText">0:00</div>
+    </div>
+    <button class="skip-btn" id="skipBtn" onclick="skipRest()">Atla →</button>
+  </div>
+</div>
+
+<!-- COMPLETED -->
+<div id="completedScreen" class="hide">
+  <div class="comp-icon">🎉</div>
+  <h2 class="comp-title">Antrenman Tamamlandı!</h2>
+  <p class="comp-sub" id="compSub"></p>
+  <div class="summary-box" id="summaryBox"></div>
+  <button class="back-btn-big" onclick="goMenu()">← Ana Menü</button>
+</div>
+
+<script>
+/* ═══════════════════ DATA ═══════════════════ */
 const WORKOUTS = {
   push: {
-    day: 1,
-    name: "İtiş",
-    icon: "💪",
-    color: "#FF4136",
-    exercises: [
-      { name: "Dips", sets: 4, repRange: "6-12", rest: 180 },
-      { name: "Decline Push-up / Weighted Push-up", sets: 4, repRange: "8-15", rest: 120 },
-      { name: "Overhead DB Triceps Extension", sets: 3, repRange: "10-15", rest: 75 },
-      { name: "Dumbbell Lateral Raise", sets: 3, repRange: "12-20", rest: 90 },
-    ],
+    day:1, name:"İtiş", icon:"💪", color:"#FF4136",
+    exercises:[
+      {name:"Dips",sets:4,repRange:"6-12",rest:180},
+      {name:"Decline Push-up / Weighted Push-up",sets:4,repRange:"8-15",rest:120},
+      {name:"Overhead DB Triceps Extension",sets:3,repRange:"10-15",rest:75},
+      {name:"Dumbbell Lateral Raise",sets:3,repRange:"12-20",rest:90}
+    ]
   },
   neck: {
-    day: 2,
-    name: "Boyun",
-    icon: "🦴",
-    color: "#FF851B",
-    exercises: [
-      { name: "Neck Flexion (Ön)", sets: 5, repRange: "15-25", rest: 90 },
-      { name: "Neck Extension (Arka)", sets: 5, repRange: "15-25", rest: 90 },
+    day:2, name:"Boyun", icon:"🦴", color:"#FF851B",
+    exercises:[
+      {name:"Neck Flexion (Ön)",sets:5,repRange:"15-25",rest:90},
+      {name:"Neck Extension (Arka)",sets:5,repRange:"15-25",rest:90}
     ],
-    note: "Failure'a abanma. 1-2 tekrar cepte bırak.",
+    note:"Failure'a abanma. 1-2 tekrar cepte bırak."
   },
   pull: {
-    day: 4,
-    name: "Çekiş",
-    icon: "🏋️",
-    color: "#0074D9",
-    exercises: [
-      { name: "Pull-up / Chin-up", sets: 4, repRange: "6-12", rest: 180 },
-      { name: "Body Row / Inverted Row", sets: 4, repRange: "8-15", rest: 120 },
-      { name: "Dumbbell Shrug", sets: 4, repRange: "10-20", rest: 90 },
-      { name: "Rear Delt Fly", sets: 2, repRange: "12-20", rest: 60 },
-      { name: "DB Curl / Hammer Curl", sets: 3, repRange: "8-15", rest: 60 },
-    ],
+    day:4, name:"Çekiş", icon:"🏋️", color:"#0074D9",
+    exercises:[
+      {name:"Pull-up / Chin-up",sets:4,repRange:"6-12",rest:180},
+      {name:"Body Row / Inverted Row",sets:4,repRange:"8-15",rest:120},
+      {name:"Dumbbell Shrug",sets:4,repRange:"10-20",rest:90},
+      {name:"Rear Delt Fly",sets:2,repRange:"12-20",rest:60},
+      {name:"DB Curl / Hammer Curl",sets:3,repRange:"8-15",rest:60}
+    ]
   },
   leg: {
-    day: 5,
-    name: "Bacak",
-    icon: "🦵",
-    color: "#2ECC40",
-    exercises: [
-      { name: "Squat", sets: 4, repRange: "15-30", rest: 180 },
-      { name: "Deep Lunge / Bulgarian Split Squat", sets: 4, repRange: "10-20", rest: 90 },
-      { name: "DB Romanian Deadlift", sets: 3, repRange: "10-20", rest: 120 },
-      { name: "Standing / Single-leg Calf Raise", sets: 4, repRange: "12-25", rest: 90 },
-    ],
-  },
+    day:5, name:"Bacak", icon:"🦵", color:"#2ECC40",
+    exercises:[
+      {name:"Squat",sets:4,repRange:"15-30",rest:180},
+      {name:"Deep Lunge / Bulgarian Split Squat",sets:4,repRange:"10-20",rest:90},
+      {name:"DB Romanian Deadlift",sets:3,repRange:"10-20",rest:120},
+      {name:"Standing / Single-leg Calf Raise",sets:4,repRange:"12-25",rest:90}
+    ]
+  }
 };
 
-function speak(text) {
-  if ("speechSynthesis" in window) {
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "tr-TR";
-    u.rate = 1.1;
-    u.volume = 1;
-    window.speechSynthesis.speak(u);
+/* ═══════════════════ STATE ═══════════════════ */
+let curDay=null, exIdx=0, setIdx=0, reps=10;
+let sessionLog={}, isResting=false, restTime=0, restTotal=0;
+let timerInterval=null;
+const CIRC=2*Math.PI*90; // ~565.49
+
+/* ═══════════════════ STORAGE ═══════════════════ */
+function loadLogs(){ try{return JSON.parse(localStorage.getItem("wk-logs"))||{}}catch(e){return{}} }
+function saveLogs(logs){ localStorage.setItem("wk-logs",JSON.stringify(logs)); }
+function getPrev(dayKey,eI,sI){ const l=loadLogs()[dayKey]; return l?l[`${eI}-${sI}`]??null:null; }
+function resetAllData(){ if(confirm("Tüm antrenman verileri silinecek. Emin misin?")){localStorage.removeItem("wk-logs");renderMenu();} }
+
+/* ═══════════════════ SPEECH ═══════════════════ */
+function speak(txt){
+  if(!('speechSynthesis' in window))return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(txt);
+  u.lang='tr-TR'; u.rate=1.1; u.volume=1;
+  speechSynthesis.speak(u);
+}
+
+/* ═══════════════════ SCREENS ═══════════════════ */
+function show(id){
+  ['menuScreen','workoutScreen','completedScreen'].forEach(s=>{
+    document.getElementById(s).classList.toggle('hide',s!==id);
+  });
+}
+
+/* ── MENU ── */
+function renderMenu(){
+  show('menuScreen');
+  const grid=document.getElementById('dayGrid');
+  const logs=loadLogs();
+  grid.innerHTML='';
+  Object.entries(WORKOUTS).forEach(([key,w])=>{
+    const prev=logs[key];
+    const lastDate=prev?.date?new Date(prev.date).toLocaleDateString('tr-TR'):null;
+    const card=document.createElement('button');
+    card.className='day-card';
+    card.style.borderLeftColor=w.color;
+    card.onclick=()=>startDay(key);
+    card.innerHTML=`
+      <div class="day-card-top"><span class="day-icon">${w.icon}</span><span class="day-num">Gün ${w.day}</span></div>
+      <div class="day-name">${w.name}</div>
+      <div class="day-ex-count">${w.exercises.length} hareket</div>
+      ${lastDate?`<div class="last-date">Son: ${lastDate}</div>`:''}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function goMenu(){
+  clearInterval(timerInterval);
+  isResting=false;
+  renderMenu();
+}
+
+/* ── START DAY ── */
+function startDay(dayKey){
+  curDay=dayKey; exIdx=0; setIdx=0; reps=10;
+  sessionLog={}; isResting=false;
+  show('workoutScreen');
+  renderWorkout();
+}
+
+/* ── RENDER WORKOUT ── */
+function renderWorkout(){
+  const w=WORKOUTS[curDay], ex=w.exercises[exIdx];
+  // top bar
+  document.getElementById('topTitle').innerHTML=`<span style="color:${w.color}">${w.icon}</span> Gün ${w.day} — ${w.name}`;
+  // progress
+  const pf=document.getElementById('progressFill');
+  pf.style.width=`${(exIdx/w.exercises.length)*100}%`;
+  pf.style.background=w.color;
+  // exercise header
+  document.getElementById('exCount').textContent=`Hareket ${exIdx+1}/${w.exercises.length}`;
+  document.getElementById('exName').textContent=ex.name;
+  document.getElementById('exMeta').textContent=`${ex.sets} set × ${ex.repRange} tekrar · Dinlenme: ${ex.rest}sn`;
+  // note
+  const nb=document.getElementById('noteBox');
+  if(w.note&&exIdx===0){nb.classList.remove('hide');nb.textContent='⚠️ '+w.note;}
+  else nb.classList.add('hide');
+  // set indicators
+  renderSetDots();
+  // rep area
+  showRepInput();
+  // color accents
+  document.getElementById('logBtn').style.background=w.color;
+  document.getElementById('timerArc').setAttribute('stroke',w.color);
+  document.getElementById('skipBtn').style.borderColor=w.color;
+  document.getElementById('skipBtn').style.color=w.color;
+}
+
+function renderSetDots(){
+  const w=WORKOUTS[curDay], ex=w.exercises[exIdx];
+  const wrap=document.getElementById('setIndicators');
+  wrap.innerHTML='';
+  for(let i=0;i<ex.sets;i++){
+    const done=sessionLog[`${exIdx}-${i}`]!==undefined;
+    const active=i===setIdx&&!done;
+    const prev=getPrev(curDay,exIdx,i);
+    const d=document.createElement('div');
+    d.className='set-dot'+(done?' done':'')+(active?' active':'');
+    if(done){d.style.background=w.color;d.style.borderColor='transparent';}
+    if(active)d.style.borderColor=w.color;
+    let inner=`<div class="set-dot-label">Set ${i+1}</div>`;
+    if(done) inner+=`<div class="set-dot-value">${sessionLog[`${exIdx}-${i}`]}</div>`;
+    else if(prev!==null) inner+=`<div class="set-dot-prev">Ön: ${prev}</div>`;
+    d.innerHTML=inner;
+    wrap.appendChild(d);
   }
 }
 
-export default function WorkoutTracker() {
-  const [screen, setScreen] = useState("menu");
-  const [selectedDay, setSelectedDay] = useState(null);
-  const [exIdx, setExIdx] = useState(0);
-  const [setIdx, setSetIdx] = useState(0);
-  const [reps, setReps] = useState(10);
-  const [isResting, setIsResting] = useState(false);
-  const [restTime, setRestTime] = useState(0);
-  const [sessionLog, setSessionLog] = useState({});
-  const [prevLog, setPrevLog] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [completed, setCompleted] = useState(false);
-  const timerRef = useRef(null);
-  const spokenRef = useRef(new Set());
+/* ── REP INPUT ── */
+function showRepInput(){
+  document.getElementById('repArea').classList.remove('hide');
+  document.getElementById('restArea').classList.add('hide');
+  document.getElementById('repLabel').textContent=`Set ${setIdx+1} — Kaç tekrar yaptın?`;
+  const prev=getPrev(curDay,exIdx,setIdx);
+  const ph=document.getElementById('prevHint');
+  if(prev!==null){ph.classList.remove('hide');ph.innerHTML=`Geçen sefer: <strong>${prev}</strong> tekrar`;}
+  else ph.classList.add('hide');
+  reps=prev||10;
+  updateRepDisplay();
+  renderQuickBtns();
+}
 
-  // Load previous data
-  useEffect(() => {
-    (async () => {
-      try {
-        const r = await window.storage.get("workout-logs");
-        if (r && r.value) setPrevLog(JSON.parse(r.value));
-      } catch {}
-      setLoading(false);
-    })();
-  }, []);
+function updateRepDisplay(){document.getElementById('repDisplay').textContent=reps;}
 
-  // Save session log
-  const saveLog = useCallback(async (dayKey, log) => {
-    try {
-      const existing = { ...prevLog };
-      existing[dayKey] = { ...log, date: new Date().toISOString() };
-      await window.storage.set("workout-logs", JSON.stringify(existing));
-      setPrevLog(existing);
-    } catch (e) {
-      console.error("Save error:", e);
-    }
-  }, [prevLog]);
+function changeReps(d){reps=Math.max(0,reps+d);updateRepDisplay();renderQuickBtns();}
 
-  // Timer logic
-  useEffect(() => {
-    if (!isResting || restTime <= 0) return;
-    timerRef.current = setInterval(() => {
-      setRestTime((prev) => {
-        const next = prev - 1;
-        if (next <= 0) {
-          clearInterval(timerRef.current);
-          speak("Süre doldu! Hazır ol!");
-          setIsResting(false);
-          return 0;
-        }
-        if (next <= 5 && next > 0) speak(String(next));
-        else if (next % 15 === 0 && next > 5) speak(`${next} saniye kaldı`);
-        return next;
-      });
-    }, 1000);
-    return () => clearInterval(timerRef.current);
-  }, [isResting, restTime > 0]);
+function setRepsTo(n){reps=n;updateRepDisplay();renderQuickBtns();}
 
-  const workout = selectedDay ? WORKOUTS[selectedDay] : null;
-  const exercise = workout ? workout.exercises[exIdx] : null;
+function renderQuickBtns(){
+  const w=WORKOUTS[curDay];
+  const wrap=document.getElementById('quickReps');
+  wrap.innerHTML='';
+  [5,8,10,12,15,20,25,30].forEach(n=>{
+    const b=document.createElement('button');
+    b.className='quick-btn'+(reps===n?' active':'');
+    if(reps===n)b.style.background=w.color;
+    b.textContent=n;
+    b.onclick=()=>setRepsTo(n);
+    wrap.appendChild(b);
+  });
+}
 
-  const startDay = (dayKey) => {
-    setSelectedDay(dayKey);
-    setExIdx(0);
-    setSetIdx(0);
-    setReps(10);
-    setSessionLog({});
-    setCompleted(false);
-    setIsResting(false);
-    setScreen("workout");
-  };
+/* ── LOG SET ── */
+function logSet(){
+  const w=WORKOUTS[curDay], ex=w.exercises[exIdx];
+  sessionLog[`${exIdx}-${setIdx}`]=reps;
+  renderSetDots();
 
-  const getPrevReps = (eIdx, sIdx) => {
-    if (!selectedDay || !prevLog[selectedDay]) return null;
-    const p = prevLog[selectedDay];
-    const key = `${eIdx}-${sIdx}`;
-    return p[key] ?? null;
-  };
+  const isLastSet=setIdx>=ex.sets-1;
+  const isLastEx=exIdx>=w.exercises.length-1;
 
-  const getCurrentReps = (eIdx, sIdx) => {
-    const key = `${eIdx}-${sIdx}`;
-    return sessionLog[key] ?? null;
-  };
+  if(isLastSet&&isLastEx){
+    finishWorkout();
+    return;
+  }
+  startRest(ex.rest);
+}
 
-  const logAndRest = () => {
-    const key = `${exIdx}-${setIdx}`;
-    const newLog = { ...sessionLog, [key]: reps };
-    setSessionLog(newLog);
+/* ── REST TIMER ── */
+function startRest(duration){
+  isResting=true; restTime=duration; restTotal=duration;
+  document.getElementById('repArea').classList.add('hide');
+  document.getElementById('restArea').classList.remove('hide');
+  updateTimerUI();
+  speak("Dinlenme başladı");
 
-    const isLastSet = setIdx >= exercise.sets - 1;
-    const isLastExercise = exIdx >= workout.exercises.length - 1;
-
-    if (isLastSet && isLastExercise) {
-      saveLog(selectedDay, newLog);
-      setCompleted(true);
-      speak("Tebrikler! Antrenman tamamlandı!");
+  clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    restTime--;
+    if(restTime<=0){
+      clearInterval(timerInterval);
+      isResting=false;
+      speak("Süre doldu! Hazır ol!");
+      advanceSet();
+      renderWorkout();
       return;
     }
-
-    setIsResting(true);
-    setRestTime(exercise.rest);
-    spokenRef.current = new Set();
-    speak("Dinlenme başladı");
-  };
-
-  const skipRest = () => {
-    clearInterval(timerRef.current);
-    setIsResting(false);
-    setRestTime(0);
-    advanceSet();
-  };
-
-  const advanceSet = useCallback(() => {
-    if (setIdx < exercise.sets - 1) {
-      setSetIdx((p) => p + 1);
-      setReps(10);
-    } else if (exIdx < workout.exercises.length - 1) {
-      setExIdx((p) => p + 1);
-      setSetIdx(0);
-      setReps(10);
-    }
-  }, [setIdx, exIdx, exercise, workout]);
-
-  useEffect(() => {
-    if (!isResting && restTime === 0 && screen === "workout" && !completed) {
-      const key = `${exIdx}-${setIdx}`;
-      if (sessionLog[key] !== undefined) advanceSet();
-    }
-  }, [isResting, restTime, screen, completed]);
-
-  const formatTime = (s) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m}:${sec.toString().padStart(2, "0")}`;
-  };
-
-  const restPercent = exercise ? ((exercise.rest - restTime) / exercise.rest) * 100 : 0;
-
-  if (loading) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.loadingText}>Yükleniyor...</div>
-      </div>
-    );
-  }
-
-  // MENU
-  if (screen === "menu") {
-    return (
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <div style={styles.logo}>⚡</div>
-          <h1 style={styles.title}>WORKOUT</h1>
-          <p style={styles.subtitle}>Antrenman gününü seç</p>
-        </div>
-        <div style={styles.dayGrid}>
-          {Object.entries(WORKOUTS).map(([key, w]) => {
-            const prev = prevLog[key];
-            const lastDate = prev?.date ? new Date(prev.date).toLocaleDateString("tr-TR") : null;
-            return (
-              <button key={key} style={{ ...styles.dayCard, borderLeft: `4px solid ${w.color}` }} onClick={() => startDay(key)}>
-                <div style={styles.dayCardTop}>
-                  <span style={styles.dayIcon}>{w.icon}</span>
-                  <span style={styles.dayNumber}>Gün {w.day}</span>
-                </div>
-                <div style={styles.dayName}>{w.name}</div>
-                <div style={styles.dayExCount}>{w.exercises.length} hareket</div>
-                {lastDate && <div style={styles.lastDate}>Son: {lastDate}</div>}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  // COMPLETED
-  if (completed) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.completedBox}>
-          <div style={{ fontSize: 64 }}>🎉</div>
-          <h2 style={styles.completedTitle}>Antrenman Tamamlandı!</h2>
-          <p style={styles.completedSub}>{workout.name} günü bitti</p>
-          <div style={styles.summaryBox}>
-            {workout.exercises.map((ex, eI) => (
-              <div key={eI} style={styles.summaryRow}>
-                <div style={styles.summaryExName}>{ex.name}</div>
-                <div style={styles.summaryReps}>
-                  {Array.from({ length: ex.sets }, (_, sI) => (
-                    <span key={sI} style={styles.summaryBadge}>{sessionLog[`${eI}-${sI}`] ?? "-"}</span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-          <button style={styles.backBtn} onClick={() => { setScreen("menu"); setCompleted(false); }}>
-            ← Ana Menü
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // WORKOUT
-  return (
-    <div style={styles.container}>
-      {/* Top bar */}
-      <div style={styles.topBar}>
-        <button style={styles.backBtnSmall} onClick={() => { clearInterval(timerRef.current); setIsResting(false); setScreen("menu"); }}>
-          ← Menü
-        </button>
-        <div style={styles.topBarTitle}>
-          <span style={{ color: workout.color }}>{workout.icon}</span> Gün {workout.day} — {workout.name}
-        </div>
-      </div>
-
-      {/* Progress */}
-      <div style={styles.progressBar}>
-        <div style={{ ...styles.progressFill, width: `${((exIdx * 100) / workout.exercises.length)}%`, background: workout.color }} />
-      </div>
-
-      {/* Exercise info */}
-      <div style={styles.exerciseHeader}>
-        <div style={styles.exerciseCount}>Hareket {exIdx + 1}/{workout.exercises.length}</div>
-        <h2 style={styles.exerciseName}>{exercise.name}</h2>
-        <div style={styles.exerciseMeta}>
-          {exercise.sets} set × {exercise.repRange} tekrar · Dinlenme: {exercise.rest}sn
-        </div>
-        {workout.note && exIdx === 0 && <div style={styles.noteBox}>⚠️ {workout.note}</div>}
-      </div>
-
-      {/* Set indicators */}
-      <div style={styles.setIndicators}>
-        {Array.from({ length: exercise.sets }, (_, i) => {
-          const done = getCurrentReps(exIdx, i) !== null;
-          const active = i === setIdx && !done;
-          const prev = getPrevReps(exIdx, i);
-          return (
-            <div key={i} style={{ ...styles.setDot, background: done ? workout.color : active ? "#333" : "#1a1a1a", border: active ? `2px solid ${workout.color}` : "2px solid #333" }}>
-              <div style={styles.setDotLabel}>Set {i + 1}</div>
-              {done && <div style={styles.setDotValue}>{getCurrentReps(exIdx, i)}</div>}
-              {!done && prev !== null && <div style={styles.setDotPrev}>Ön: {prev}</div>}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Rest Timer */}
-      {isResting ? (
-        <div style={styles.restContainer}>
-          <div style={styles.restLabel}>DİNLENME</div>
-          <div style={styles.timerCircleOuter}>
-            <svg width="200" height="200" viewBox="0 0 200 200">
-              <circle cx="100" cy="100" r="90" fill="none" stroke="#222" strokeWidth="8" />
-              <circle cx="100" cy="100" r="90" fill="none" stroke={workout.color} strokeWidth="8"
-                strokeDasharray={`${2 * Math.PI * 90}`}
-                strokeDashoffset={`${2 * Math.PI * 90 * (1 - restPercent / 100)}`}
-                strokeLinecap="round"
-                transform="rotate(-90 100 100)"
-                style={{ transition: "stroke-dashoffset 1s linear" }} />
-            </svg>
-            <div style={styles.timerText}>{formatTime(restTime)}</div>
-          </div>
-          <button style={{ ...styles.skipBtn, borderColor: workout.color, color: workout.color }} onClick={skipRest}>
-            Atla →
-          </button>
-        </div>
-      ) : (
-        /* Rep input */
-        <div style={styles.repInputContainer}>
-          <div style={styles.repLabel}>Set {setIdx + 1} — Kaç tekrar yaptın?</div>
-          {getPrevReps(exIdx, setIdx) !== null && (
-            <div style={styles.prevRepHint}>Geçen sefer: <strong>{getPrevReps(exIdx, setIdx)}</strong> tekrar</div>
-          )}
-          <div style={styles.repStepper}>
-            <button style={styles.stepBtn} onClick={() => setReps((r) => Math.max(0, r - 1))}>
-              <span style={styles.stepBtnText}>−</span>
-            </button>
-            <div style={styles.repDisplay}>{reps}</div>
-            <button style={styles.stepBtn} onClick={() => setReps((r) => r + 1)}>
-              <span style={styles.stepBtnText}>+</span>
-            </button>
-          </div>
-          <div style={styles.quickReps}>
-            {[5, 8, 10, 12, 15, 20].map((n) => (
-              <button key={n} style={{ ...styles.quickBtn, background: reps === n ? workout.color : "#222", color: reps === n ? "#000" : "#888" }} onClick={() => setReps(n)}>
-                {n}
-              </button>
-            ))}
-          </div>
-          <button style={{ ...styles.logBtn, background: workout.color }} onClick={logAndRest}>
-            ✓ Kaydet & Dinlenmeye Geç
-          </button>
-        </div>
-      )}
-    </div>
-  );
+    if(restTime<=5&&restTime>0) speak(String(restTime));
+    else if(restTime%15===0&&restTime>5) speak(`${restTime} saniye kaldı`);
+    updateTimerUI();
+  },1000);
 }
 
-const styles = {
-  container: {
-    minHeight: "100vh",
-    background: "#0d0d0d",
-    color: "#eee",
-    fontFamily: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    padding: "16px",
-    boxSizing: "border-box",
-  },
-  loadingText: { color: "#666", marginTop: 100, fontSize: 18 },
+function updateTimerUI(){
+  const pct=(restTotal-restTime)/restTotal;
+  document.getElementById('timerArc').setAttribute('stroke-dashoffset', CIRC*(1-pct));
+  const m=Math.floor(restTime/60), s=restTime%60;
+  document.getElementById('timerText').textContent=`${m}:${String(s).padStart(2,'0')}`;
+}
 
-  // Menu
-  header: { textAlign: "center", marginTop: 32, marginBottom: 32 },
-  logo: { fontSize: 48, marginBottom: 8 },
-  title: { fontSize: 36, fontWeight: 900, letterSpacing: 8, margin: 0, color: "#fff" },
-  subtitle: { color: "#666", fontSize: 14, marginTop: 8, letterSpacing: 2, textTransform: "uppercase" },
-  dayGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, width: "100%", maxWidth: 400 },
-  dayCard: {
-    background: "#141414",
-    border: "none",
-    borderRadius: 12,
-    padding: "20px 16px",
-    textAlign: "left",
-    cursor: "pointer",
-    transition: "transform 0.15s",
-    color: "#eee",
-    fontFamily: "inherit",
-  },
-  dayCardTop: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
-  dayIcon: { fontSize: 28 },
-  dayNumber: { fontSize: 11, color: "#555", letterSpacing: 1, textTransform: "uppercase" },
-  dayName: { fontSize: 20, fontWeight: 800, marginBottom: 4 },
-  dayExCount: { fontSize: 12, color: "#666" },
-  lastDate: { fontSize: 11, color: "#444", marginTop: 8 },
+function skipRest(){
+  clearInterval(timerInterval);
+  isResting=false; restTime=0;
+  advanceSet();
+  renderWorkout();
+}
 
-  // Top bar
-  topBar: { display: "flex", alignItems: "center", width: "100%", maxWidth: 480, marginBottom: 8, gap: 12 },
-  backBtnSmall: { background: "none", border: "1px solid #333", color: "#888", padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontFamily: "inherit", whiteSpace: "nowrap" },
-  topBarTitle: { fontSize: 15, fontWeight: 700, letterSpacing: 1 },
+function advanceSet(){
+  const ex=WORKOUTS[curDay].exercises[exIdx];
+  if(setIdx<ex.sets-1){setIdx++;}
+  else if(exIdx<WORKOUTS[curDay].exercises.length-1){exIdx++;setIdx=0;}
+  reps=10;
+}
 
-  // Progress
-  progressBar: { width: "100%", maxWidth: 480, height: 3, background: "#1a1a1a", borderRadius: 2, marginBottom: 20, overflow: "hidden" },
-  progressFill: { height: "100%", borderRadius: 2, transition: "width 0.4s ease" },
+/* ── FINISH ── */
+function finishWorkout(){
+  const w=WORKOUTS[curDay];
+  const logs=loadLogs();
+  logs[curDay]={...sessionLog, date:new Date().toISOString()};
+  saveLogs(logs);
 
-  // Exercise
-  exerciseHeader: { textAlign: "center", marginBottom: 20, width: "100%", maxWidth: 480 },
-  exerciseCount: { fontSize: 11, color: "#555", letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 },
-  exerciseName: { fontSize: 22, fontWeight: 800, margin: "4px 0", lineHeight: 1.2 },
-  exerciseMeta: { fontSize: 13, color: "#666", marginTop: 4 },
-  noteBox: { background: "#1a1500", border: "1px solid #332800", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "#cc9900", marginTop: 12, textAlign: "left" },
+  show('completedScreen');
+  document.getElementById('compSub').textContent=`${w.name} günü bitti`;
+  const box=document.getElementById('summaryBox');
+  box.innerHTML='';
+  w.exercises.forEach((ex,eI)=>{
+    const row=document.createElement('div');
+    row.className='summary-row';
+    let badges='';
+    for(let sI=0;sI<ex.sets;sI++){
+      const v=sessionLog[`${eI}-${sI}`]??'-';
+      badges+=`<span class="summary-badge">${v}</span>`;
+    }
+    row.innerHTML=`<div class="summary-ex">${ex.name}</div><div class="summary-reps">${badges}</div>`;
+    box.appendChild(row);
+  });
+  speak("Tebrikler! Antrenman tamamlandı!");
+}
 
-  // Set indicators
-  setIndicators: { display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap", justifyContent: "center" },
-  setDot: { borderRadius: 10, padding: "8px 14px", minWidth: 60, textAlign: "center", transition: "all 0.2s" },
-  setDotLabel: { fontSize: 10, color: "#888", textTransform: "uppercase", letterSpacing: 1 },
-  setDotValue: { fontSize: 20, fontWeight: 900, marginTop: 2 },
-  setDotPrev: { fontSize: 10, color: "#555", marginTop: 2 },
-
-  // Rest
-  restContainer: { display: "flex", flexDirection: "column", alignItems: "center", marginTop: 16 },
-  restLabel: { fontSize: 14, letterSpacing: 6, color: "#FF4136", fontWeight: 800, marginBottom: 20, textTransform: "uppercase" },
-  timerCircleOuter: { position: "relative", width: 200, height: 200, display: "flex", alignItems: "center", justifyContent: "center" },
-  timerText: { position: "absolute", fontSize: 48, fontWeight: 900, letterSpacing: 2, color: "#fff" },
-  skipBtn: { marginTop: 24, background: "none", border: "2px solid", padding: "10px 32px", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" },
-
-  // Rep input
-  repInputContainer: { display: "flex", flexDirection: "column", alignItems: "center", width: "100%", maxWidth: 480 },
-  repLabel: { fontSize: 15, fontWeight: 700, marginBottom: 4, color: "#ccc" },
-  prevRepHint: { fontSize: 13, color: "#666", marginBottom: 16 },
-  repStepper: { display: "flex", alignItems: "center", gap: 24, marginBottom: 16 },
-  stepBtn: { width: 64, height: 64, borderRadius: "50%", border: "2px solid #333", background: "#1a1a1a", color: "#fff", fontSize: 32, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit", transition: "background 0.15s" },
-  stepBtnText: { lineHeight: 1, marginTop: -2 },
-  repDisplay: { fontSize: 64, fontWeight: 900, minWidth: 80, textAlign: "center", color: "#fff" },
-  quickReps: { display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap", justifyContent: "center" },
-  quickBtn: { border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s" },
-  logBtn: { border: "none", borderRadius: 14, padding: "16px 40px", fontSize: 16, fontWeight: 800, cursor: "pointer", color: "#000", fontFamily: "inherit", letterSpacing: 1, width: "100%", maxWidth: 360 },
-
-  // Completed
-  completedBox: { textAlign: "center", marginTop: 40, width: "100%", maxWidth: 480 },
-  completedTitle: { fontSize: 28, fontWeight: 900, margin: "16px 0 4px" },
-  completedSub: { color: "#666", fontSize: 14, marginBottom: 24 },
-  summaryBox: { background: "#141414", borderRadius: 12, padding: 16, textAlign: "left" },
-  summaryRow: { padding: "10px 0", borderBottom: "1px solid #1a1a1a" },
-  summaryExName: { fontSize: 13, fontWeight: 700, marginBottom: 6 },
-  summaryReps: { display: "flex", gap: 6 },
-  summaryBadge: { background: "#222", borderRadius: 6, padding: "4px 10px", fontSize: 14, fontWeight: 800, color: "#fff" },
-  backBtn: { marginTop: 24, background: "none", border: "2px solid #333", color: "#ccc", padding: "12px 32px", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" },
-};
+/* ═══════════════════ INIT ═══════════════════ */
+renderMenu();
+</script>
+</body>
+</html>
