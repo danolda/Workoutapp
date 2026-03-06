@@ -201,8 +201,7 @@ const WORKOUTS = {
       {name:"Pull-up / Chin-up",sets:4,repRange:"6-12",rest:180},
       {name:"Body Row / Inverted Row",sets:4,repRange:"8-15",rest:120},
       {name:"Dumbbell Shrug",sets:4,repRange:"10-20",rest:90},
-      {name:"Rear Delt Fly",sets:2,repRange:"12-20",rest:60},
-      {name:"DB Curl / Hammer Curl",sets:3,repRange:"8-15",rest:60}
+      {name:"Rear Delt Fly",sets:2,repRange:"12-20",rest:60}
     ]
   },
   leg: {
@@ -298,11 +297,10 @@ self.onmessage=function(e){
 const workerBlob=new Blob([workerCode],{type:'application/javascript'});
 const timerWorker=new Worker(URL.createObjectURL(workerBlob));
 
-// ── Sessiz ses döngüsü (tarayıcıyı uyutmaz) ──
+// ── Sessiz ses döngüsü (tüm antrenman boyunca — media session canlı kalsın) ──
 let silentAudio=null;
 function startSilentLoop(){
   if(silentAudio)return;
-  // 10 saniyelik sessiz WAV üret
   const sr=8000, dur=10, samples=sr*dur;
   const buf=new ArrayBuffer(44+samples*2);
   const v=new DataView(buf);
@@ -312,7 +310,6 @@ function startSilentLoop(){
   v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);
   v.setUint16(32,2,true);v.setUint16(34,16,true);
   ws(36,'data');v.setUint32(40,samples*2,true);
-  // samples zaten 0 — sessiz
   const blob=new Blob([buf],{type:'audio/wav'});
   silentAudio=new Audio(URL.createObjectURL(blob));
   silentAudio.loop=true;
@@ -321,6 +318,79 @@ function startSilentLoop(){
 }
 function stopSilentLoop(){
   if(silentAudio){silentAudio.pause();silentAudio.src='';silentAudio=null;}
+}
+
+// ── Media Session API (kilit ekranı kontrolleri) ──
+function updateMediaSession(title, subtitle, actions){
+  if(!('mediaSession' in navigator))return;
+  navigator.mediaSession.metadata=new MediaMetadata({
+    title: title,
+    artist: subtitle,
+    album: 'Workout Tracker',
+    artwork:[
+      {src:'icon-192.png',sizes:'192x192',type:'image/png'},
+      {src:'icon-512.png',sizes:'512x512',type:'image/png'}
+    ]
+  });
+  // Tüm handler'ları temizle
+  ['play','pause','nexttrack','previoustrack'].forEach(a=>{
+    try{navigator.mediaSession.setActionHandler(a,null);}catch(e){}
+  });
+  // Yeni handler'ları ata
+  if(actions){
+    Object.entries(actions).forEach(([action,fn])=>{
+      try{navigator.mediaSession.setActionHandler(action,fn);}catch(e){}
+    });
+  }
+}
+
+function updateMediaSessionTimer(){
+  if(!('mediaSession' in navigator)||!isResting)return;
+  try{
+    navigator.mediaSession.setPositionState({
+      duration: restTotal,
+      playbackRate: 1,
+      position: Math.min(restTotal, restTotal-restTime)
+    });
+  }catch(e){}
+}
+
+function setMediaSessionResting(){
+  const w=WORKOUTS[curDay], ex=w.exercises[exIdx];
+  const m=Math.floor(restTime/60), s=restTime%60;
+  const timeStr=`${m}:${String(s).padStart(2,'0')}`;
+  updateMediaSession(
+    `⏱ Dinlenme ${timeStr}`,
+    `${ex.name} · Set ${setIdx+1}/${ex.sets}`,
+    {
+      // advancement: skip rest
+      nexttrack: ()=>{ skipRest(); },
+      // no-op pause to keep session alive
+      pause: ()=>{ navigator.mediaSession.playbackState='playing'; }
+    }
+  );
+  navigator.mediaSession.playbackState='playing';
+  updateMediaSessionTimer();
+}
+
+function setMediaSessionInput(){
+  const w=WORKOUTS[curDay], ex=w.exercises[exIdx];
+  const prev=getPrev(curDay,exIdx,setIdx);
+  const prevStr=prev!==null?` · Geçen: ${prev}`:'';
+  updateMediaSession(
+    `${ex.name}`,
+    `Set ${setIdx+1}/${ex.sets}${prevStr} · Tekrar gir ▶`,
+    {
+      // ▶ next = kaydet & dinlenmeye geç
+      nexttrack: ()=>{ logSet(); },
+      play: ()=>{ logSet(); },
+      pause: ()=>{ navigator.mediaSession.playbackState='playing'; }
+    }
+  );
+  navigator.mediaSession.playbackState='paused';
+  try{navigator.mediaSession.setPositionState(null);}catch(e){
+    try{navigator.mediaSession.setPositionState({duration:0,position:0,playbackRate:1});}catch(e2){}
+  }
 }
 
 /* ═══════════════════ SCREENS ═══════════════════ */
@@ -358,6 +428,10 @@ function goMenu(){
   isResting=false;
   releaseWakeLock();
   stopSilentLoop();
+  if('mediaSession' in navigator){
+    navigator.mediaSession.metadata=null;
+    navigator.mediaSession.playbackState='none';
+  }
   renderMenu();
 }
 
@@ -365,6 +439,7 @@ function goMenu(){
 function startDay(dayKey){
   unlockSounds();
   requestWakeLock();
+  startSilentLoop();
   curDay=dayKey; exIdx=0; setIdx=0; reps=10;
   sessionLog={}; isResting=false;
   show('workoutScreen');
@@ -431,6 +506,7 @@ function showRepInput(){
   reps=prev||10;
   updateRepDisplay();
   renderQuickBtns();
+  setMediaSessionInput();
 }
 
 function updateRepDisplay(){document.getElementById('repDisplay').textContent=reps;}
@@ -471,7 +547,7 @@ function logSet(){
 }
 
 /* ── REST TIMER ── */
-let restEndTime=0; // absolute timestamp
+let restEndTime=0;
 const spokenMarkers=new Set();
 
 function startRest(duration){
@@ -480,7 +556,6 @@ function startRest(duration){
   spokenMarkers.clear();
   document.getElementById('repArea').classList.add('hide');
   document.getElementById('restArea').classList.remove('hide');
-  startSilentLoop();
   updateRestFromTime();
 
   timerWorker.onmessage=function(){
@@ -497,7 +572,6 @@ function updateRestFromTime(){
   if(remaining<=0){
     timerWorker.postMessage('stop');
     isResting=false;
-    stopSilentLoop();
     advanceSet();
     renderWorkout();
     return;
@@ -510,6 +584,7 @@ function updateRestFromTime(){
     }
   });
   updateTimerUI();
+  setMediaSessionResting();
 }
 
 function updateTimerUI(){
@@ -522,7 +597,6 @@ function updateTimerUI(){
 function skipRest(){
   timerWorker.postMessage('stop');
   isResting=false; restTime=0;
-  stopSilentLoop();
   advanceSet();
   renderWorkout();
 }
@@ -540,6 +614,12 @@ function finishWorkout(){
   const logs=loadLogs();
   logs[curDay]={...sessionLog, date:new Date().toISOString()};
   saveLogs(logs);
+  stopSilentLoop();
+  releaseWakeLock();
+  if('mediaSession' in navigator){
+    navigator.mediaSession.metadata=null;
+    navigator.mediaSession.playbackState='none';
+  }
 
   show('completedScreen');
   document.getElementById('compSub').textContent=`${w.name} günü bitti`;
