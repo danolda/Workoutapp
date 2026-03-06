@@ -211,10 +211,30 @@ function getPrev(dayKey,eI,sI){ const l=loadLogs()[dayKey]; return l?l[`${eI}-${
 function resetAllData(){ if(confirm("Tüm antrenman verileri silinecek. Emin misin?")){localStorage.removeItem("wk-logs");renderMenu();} }
 
 /* ═══════════════════ SPEECH ═══════════════════ */
+/*
+  Birincil: Google Translate TTS — doğal Türkçe ses
+  Yedek:    Web Speech API (cihazda TR ses varsa)
+*/
+let ttsAudio=null;
+let useFallback=false;
+
+function speakGoogle(txt){
+  return new Promise((resolve,reject)=>{
+    if(ttsAudio){ttsAudio.pause();ttsAudio=null;}
+    const url=`https://translate.google.com/translate_tts?ie=UTF-8&tl=tr&client=tw-ob&q=${encodeURIComponent(txt)}`;
+    ttsAudio=new Audio(url);
+    ttsAudio.volume=1;
+    ttsAudio.onended=resolve;
+    ttsAudio.onerror=()=>{useFallback=true;reject()};
+    ttsAudio.play().catch(()=>{useFallback=true;reject()});
+  });
+}
+
+// Web Speech API yedek
 let trVoice=null;
 function findTurkishVoice(){
+  if(!('speechSynthesis' in window))return;
   const voices=speechSynthesis.getVoices();
-  // Önce tam tr-TR eşleşmesi ara
   trVoice=voices.find(v=>v.lang==='tr-TR')
     ||voices.find(v=>v.lang.startsWith('tr'))
     ||null;
@@ -236,23 +256,26 @@ const NUM_TR={
 };
 function numToTR(n){
   if(NUM_TR[n]!==undefined)return NUM_TR[n];
-  // Genel çözüm
   if(n>=100){const y=Math.floor(n/60);const s=n%60;return(y>0?y+' dakika ':'')+(s>0?numToTR(s)+' saniye':'');}
   const tens=['','on','yirmi','otuz','kırk','elli','altmış','yetmiş','seksen','doksan'];
   const t=Math.floor(n/10), b=n%10;
   return (tens[t]||'')+(b>0?' '+(NUM_TR[b]||''):'');
 }
 
-function speak(txt){
+function speakFallback(txt){
   if(!('speechSynthesis' in window))return;
   speechSynthesis.cancel();
-  // Sayıları Türkçe kelimelere çevir
   const processed=txt.replace(/\d+/g,m=>numToTR(parseInt(m)));
   const u=new SpeechSynthesisUtterance(processed);
   u.lang='tr-TR';
   if(trVoice)u.voice=trVoice;
-  u.rate=1.05; u.volume=1;
+  u.rate=1.05;u.volume=1;
   speechSynthesis.speak(u);
+}
+
+function speak(txt){
+  if(useFallback){speakFallback(txt);return;}
+  speakGoogle(txt).catch(()=>speakFallback(txt));
 }
 
 /* ═══════════════════ SCREENS ═══════════════════ */
