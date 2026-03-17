@@ -185,7 +185,7 @@ const WORKOUTS={
     {name:"Pull-up / Chin-up",sets:4,repRange:"6-12",rest:180},
     {name:"Body Row / Inverted Row",sets:4,repRange:"8-15",rest:120},
     {name:"Dumbbell Shrug",sets:4,repRange:"10-20",rest:90},
-    {name:"Rear Delt Fly",sets:2,repRange:"12-20",rest:60}]},
+    {name:"Dumbell Curl",sets:3,repRange:"12-20",rest:60}]},
   leg:{day:5,name:"Bacak",icon:"🦵",color:"#2ECC40",exercises:[
     {name:"Squat",sets:4,repRange:"15-30",rest:180},
     {name:"Deep Lunge / Bulgarian Split Squat",sets:4,repRange:"10-20",rest:90},
@@ -364,8 +364,7 @@ function setRepsTo(n){reps=n;updateRepDisplay();renderQuickBtns()}
 
 function renderQuickBtns(){
   const w=WORKOUTS[curDay],wrap=document.getElementById('quickReps');
-  wrap.innerHTML='';
-  [5,8,10,12,15,20,25,30].forEach(n=>{
+  wrap.innerHTML='';[5,8,10,12,15,20,25,30].forEach(n=>{
     const b=document.createElement('button');
     b.className='quick-btn'+(reps===n?' active':'');
     if(reps===n)b.style.background=w.color;
