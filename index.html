@@ -366,18 +366,17 @@
       margin-bottom: 16px;
     }
 
-    /* REPUTATION STEPPER & OVERLOAD RECORD BOX */
+    /* REPUTATION STEPPER & QUICK REPS ROW */
     .rep-tracker-card {
       width: 100%;
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 16px;
+      padding: 16px 14px;
       display: flex;
       flex-direction: column;
       align-items: center;
       margin-bottom: 18px;
-      position: relative;
     }
 
     .prev-record-badge {
@@ -432,11 +431,57 @@
       outline: none;
     }
 
+    /* Quick Action Reps Pills */
+    .quick-reps-container {
+      width: 100%;
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .quick-reps-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .quick-rep-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 7px 11px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .quick-rep-btn:active {
+      transform: scale(0.92);
+      background: var(--primary);
+      color: #042f22;
+      border-color: var(--primary);
+    }
+
+    .quick-rep-btn.add {
+      background: rgba(99, 102, 241, 0.12);
+      border-color: rgba(99, 102, 241, 0.28);
+      color: #a5b4fc;
+    }
+
+    .quick-rep-btn.add:active {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
     .stepper-caption {
       font-size: 0.72rem;
       font-weight: 600;
       color: var(--text-sub);
-      margin-top: 6px;
+      margin-top: 10px;
     }
 
     .complete-set-btn {
@@ -675,6 +720,26 @@
             <input type="number" id="repsInput" class="reps-input-field" value="10" min="0" max="999">
             <button class="stepper-btn" id="incRepsBtn">+</button>
           </div>
+
+          <!-- Quick Action Buttons Row -->
+          <div class="quick-reps-container">
+            <!-- Preset Values -->
+            <div class="quick-reps-row">
+              <button type="button" class="quick-rep-btn" data-val="12">12</button>
+              <button type="button" class="quick-rep-btn" data-val="15">15</button>
+              <button type="button" class="quick-rep-btn" data-val="20">20</button>
+              <button type="button" class="quick-rep-btn" data-val="25">25</button>
+              <button type="button" class="quick-rep-btn" data-val="30">30</button>
+              <button type="button" class="quick-rep-btn" data-val="40">40</button>
+            </div>
+            <!-- Quick Increments -->
+            <div class="quick-reps-row">
+              <button type="button" class="quick-rep-btn add" data-add="5">+5 Ekle</button>
+              <button type="button" class="quick-rep-btn add" data-add="10">+10 Ekle</button>
+              <button type="button" class="quick-rep-btn add" data-sub="5">-5 Çıkar</button>
+            </div>
+          </div>
+
           <span class="stepper-caption">Tükenişe (Failure) kadar çıkardığın net tekrar</span>
         </div>
 
@@ -796,7 +861,7 @@
         desc: "Haftalık Döngü Tamamlandı",
         isRest: true,
         summaryIcon: "🌱",
-        restMsg: "Haftalık 4 antrenman seansını tamamladınız. Vücudunuzu besleyin, dinlenin ve bir sonraki haftaya taze başlayın."
+        restMsg: "Haftalık 4 antrenman seansını tamamladınız. Vücudunuzu besleyin, dinlenin ve yeni haftaya taze başlayın."
       }
     ];
 
@@ -909,7 +974,7 @@
     let activeDay = null;
     let workoutTasks = [];
     let currentTaskIndex = 0;
-    let currentSessionLogs = []; // Session history
+    let currentSessionLogs = [];
 
     function buildTasksForDay(dayObj) {
       const list = [];
@@ -1005,11 +1070,11 @@
         questNoteBox.style.display = 'none';
       }
 
-      // Check Previous Record for Overload Target
+      // Check Previous Record
       const prevReps = getPrevReps(task.taskKey);
       if (prevReps !== null) {
         prevRecordText.textContent = `${prevReps} Tekrar`;
-        repsInput.value = prevReps; // default to previous score to beat
+        repsInput.value = prevReps;
       } else {
         prevRecordText.textContent = `İlk Kez Yapılıyor`;
         repsInput.value = task.defReps;
@@ -1031,7 +1096,7 @@
       }
     }
 
-    // Stepper buttons
+    // Standard stepper buttons (-1 / +1)
     document.getElementById('decRepsBtn').addEventListener('click', () => {
       let v = parseInt(repsInput.value, 10) || 0;
       if (v > 0) repsInput.value = v - 1;
@@ -1042,16 +1107,34 @@
       repsInput.value = v + 1;
     });
 
+    // Quick Action Reps Buttons Event Delegation (Direct values & Increments)
+    document.querySelector('.quick-reps-container').addEventListener('click', (e) => {
+      const btn = e.target.closest('.quick-rep-btn');
+      if (!btn) return;
+
+      if ('vibrate' in navigator) navigator.vibrate(20);
+      let currentVal = parseInt(repsInput.value, 10) || 0;
+
+      if (btn.dataset.val !== undefined) {
+        // Direct jump to 12, 15, 20, 25, 30, 40
+        repsInput.value = parseInt(btn.dataset.val, 10);
+      } else if (btn.dataset.add !== undefined) {
+        // Add +5 or +10
+        repsInput.value = currentVal + parseInt(btn.dataset.add, 10);
+      } else if (btn.dataset.sub !== undefined) {
+        // Subtract -5
+        repsInput.value = Math.max(0, currentVal - parseInt(btn.dataset.sub, 10));
+      }
+    });
+
     /* Complete Set Button Action */
     document.getElementById('completeSetBtn').addEventListener('click', () => {
       if ('vibrate' in navigator) navigator.vibrate(40);
       const finishedTask = workoutTasks[currentTaskIndex];
       const performedReps = parseInt(repsInput.value, 10) || 0;
 
-      // Save to progressive overload storage
       saveExerciseReps(finishedTask.taskKey, performedReps);
 
-      // Save to current session log
       currentSessionLogs.push({
         name: finishedTask.name,
         set: finishedTask.setNumber,
@@ -1059,12 +1142,10 @@
       });
 
       if (currentTaskIndex + 1 >= workoutTasks.length) {
-        // Workout Finished
         showWorkoutSummary();
         return;
       }
 
-      // Transition to Rest Timer
       const nextTask = workoutTasks[currentTaskIndex + 1];
       startRestCountdown(finishedTask.restSec, nextTask);
     });
