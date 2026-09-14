@@ -1,455 +1,915 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Workout Tracker</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0d0d0d">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Workout">
-<link rel="apple-touch-icon" href="icon-192.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{background:#0d0d0d;color:#eee;font-family:'JetBrains Mono','SF Mono','Fira Code',monospace;min-height:100vh;min-height:100dvh;overflow-x:hidden}
-button{font-family:inherit;cursor:pointer;border:none;outline:none;-webkit-user-select:none;user-select:none}
-.hide{display:none!important}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Aesthetic Upper/Lower Tracker</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#09090b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <!-- Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-#menuScreen{display:flex;flex-direction:column;align-items:center;padding:16px;min-height:100vh}
-.logo{font-size:48px;margin-top:32px}
-.main-title{font-size:36px;font-weight:900;letter-spacing:8px;margin-top:8px;color:#fff}
-.main-sub{color:#666;font-size:13px;margin-top:8px;letter-spacing:2px;text-transform:uppercase}
-.day-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:400px;margin-top:32px}
-.day-card{background:#141414;border-radius:12px;padding:20px 16px;text-align:left;color:#eee;border-left:4px solid #555;transition:transform .12s}
-.day-card:active{transform:scale(.97)}
-.day-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.day-icon{font-size:28px}
-.day-num{font-size:11px;color:#555;letter-spacing:1px;text-transform:uppercase}
-.day-name{font-size:20px;font-weight:800;margin-bottom:4px}
-.day-ex-count{font-size:12px;color:#666}
-.last-date{font-size:11px;color:#444;margin-top:8px}
+  <style>
+    :root {
+      --bg: #09090b;
+      --card-bg: rgba(24, 24, 27, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover: rgba(39, 39, 42, 0.8);
+      --primary: #10b981;
+      --primary-glow: rgba(16, 185, 129, 0.25);
+      --accent: #6366f1;
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --text-sub: #71717a;
+      --danger: #ef4444;
+      --radius: 16px;
+      --safe-bottom: env(safe-area-inset-bottom, 16px);
+    }
 
-#workoutScreen{display:flex;flex-direction:column;align-items:center;padding:16px;min-height:100vh}
-.top-bar{display:flex;align-items:center;width:100%;max-width:480px;gap:12px;margin-bottom:8px}
-.back-btn-sm{background:none;border:1px solid #333;color:#888;padding:6px 12px;border-radius:8px;font-size:13px;white-space:nowrap}
-.top-bar-title{font-size:15px;font-weight:700;letter-spacing:1px}
-.progress-bar{width:100%;max-width:480px;height:3px;background:#1a1a1a;border-radius:2px;margin-bottom:20px;overflow:hidden}
-.progress-fill{height:100%;border-radius:2px;transition:width .4s ease}
-.ex-header{text-align:center;margin-bottom:20px;width:100%;max-width:480px}
-.ex-count{font-size:11px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
-.ex-name{font-size:22px;font-weight:800;margin:4px 0;line-height:1.2}
-.ex-meta{font-size:13px;color:#666;margin-top:4px}
-.note-box{background:#1a1500;border:1px solid #332800;border-radius:8px;padding:8px 12px;font-size:12px;color:#cc9900;margin-top:12px;text-align:left}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
 
-.set-indicators{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;justify-content:center}
-.set-dot{border-radius:10px;padding:8px 14px;min-width:60px;text-align:center;transition:all .2s;border:2px solid #333;background:#1a1a1a}
-.set-dot.done{border-color:transparent}
-.set-dot.active{background:#333}
-.set-dot-label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px}
-.set-dot-value{font-size:20px;font-weight:900;margin-top:2px}
-.set-dot-prev{font-size:10px;color:#555;margin-top:2px}
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 16px calc(110px + var(--safe-bottom));
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 10%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 90%, rgba(16, 185, 129, 0.06) 0%, transparent 40%);
+    }
 
-.rep-input-area{display:flex;flex-direction:column;align-items:center;width:100%;max-width:480px}
-.rep-label{font-size:15px;font-weight:700;margin-bottom:4px;color:#ccc}
-.prev-hint{font-size:13px;color:#666;margin-bottom:16px}
-.prev-hint strong{color:#aaa}
-.rep-stepper{display:flex;align-items:center;gap:24px;margin-bottom:16px}
-.step-btn{width:64px;height:64px;border-radius:50%;border:2px solid #333;background:#1a1a1a;color:#fff;font-size:32px;display:flex;align-items:center;justify-content:center;transition:background .15s;line-height:1}
-.step-btn:active{background:#333}
-.rep-display{font-size:64px;font-weight:900;min-width:80px;text-align:center;color:#fff}
-.quick-reps{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;justify-content:center}
-.quick-btn{border-radius:8px;padding:8px 16px;font-size:14px;font-weight:700;background:#222;color:#888;transition:all .15s}
-.quick-btn.active{color:#000}
-.log-btn{border-radius:14px;padding:16px 40px;font-size:16px;font-weight:800;color:#000;letter-spacing:1px;width:100%;max-width:360px;transition:transform .12s}
-.log-btn:active{transform:scale(.97)}
+    .container {
+      width: 100%;
+      max-width: 520px;
+    }
 
-.rest-area{display:flex;flex-direction:column;align-items:center;margin-top:16px}
-.rest-label{font-size:14px;letter-spacing:6px;color:#FF4136;font-weight:800;margin-bottom:20px;text-transform:uppercase}
-.timer-wrap{position:relative;width:200px;height:200px;display:flex;align-items:center;justify-content:center}
-.timer-wrap svg{position:absolute;top:0;left:0}
-.timer-text{font-size:48px;font-weight:900;letter-spacing:2px;color:#fff;z-index:1}
-.skip-btn{margin-top:24px;background:none;border:2px solid;padding:10px 32px;border-radius:12px;font-size:15px;font-weight:700}
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
 
-#completedScreen{display:flex;flex-direction:column;align-items:center;padding:16px;min-height:100vh}
-.comp-icon{font-size:64px;margin-top:40px}
-.comp-title{font-size:28px;font-weight:900;margin:16px 0 4px}
-.comp-sub{color:#666;font-size:14px;margin-bottom:24px}
-.summary-box{background:#141414;border-radius:12px;padding:16px;text-align:left;width:100%;max-width:480px}
-.summary-row{padding:10px 0;border-bottom:1px solid #1a1a1a}
-.summary-row:last-child{border:none}
-.summary-ex{font-size:13px;font-weight:700;margin-bottom:6px}
-.summary-reps{display:flex;gap:6px;flex-wrap:wrap}
-.summary-badge{background:#222;border-radius:6px;padding:4px 10px;font-size:14px;font-weight:800;color:#fff}
-.back-btn-big{margin-top:24px;background:none;border:2px solid #333;color:#ccc;padding:12px 32px;border-radius:12px;font-size:15px;font-weight:700}
+    .brand-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #ffffff 40%, #a1a1aa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
 
-.reset-row{margin-top:24px}
-.reset-btn{background:none;border:1px solid #222;color:#444;padding:8px 16px;border-radius:8px;font-size:11px;letter-spacing:1px;text-transform:uppercase}
-.reset-btn:active{color:#FF4136;border-color:#FF4136}
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
 
-.install-banner{display:none;position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;border-top:1px solid #333;padding:14px 16px;z-index:999;align-items:center;justify-content:space-between;gap:12px}
-.install-banner.show{display:flex}
-.install-info{flex:1}
-.install-title{font-size:13px;font-weight:800;color:#fff}
-.install-sub{font-size:11px;color:#666;margin-top:2px}
-.install-btn{background:#FF4136;color:#000;font-weight:800;padding:10px 20px;border-radius:10px;font-size:13px;letter-spacing:1px}
-.install-close{background:none;color:#555;font-size:20px;padding:4px 8px}
+    .btn-icon {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      border-radius: 12px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s;
+    }
 
-.ios-tip{background:#111;border:1px solid #222;border-radius:10px;padding:10px 14px;margin-top:16px;font-size:11px;color:#555;text-align:center;max-width:400px;line-height:1.5}
-.ios-tip strong{color:#888}
-</style>
+    .btn-icon:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      color: var(--text-main);
+    }
+
+    /* Day Navigation Pill Bar */
+    .day-nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      scrollbar-width: none;
+    }
+    .day-nav::-webkit-scrollbar { display: none; }
+
+    .day-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 9px 15px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .day-btn.active {
+      background: var(--primary);
+      color: #042f22;
+      border-color: var(--primary);
+      box-shadow: 0 4px 15px var(--primary-glow);
+      font-weight: 700;
+    }
+
+    /* Progress & Day Summary */
+    .day-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 18px;
+      backdrop-filter: blur(16px);
+    }
+
+    .day-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+
+    .day-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .progress-text {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--primary));
+      width: 0%;
+      border-radius: 999px;
+      transition: width 0.35s ease;
+    }
+
+    /* Exercise Card */
+    .exercise-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .exercise-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      backdrop-filter: blur(12px);
+      transition: border-color 0.2s, transform 0.15s;
+    }
+
+    .exercise-card:focus-within {
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .ex-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .ex-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .badge-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+    }
+
+    .badge.tempo {
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.25);
+    }
+
+    .badge.rest {
+      background: rgba(16, 185, 129, 0.15);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    /* Sets Grid */
+    .sets-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .set-btn {
+      flex: 1;
+      min-width: 58px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 10px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .set-btn span.set-num {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .set-btn span.set-icon {
+      font-size: 1.1rem;
+      line-height: 1;
+      color: var(--text-sub);
+    }
+
+    .set-btn.completed {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    .set-btn.completed span.set-num {
+      color: #a7f3d0;
+    }
+
+    .set-btn.completed span.set-icon {
+      color: var(--primary);
+    }
+
+    /* Rest Day Banner */
+    .rest-banner {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 36px 24px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .rest-icon {
+      font-size: 2.8rem;
+      margin-bottom: 4px;
+    }
+
+    .rest-text {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      max-width: 340px;
+    }
+
+    /* Floating Timer Bar */
+    .timer-bar {
+      position: fixed;
+      bottom: calc(16px + var(--safe-bottom));
+      left: 50%;
+      transform: translateX(-50%) translateY(140%);
+      width: calc(100% - 32px);
+      max-width: 500px;
+      background: rgba(18, 18, 22, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 14px 18px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1000;
+    }
+
+    .timer-bar.active {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .timer-info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .timer-circle {
+      position: relative;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .timer-circle svg {
+      transform: rotate(-90deg);
+      width: 48px;
+      height: 48px;
+    }
+
+    .timer-circle circle {
+      fill: none;
+      stroke-width: 4;
+      stroke-linecap: round;
+    }
+
+    .timer-circle .bg-ring {
+      stroke: rgba(255, 255, 255, 0.1);
+    }
+
+    .timer-circle .val-ring {
+      stroke: var(--primary);
+      stroke-dasharray: 126;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear;
+    }
+
+    .timer-text-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .timer-label {
+      font-size: 0.7rem;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .timer-clock {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text-main);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .timer-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .timer-btn.primary {
+      background: var(--primary);
+      color: #042f22;
+      border: none;
+    }
+
+    /* Reset button */
+    .reset-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px dashed var(--card-border);
+      color: var(--text-sub);
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .reset-btn:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+  </style>
 </head>
 <body>
 
-<div id="menuScreen">
-  <div class="logo">⚡</div>
-  <h1 class="main-title">WORKOUT</h1>
-  <p class="main-sub">Antrenman gününü seç</p>
-  <div class="day-grid" id="dayGrid"></div>
-  <div class="ios-tip">
-    <strong>İpucu:</strong> Antrenman sırasında ekran açık kalır.<br>
-    Spotify arka planda çalmaya devam eder.<br>
-    Telefonu ters çevir, ekranı kapatma.
-  </div>
-  <div class="reset-row">
-    <button class="reset-btn" id="testSndBtn" onclick="testSound()" style="border-color:#0074D9;color:#0074D9">🔇 Sesi Test Et</button>
-  </div>
-  <div class="reset-row">
-    <button class="reset-btn" onclick="resetAllData()">Tüm Verileri Sıfırla</button>
-  </div>
-</div>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div>
+        <h1 class="brand-title">ATHLETE LAB</h1>
+        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Scientific Upper / Lower Split</div>
+      </div>
+      <div class="header-actions">
+        <button id="soundToggleBtn" class="btn-icon" title="Ses Aç/Kapat">🔊</button>
+        <button id="wakeLockBtn" class="btn-icon" title="Ekran Uykusunu Engelle">⚡</button>
+      </div>
+    </header>
 
-<div id="workoutScreen" class="hide">
-  <div class="top-bar">
-    <button class="back-btn-sm" onclick="goMenu()">← Menü</button>
-    <div class="top-bar-title" id="topTitle"></div>
-  </div>
-  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-  <div class="ex-header">
-    <div class="ex-count" id="exCount"></div>
-    <h2 class="ex-name" id="exName"></h2>
-    <div class="ex-meta" id="exMeta"></div>
-    <div class="note-box hide" id="noteBox"></div>
-  </div>
-  <div class="set-indicators" id="setIndicators"></div>
-  <div class="rep-input-area" id="repArea">
-    <div class="rep-label" id="repLabel"></div>
-    <div class="prev-hint hide" id="prevHint"></div>
-    <div class="rep-stepper">
-      <button class="step-btn" onclick="changeReps(-1)">−</button>
-      <div class="rep-display" id="repDisplay">10</div>
-      <button class="step-btn" onclick="changeReps(1)">+</button>
+    <!-- Day Selector -->
+    <nav class="day-nav" id="dayNav">
+      <button class="day-btn active" data-day="0">1. Gün (Üst A)</button>
+      <button class="day-btn" data-day="1">2. Gün (Alt A)</button>
+      <button class="day-btn" data-day="2">3. Gün (Rest)</button>
+      <button class="day-btn" data-day="3">4. Gün (Üst B)</button>
+      <button class="day-btn" data-day="4">5. Gün (Alt B)</button>
+      <button class="day-btn" data-day="5">Hafta Sonu</button>
+    </nav>
+
+    <!-- Summary & Progress Card -->
+    <div class="day-card" id="dayHeaderCard">
+      <div class="day-header">
+        <div class="day-title" id="currentDayTitle">1. Gün: Üst Vücut A</div>
+        <div class="progress-text" id="progressStatus">0 / 17 Set</div>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-fill" id="progressBar"></div>
+      </div>
     </div>
-    <div class="quick-reps" id="quickReps"></div>
-    <button class="log-btn" id="logBtn" onclick="logSet()">✓ Kaydet & Dinlenmeye Geç</button>
-  </div>
-  <div class="rest-area hide" id="restArea">
-    <div class="rest-label">DİNLENME</div>
-    <div class="timer-wrap">
-      <svg width="200" height="200" viewBox="0 0 200 200">
-        <circle cx="100" cy="100" r="90" fill="none" stroke="#222" stroke-width="8"/>
-        <circle id="timerArc" cx="100" cy="100" r="90" fill="none" stroke="#FF4136" stroke-width="8"
-          stroke-dasharray="565.49" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 100 100)"
-          style="transition:stroke-dashoffset 1s linear"/>
-      </svg>
-      <div class="timer-text" id="timerText">0:00</div>
+
+    <!-- Workout Content Container -->
+    <div id="exerciseContainer" class="exercise-list">
+      <!-- Injected via JavaScript -->
     </div>
-    <button class="skip-btn" id="skipBtn" onclick="skipRest()">Atla →</button>
+
+    <!-- Reset Day Button -->
+    <button class="reset-btn" id="resetDayBtn">🔄 Bu Günün Setlerini Sıfırla</button>
   </div>
-</div>
 
-<div id="completedScreen" class="hide">
-  <div class="comp-icon">🎉</div>
-  <h2 class="comp-title">Antrenman Tamamlandı!</h2>
-  <p class="comp-sub" id="compSub"></p>
-  <div class="summary-box" id="summaryBox"></div>
-  <button class="back-btn-big" onclick="goMenu()">← Ana Menü</button>
-</div>
-
-<script>
-/* ═══════════════════ DATA ═══════════════════ */
-const WORKOUTS={
-  push:{day:1,name:"İtiş",icon:"💪",color:"#FF4136",exercises:[
-    {name:"Dips",sets:4,repRange:"6-12",rest:180},
-    {name:"Decline Push-up / Weighted Push-up",sets:4,repRange:"8-15",rest:120},
-    {name:"Overhead DB Triceps Extension",sets:3,repRange:"10-15",rest:75},
-    {name:"Dumbbell Lateral Raise",sets:3,repRange:"12-20",rest:90}]},
-  neck:{day:2,name:"Boyun",icon:"🦴",color:"#FF851B",note:"Failure'a abanma. 1-2 tekrar cepte bırak.",exercises:[
-    {name:"Neck Flexion (Ön)",sets:5,repRange:"15-25",rest:90},
-    {name:"Neck Extension (Arka)",sets:5,repRange:"15-25",rest:90}]},
-  pull:{day:4,name:"Çekiş",icon:"🏋️",color:"#0074D9",exercises:[
-    {name:"Pull-up / Chin-up",sets:4,repRange:"6-12",rest:180},
-    {name:"Body Row / Inverted Row",sets:4,repRange:"8-15",rest:120},
-    {name:"Dumbbell Shrug",sets:4,repRange:"10-20",rest:90},
-    {name:"Dumbell Curl",sets:3,repRange:"12-20",rest:60}]},
-  leg:{day:5,name:"Bacak",icon:"🦵",color:"#2ECC40",exercises:[
-    {name:"Squat",sets:4,repRange:"15-30",rest:180},
-    {name:"Deep Lunge / Bulgarian Split Squat",sets:4,repRange:"10-20",rest:90},
-    {name:"DB Romanian Deadlift",sets:3,repRange:"10-20",rest:120},
-    {name:"Standing / Single-leg Calf Raise",sets:4,repRange:"12-25",rest:90}]}
-};
-
-/* ═══════════════════ STATE ═══════════════════ */
-let curDay=null,exIdx=0,setIdx=0,reps=10;
-let sessionLog={},isResting=false,restTime=0,restTotal=0;
-let timerInterval=null,restEndTime=0;
-const CIRC=2*Math.PI*90;
-const spokenMarkers=new Set();
-
-/* ═══════════════════ STORAGE ═══════════════════ */
-function loadLogs(){try{return JSON.parse(localStorage.getItem("wk-logs"))||{}}catch(e){return{}}}
-function saveLogs(l){localStorage.setItem("wk-logs",JSON.stringify(l))}
-function getPrev(d,e,s){const l=loadLogs()[d];return l?l[`${e}-${s}`]??null:null}
-function resetAllData(){if(confirm("Tüm antrenman verileri silinecek. Emin misin?")){localStorage.removeItem("wk-logs");renderMenu()}}
-
-/* ═══════════════════ SES — AudioContext ═══════════════════ */
-/*
-  AudioContext sesleri <audio> elementinden farklı olarak:
-  ✓ Media Session oluşturmaz → Spotify widget'ını ezmez
-  ✓ Spotify çalarken üstüne ses çalar (iOS ducking yapar)
-  ✓ User gesture sonrası sorunsuz çalışır
-  
-  Dosyalar: 1dk.mp3, 30s.mp3, 15s.mp3, 5s.mp3
-*/
-const SND={
-  '60':null,'30':null,'15':null,'5':null
-};
-let audioReady=false;
-
-function createSounds(){
-  SND['60']=new Audio('1dk.mp3');
-  SND['30']=new Audio('30s.mp3');
-  SND['15']=new Audio('15s.mp3');
-  SND['5']=new Audio('5s.mp3');
-  Object.values(SND).forEach(a=>{
-    a.preload='auto';
-    a.setAttribute('playsinline','');
-    a.load();
-  });
-}
-createSounds();
-
-// iOS: user gesture sırasında her Audio'yu sessizce çal→durdur = kilit açılır
-function unlockSounds(){
-  if(audioReady)return;
-  const promises=Object.values(SND).map(a=>{
-    a.muted=true;
-    a.volume=0;
-    return a.play().then(()=>{
-      a.pause();
-      a.currentTime=0;
-      a.muted=false;
-      a.volume=1;
-    }).catch(()=>{});
-  });
-  Promise.all(promises).then(()=>{audioReady=true;updateTestBtn()});
-}
-
-function playAt(sec){
-  const k=String(sec);
-  if(!SND[k])return;
-  // Her çalmada yeni Audio oluştur — iOS'ta tekrar çalma sorununu çözer
-  const a=new Audio(SND[k].src);
-  a.volume=1;
-  a.play().catch(()=>{
-    // Fallback: orijinal elementi dene
-    SND[k].currentTime=0;
-    SND[k].play().catch(()=>{});
-  });
-}
-
-function updateTestBtn(){
-  const b=document.getElementById('testSndBtn');
-  if(b)b.textContent=audioReady?'🔊 Sesi Test Et (Hazır)':'🔇 Sesi Test Et';
-}
-
-function testSound(){
-  unlockSounds();
-  setTimeout(()=>{playAt(5)},300);
-}
-
-/* ═══════════════════ WAKE LOCK ═══════════════════ */
-let wakeLock=null;
-async function requestWakeLock(){
-  try{if('wakeLock' in navigator){wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{wakeLock=null})}}catch(e){}
-}
-function releaseWakeLock(){if(wakeLock){try{wakeLock.release()}catch(e){} wakeLock=null}}
-document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'&&curDay){
-    requestWakeLock();
-    if(isResting)updateRestFromTime();
-  }
-});
-
-/* ═══════════════════ SCREENS ═══════════════════ */
-function show(id){['menuScreen','workoutScreen','completedScreen'].forEach(s=>document.getElementById(s).classList.toggle('hide',s!==id))}
-
-function renderMenu(){
-  show('menuScreen');
-  const grid=document.getElementById('dayGrid'),logs=loadLogs();
-  grid.innerHTML='';
-  Object.entries(WORKOUTS).forEach(([key,w])=>{
-    const prev=logs[key];
-    const lastDate=prev?.date?new Date(prev.date).toLocaleDateString('tr-TR'):null;
-    const c=document.createElement('button');
-    c.className='day-card';c.style.borderLeftColor=w.color;
-    c.onclick=()=>startDay(key);
-    c.innerHTML=`<div class="day-card-top"><span class="day-icon">${w.icon}</span><span class="day-num">Gün ${w.day}</span></div>
-      <div class="day-name">${w.name}</div><div class="day-ex-count">${w.exercises.length} hareket</div>
-      ${lastDate?`<div class="last-date">Son: ${lastDate}</div>`:''}`;
-    grid.appendChild(c);
-  });
-}
-
-function goMenu(){clearInterval(timerInterval);isResting=false;releaseWakeLock();renderMenu()}
-
-async function startDay(dayKey){
-  unlockSounds();
-  requestWakeLock();
-  curDay=dayKey;exIdx=0;setIdx=0;reps=10;
-  sessionLog={};isResting=false;
-  show('workoutScreen');renderWorkout();
-}
-
-function renderWorkout(){
-  const w=WORKOUTS[curDay],ex=w.exercises[exIdx];
-  document.getElementById('topTitle').innerHTML=`<span style="color:${w.color}">${w.icon}</span> Gün ${w.day} — ${w.name}`;
-  document.getElementById('progressFill').style.width=`${(exIdx/w.exercises.length)*100}%`;
-  document.getElementById('progressFill').style.background=w.color;
-  document.getElementById('exCount').textContent=`Hareket ${exIdx+1}/${w.exercises.length}`;
-  document.getElementById('exName').textContent=ex.name;
-  document.getElementById('exMeta').textContent=`${ex.sets} set × ${ex.repRange} tekrar · Dinlenme: ${ex.rest}sn`;
-  const nb=document.getElementById('noteBox');
-  if(w.note&&exIdx===0){nb.classList.remove('hide');nb.textContent='⚠️ '+w.note}else nb.classList.add('hide');
-  renderSetDots();showRepInput();
-  document.getElementById('logBtn').style.background=w.color;
-  document.getElementById('timerArc').setAttribute('stroke',w.color);
-  document.getElementById('skipBtn').style.borderColor=w.color;
-  document.getElementById('skipBtn').style.color=w.color;
-}
-
-function renderSetDots(){
-  const w=WORKOUTS[curDay],ex=w.exercises[exIdx],wrap=document.getElementById('setIndicators');
-  wrap.innerHTML='';
-  for(let i=0;i<ex.sets;i++){
-    const done=sessionLog[`${exIdx}-${i}`]!==undefined,active=i===setIdx&&!done,prev=getPrev(curDay,exIdx,i);
-    const d=document.createElement('div');
-    d.className='set-dot'+(done?' done':'')+(active?' active':'');
-    if(done){d.style.background=w.color;d.style.borderColor='transparent'}
-    if(active)d.style.borderColor=w.color;
-    let h=`<div class="set-dot-label">Set ${i+1}</div>`;
-    if(done)h+=`<div class="set-dot-value">${sessionLog[`${exIdx}-${i}`]}</div>`;
-    else if(prev!==null)h+=`<div class="set-dot-prev">Ön: ${prev}</div>`;
-    d.innerHTML=h;wrap.appendChild(d);
-  }
-}
-
-function showRepInput(){
-  document.getElementById('repArea').classList.remove('hide');
-  document.getElementById('restArea').classList.add('hide');
-  document.getElementById('repLabel').textContent=`Set ${setIdx+1} — Kaç tekrar yaptın?`;
-  const prev=getPrev(curDay,exIdx,setIdx),ph=document.getElementById('prevHint');
-  if(prev!==null){ph.classList.remove('hide');ph.innerHTML=`Geçen sefer: <strong>${prev}</strong> tekrar`}
-  else ph.classList.add('hide');
-  reps=prev||10;updateRepDisplay();renderQuickBtns();
-}
-
-function updateRepDisplay(){document.getElementById('repDisplay').textContent=reps}
-function changeReps(d){reps=Math.max(0,reps+d);updateRepDisplay();renderQuickBtns()}
-function setRepsTo(n){reps=n;updateRepDisplay();renderQuickBtns()}
-
-function renderQuickBtns(){
-  const w=WORKOUTS[curDay],wrap=document.getElementById('quickReps');
-  wrap.innerHTML='';[5,8,10,12,15,20,25,30].forEach(n=>{
-    const b=document.createElement('button');
-    b.className='quick-btn'+(reps===n?' active':'');
-    if(reps===n)b.style.background=w.color;
-    b.textContent=n;b.onclick=()=>setRepsTo(n);wrap.appendChild(b);
-  });
-}
-
-function logSet(){
-  unlockSounds();
-  const ex=WORKOUTS[curDay].exercises[exIdx];
-  sessionLog[`${exIdx}-${setIdx}`]=reps;renderSetDots();
-  if(setIdx>=ex.sets-1&&exIdx>=WORKOUTS[curDay].exercises.length-1){finishWorkout();return}
-  startRest(ex.rest);
-}
-
-function startRest(duration){
-  isResting=true;restTotal=duration;
-  restEndTime=Date.now()+duration*1000;
-  spokenMarkers.clear();
-  document.getElementById('repArea').classList.add('hide');
-  document.getElementById('restArea').classList.remove('hide');
-  updateRestFromTime();
-  clearInterval(timerInterval);
-  timerInterval=setInterval(()=>{if(isResting)updateRestFromTime()},1000);
-}
-
-function updateRestFromTime(){
-  const rem=Math.max(0,Math.ceil((restEndTime-Date.now())/1000));
-  restTime=rem;
-  if(rem<=0){clearInterval(timerInterval);isResting=false;advanceSet();renderWorkout();return}
-  [60,30,15,5].forEach(m=>{if(rem===m&&!spokenMarkers.has(m)){spokenMarkers.add(m);playAt(m)}});
-  updateTimerUI();
-}
-
-function updateTimerUI(){
-  document.getElementById('timerArc').setAttribute('stroke-dashoffset',CIRC*(1-(restTotal-restTime)/restTotal));
-  const m=Math.floor(restTime/60),s=restTime%60;
-  document.getElementById('timerText').textContent=`${m}:${String(s).padStart(2,'0')}`;
-}
-
-function skipRest(){clearInterval(timerInterval);isResting=false;restTime=0;advanceSet();renderWorkout()}
-
-function advanceSet(){
-  const ex=WORKOUTS[curDay].exercises[exIdx];
-  if(setIdx<ex.sets-1)setIdx++;
-  else if(exIdx<WORKOUTS[curDay].exercises.length-1){exIdx++;setIdx=0}
-  reps=10;
-}
-
-function finishWorkout(){
-  const w=WORKOUTS[curDay],logs=loadLogs();
-  logs[curDay]={...sessionLog,date:new Date().toISOString()};
-  saveLogs(logs);releaseWakeLock();
-  show('completedScreen');
-  document.getElementById('compSub').textContent=`${w.name} günü bitti`;
-  const box=document.getElementById('summaryBox');box.innerHTML='';
-  w.exercises.forEach((ex,eI)=>{
-    const row=document.createElement('div');row.className='summary-row';
-    let badges='';
-    for(let sI=0;sI<ex.sets;sI++){badges+=`<span class="summary-badge">${sessionLog[`${eI}-${sI}`]??'-'}</span>`}
-    row.innerHTML=`<div class="summary-ex">${ex.name}</div><div class="summary-reps">${badges}</div>`;
-    box.appendChild(row);
-  });
-}
-
-renderMenu();
-
-/* ═══════════════════ PWA ═══════════════════ */
-let deferredPrompt=null;
-const banner=document.getElementById('installBanner');
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;banner.classList.add('show')});
-function installApp(){if(!deferredPrompt)return;deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{banner.classList.remove('show');deferredPrompt=null})}
-function dismissInstall(){banner.classList.remove('show')}
-window.addEventListener('appinstalled',()=>banner.classList.remove('show'));
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
-</script>
-
-<div class="install-banner" id="installBanner">
-  <div class="install-info">
-    <div class="install-title">⚡ Uygulamayı Yükle</div>
-    <div class="install-sub">Ana ekrana ekle, app gibi kullan</div>
+  <!-- Floating Intelligent Rest Timer -->
+  <div class="timer-bar" id="timerBar">
+    <div class="timer-info">
+      <div class="timer-circle">
+        <svg>
+          <circle class="bg-ring" cx="24" cy="24" r="20"></circle>
+          <circle class="val-ring" id="timerSvgRing" cx="24" cy="24" r="20"></circle>
+        </svg>
+      </div>
+      <div class="timer-text-wrap">
+        <span class="timer-label" id="timerTargetName">Dinlenme</span>
+        <span class="timer-clock" id="timerClock">01:30</span>
+      </div>
+    </div>
+    <div class="timer-actions">
+      <button class="timer-btn" id="timerAdd15">+15s</button>
+      <button class="timer-btn primary" id="timerToggleBtn">Durdur</button>
+      <button class="timer-btn" id="timerCloseBtn">Bitir</button>
+    </div>
   </div>
-  <button class="install-btn" onclick="installApp()">YÜKLE</button>
-  <button class="install-close" onclick="dismissInstall()">✕</button>
-</div>
 
+  <script>
+    /* ==========================================================================
+       1. SCIENTIFIC PROGRAM CONFIGURATION
+       ========================================================================== */
+    const WORKOUT_DAYS = [
+      {
+        id: 0,
+        name: "1. Gün: Üst Vücut A (Dikey Çekiş & Göğüs)",
+        isRest: false,
+        exercises: [
+          { name: "Barfiks (Geniş/Normal Tutuş)", sets: 3, target: "RIR 1–2", tempo: "Kontrollü İniş", rest: 120 },
+          { name: "Dips (Gövde Öne Eğik - Göğüs)", sets: 3, target: "8–10 Tekrar", tempo: "Kontrollü", rest: 120 },
+          { name: "Decline Şınav", sets: 2, target: "RIR 1", tempo: "Sabit Gerilim", rest: 90 },
+          { name: "Biceps Curl", sets: 2, target: "10–12 Tekrar", tempo: "2-0-1-0", rest: 90 },
+          { name: "Lateral Raise", sets: 3, target: "12–15 Tekrar", tempo: "Tepe 1s Sıkışma", rest: 90 },
+          { name: "Shrug", sets: 2, target: "12–15 Tekrar", tempo: "Tepe 2s Sıkışma", rest: 90 },
+          { name: "Boyun Egzersizi (10–12 kg)", sets: 2, target: "15–20 Tekrar", tempo: "Yavaş ve Güvenli", rest: 90 }
+        ]
+      },
+      {
+        id: 1,
+        name: "2. Gün: Alt Vücut A (Ön Bacak Odaklı)",
+        isRest: false,
+        exercises: [
+          { name: "Split Squat (Bacak Başı)", sets: 3, target: "8–10 Tekrar", tempo: "3-1-1-0", rest: 90, note: "Bacak arası 45s dinlen" },
+          { name: "Dumbbell Deadlift / RDL", sets: 3, target: "8–10 Tekrar", tempo: "3-2-1-0", rest: 120, note: "Dipte 2 sn esneme" },
+          { name: "Normal Squat", sets: 3, target: "12–15 Tekrar", tempo: "3-1-1-0", rest: 90, note: "Dizleri kitlemeden sürekli tansiyon" },
+          { name: "Duvarda Calf Raise (Tek Bacak)", sets: 3, target: "12–15 Tekrar", tempo: "Dipte 2s, Tepede 1s", rest: 90 }
+        ]
+      },
+      {
+        id: 2,
+        name: "3. Gün: Dinlenme & Rejenerasyon",
+        isRest: true,
+        restMessage: "Kas proteini sentezi ve sinir sistemi toparlanma evresinde. Hafif yürüyüş, esneme ve bol su tüketimi ile yarınki seansa hazırlanın."
+      },
+      {
+        id: 3,
+        name: "4. Gün: Üst Vücut B (Sırt Kalınlığı & Kol Odaklı)",
+        isRest: false,
+        exercises: [
+          { name: "Inverted Row (Dips Barında)", sets: 3, target: "8–10 Tekrar", tempo: "Sırtı Sıkıştır", rest: 90 },
+          { name: "Dips (Gövde Öne Eğik - Göğüs)", sets: 3, target: "8–10 Tekrar", tempo: "Kontrollü", rest: 120 },
+          { name: "Barfiks", sets: 2, target: "RIR 1", tempo: "Tam Açılma", rest: 120 },
+          { name: "Triceps Overhead Extension", sets: 2, target: "10–12 Tekrar", tempo: "2-0-1-0", rest: 90 },
+          { name: "Lateral Raise", sets: 3, target: "12–15 Tekrar", tempo: "Tepe 1s Sıkışma", rest: 90 },
+          { name: "Shrug", sets: 2, target: "12–15 Tekrar", tempo: "Tepe 2s Sıkışma", rest: 90 },
+          { name: "Boyun Egzersizi (10–12 kg)", sets: 2, target: "15–20 Tekrar", tempo: "Yavaş ve Güvenli", rest: 90 }
+        ]
+      },
+      {
+        id: 4,
+        name: "5. Gün: Alt Vücut B (Arka Zincir Odaklı)",
+        isRest: false,
+        exercises: [
+          { name: "Dumbbell Deadlift / RDL", sets: 3, target: "8–10 Tekrar", tempo: "3-2-1-0", rest: 120, note: "Hamstring tansiyonu" },
+          { name: "Split Squat (Bacak Başı)", sets: 3, target: "8–10 Tekrar", tempo: "3-1-1-0", rest: 90, note: "Bacak arası 45s dinlen" },
+          { name: "Normal Squat", sets: 3, target: "12–15 Tekrar", tempo: "3-1-1-0", rest: 90 },
+          { name: "Duvarda Calf Raise (Tek Bacak)", sets: 3, target: "12–15 Tekrar", tempo: "Dipte 2s, Tepede 1s", rest: 90 }
+        ]
+      },
+      {
+        id: 5,
+        name: "Hafta Sonu: Tam Dinlenme",
+        isRest: true,
+        restMessage: "Haftalık 4 günlük antrenman döngüsü tamamlandı! Yeterli protein ve kaliteli uyku ile kas liflerinizi onarın."
+      }
+    ];
+
+    /* ==========================================================================
+       2. AUDIO CONTROLLER & AUDIO SYSTEM
+       ========================================================================== */
+    let isSoundEnabled = true;
+    const audioClips = {
+      '60': new Audio('1dk.mp3'),
+      '30': new Audio('30s.mp3'),
+      '15': new Audio('15s.mp3'),
+      '5':  new Audio('5s.mp3')
+    };
+
+    // Synthesized Web Audio fallback for final bell/alert
+    let audioCtx = null;
+    function playSyntheticChime() {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(440, now + 0.4);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.4);
+      } catch (e) {
+        console.warn("AudioContext chime failed", e);
+      }
+    }
+
+    function playAlertSound(secondsLeft) {
+      if (!isSoundEnabled) return;
+      const key = String(secondsLeft);
+      if (audioClips[key]) {
+        audioClips[key].currentTime = 0;
+        audioClips[key].play().catch(() => {
+          playSyntheticChime();
+        });
+      } else if (secondsLeft === 0) {
+        playSyntheticChime();
+      }
+    }
+
+    // Unlocking Audio on first mobile user interaction
+    function unlockAudioContext() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    document.addEventListener('touchstart', unlockAudioContext, { once: true });
+    document.addEventListener('click', unlockAudioContext, { once: true });
+
+    /* ==========================================================================
+       3. WAKE LOCK API (SCREEN AWAKE)
+       ========================================================================== */
+    let wakeLock = null;
+    const wakeLockBtn = document.getElementById('wakeLockBtn');
+
+    async function toggleWakeLock() {
+      if ('wakeLock' in navigator) {
+        try {
+          if (!wakeLock) {
+            wakeLock = await navigator.wakeLock.request('screen');
+            wakeLockBtn.style.color = 'var(--primary)';
+            wakeLockBtn.style.borderColor = 'var(--primary)';
+          } else {
+            await wakeLock.release();
+            wakeLock = null;
+            wakeLockBtn.style.color = 'var(--text-muted)';
+            wakeLockBtn.style.borderColor = 'var(--card-border)';
+          }
+        } catch (err) {
+          console.warn("Wake lock error:", err);
+        }
+      } else {
+        alert("Tarayıcınız Wake Lock özelliğini desteklemiyor.");
+      }
+    }
+    wakeLockBtn.addEventListener('click', toggleWakeLock);
+
+    /* ==========================================================================
+       4. REST TIMER ENGINE
+       ========================================================================== */
+    let timerTotal = 90;
+    let timerRemaining = 90;
+    let timerInterval = null;
+    let isTimerRunning = false;
+
+    const timerBar = document.getElementById('timerBar');
+    const timerClock = document.getElementById('timerClock');
+    const timerTargetName = document.getElementById('timerTargetName');
+    const timerSvgRing = document.getElementById('timerSvgRing');
+    const timerToggleBtn = document.getElementById('timerToggleBtn');
+    const timerCloseBtn = document.getElementById('timerCloseBtn');
+    const timerAdd15 = document.getElementById('timerAdd15');
+
+    const RING_CIRCUMFERENCE = 2 * Math.PI * 20; // ~125.66
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function updateTimerUI() {
+      timerClock.textContent = formatTime(timerRemaining);
+      const fraction = timerRemaining / timerTotal;
+      const offset = RING_CIRCUMFERENCE * (1 - fraction);
+      timerSvgRing.style.strokeDasharray = `${RING_CIRCUMFERENCE}`;
+      timerSvgRing.style.strokeDashoffset = `${offset}`;
+    }
+
+    function startRestTimer(durationSeconds, label = "Dinlenme") {
+      clearInterval(timerInterval);
+      timerTotal = durationSeconds;
+      timerRemaining = durationSeconds;
+      timerTargetName.textContent = label;
+      isTimerRunning = true;
+      timerToggleBtn.textContent = "Durdur";
+      
+      updateTimerUI();
+      timerBar.classList.add('active');
+
+      timerInterval = setInterval(() => {
+        if (!isTimerRunning) return;
+
+        timerRemaining--;
+        updateTimerUI();
+
+        // Check for specific audio alerts: 60s, 30s, 15s, 5s, 0s
+        if ([60, 30, 15, 5, 0].includes(timerRemaining)) {
+          playAlertSound(timerRemaining);
+          if ('vibrate' in navigator) navigator.vibrate(timerRemaining === 0 ? [100, 50, 100] : 40);
+        }
+
+        if (timerRemaining <= 0) {
+          clearInterval(timerInterval);
+          isTimerRunning = false;
+          setTimeout(() => {
+            timerBar.classList.remove('active');
+          }, 1800);
+        }
+      }, 1000);
+    }
+
+    timerToggleBtn.addEventListener('click', () => {
+      isTimerRunning = !isTimerRunning;
+      timerToggleBtn.textContent = isTimerRunning ? "Durdur" : "Başlat";
+    });
+
+    timerCloseBtn.addEventListener('click', () => {
+      clearInterval(timerInterval);
+      isTimerRunning = false;
+      timerBar.classList.remove('active');
+    });
+
+    timerAdd15.addEventListener('click', () => {
+      timerRemaining += 15;
+      timerTotal = Math.max(timerTotal, timerRemaining);
+      updateTimerUI();
+    });
+
+    /* ==========================================================================
+       5. STATE MANAGEMENT & LOCAL STORAGE
+       ========================================================================== */
+    let currentDayIndex = 0;
+    const STORAGE_KEY = 'aesthetic_workout_state_v1';
+
+    function loadSavedState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveState(state) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    /* ==========================================================================
+       6. RENDER LOGIC
+       ========================================================================== */
+    const dayNav = document.getElementById('dayNav');
+    const exerciseContainer = document.getElementById('exerciseContainer');
+    const currentDayTitle = document.getElementById('currentDayTitle');
+    const progressStatus = document.getElementById('progressStatus');
+    const progressBar = document.getElementById('progressBar');
+    const resetDayBtn = document.getElementById('resetDayBtn');
+    const soundToggleBtn = document.getElementById('soundToggleBtn');
+
+    soundToggleBtn.addEventListener('click', () => {
+      isSoundEnabled = !isSoundEnabled;
+      soundToggleBtn.textContent = isSoundEnabled ? "🔊" : "🔇";
+    });
+
+    function renderDay(dayIndex) {
+      currentDayIndex = dayIndex;
+      const dayData = WORKOUT_DAYS[dayIndex];
+      const savedState = loadSavedState();
+      const dayState = savedState[dayIndex] || {};
+
+      // Update Nav Buttons
+      document.querySelectorAll('.day-btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx === dayIndex);
+      });
+
+      // Update Header
+      currentDayTitle.textContent = dayData.name;
+
+      if (dayData.isRest) {
+        resetDayBtn.style.display = 'none';
+        progressStatus.textContent = "Dinlenme Günü";
+        progressBar.style.width = '100%';
+        exerciseContainer.innerHTML = `
+          <div class="rest-banner">
+            <div class="rest-icon">🧘‍♂️</div>
+            <h3 style="font-weight: 700; color: var(--text-main);">Toparlanma & Rejenerasyon</h3>
+            <p class="rest-text">${dayData.restMessage}</p>
+          </div>
+        `;
+        return;
+      }
+
+      resetDayBtn.style.display = 'block';
+
+      // Count totals
+      let totalSets = 0;
+      let completedSets = 0;
+
+      let html = '';
+      dayData.exercises.forEach((ex, exIdx) => {
+        totalSets += ex.sets;
+        let setsHtml = '';
+
+        for (let s = 1; s <= ex.sets; s++) {
+          const isDone = dayState[`${exIdx}_${s}`] === true;
+          if (isDone) completedSets++;
+
+          setsHtml += `
+            <div class="set-btn ${isDone ? 'completed' : ''}" 
+                 data-ex-idx="${exIdx}" 
+                 data-set-num="${s}" 
+                 data-rest="${ex.rest}">
+              <span class="set-num">${s}. Set</span>
+              <span class="set-icon">${isDone ? '✓' : '○'}</span>
+            </div>
+          `;
+        }
+
+        html += `
+          <div class="exercise-card">
+            <div class="ex-top">
+              <div class="ex-name">${ex.name}</div>
+            </div>
+            <div class="badge-wrap">
+              <span class="badge">${ex.target}</span>
+              <span class="badge tempo">Tempo: ${ex.tempo}</span>
+              <span class="badge rest">⏱ ${ex.rest}s</span>
+              ${ex.note ? `<span class="badge" style="background: rgba(239, 68, 68, 0.12); color: #fca5a5;">${ex.note}</span>` : ''}
+            </div>
+            <div class="sets-row">
+              ${setsHtml}
+            </div>
+          </div>
+        `;
+      });
+
+      exerciseContainer.innerHTML = html;
+
+      // Update progress bar
+      const pct = totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
+      progressStatus.textContent = `${completedSets} / ${totalSets} Set (${pct}%)`;
+      progressBar.style.width = `${pct}%`;
+
+      // Attach Set Click Handlers
+      document.querySelectorAll('.set-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const exIdx = btn.dataset.exIdx;
+          const setNum = btn.dataset.setNum;
+          const rest = parseInt(btn.dataset.rest, 10);
+          const key = `${exIdx}_${setNum}`;
+
+          const state = loadSavedState();
+          if (!state[currentDayIndex]) state[currentDayIndex] = {};
+
+          const currentlyDone = state[currentDayIndex][key] === true;
+          state[currentDayIndex][key] = !currentlyDone;
+          saveState(state);
+
+          if (!currentlyDone) {
+            // Checkmark completed -> trigger intelligent rest timer
+            const exName = dayData.exercises[exIdx].name.split('(')[0].trim();
+            startRestTimer(rest, `${exName} (#${setNum})`);
+            if ('vibrate' in navigator) navigator.vibrate(30);
+          }
+
+          renderDay(currentDayIndex);
+        });
+      });
+    }
+
+    // Day nav click
+    dayNav.addEventListener('click', (e) => {
+      const btn = e.target.closest('.day-btn');
+      if (btn) {
+        renderDay(parseInt(btn.dataset.day, 10));
+      }
+    });
+
+    // Reset Day
+    resetDayBtn.addEventListener('click', () => {
+      if (confirm("Bu günün tüm tamamlanan setleri sıfırlansın mı?")) {
+        const state = loadSavedState();
+        delete state[currentDayIndex];
+        saveState(state);
+        renderDay(currentDayIndex);
+      }
+    });
+
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+
+    // Initial render
+    renderDay(0);
+  </script>
 </body>
 </html>
