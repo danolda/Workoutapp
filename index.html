@@ -3,31 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Aesthetic Upper/Lower Tracker</title>
+  <title>Athlete Quest | Scientific Workout</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#09090b">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   
-  <!-- Modern Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
     :root {
       --bg: #09090b;
-      --card-bg: rgba(24, 24, 27, 0.7);
+      --card: rgba(24, 24, 27, 0.75);
       --card-border: rgba(255, 255, 255, 0.08);
-      --card-hover: rgba(39, 39, 42, 0.8);
       --primary: #10b981;
-      --primary-glow: rgba(16, 185, 129, 0.25);
+      --primary-glow: rgba(16, 185, 129, 0.28);
       --accent: #6366f1;
-      --text-main: #f4f4f5;
+      --accent-glow: rgba(99, 102, 241, 0.25);
+      --text: #f4f4f5;
       --text-muted: #a1a1aa;
       --text-sub: #71717a;
       --danger: #ef4444;
-      --radius: 16px;
+      --radius: 20px;
+      --safe-top: env(safe-area-inset-top, 16px);
       --safe-bottom: env(safe-area-inset-bottom, 16px);
     }
 
@@ -41,544 +41,662 @@
 
     body {
       background-color: var(--bg);
-      color: var(--text-main);
+      color: var(--text);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px 16px calc(110px + var(--safe-bottom));
-      overflow-x: hidden;
       background-image: 
-        radial-gradient(circle at 10% 10%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 90% 90%, rgba(16, 185, 129, 0.06) 0%, transparent 40%);
+        radial-gradient(circle at 15% 10%, rgba(99, 102, 241, 0.07) 0%, transparent 45%),
+        radial-gradient(circle at 85% 90%, rgba(16, 185, 129, 0.06) 0%, transparent 45%);
+      padding: calc(12px + var(--safe-top)) 16px calc(24px + var(--safe-bottom));
+      overflow-x: hidden;
     }
 
-    .container {
+    .app-container {
       width: 100%;
-      max-width: 520px;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 40px);
     }
 
-    /* Header */
+    /* Views */
+    .view {
+      display: none;
+      width: 100%;
+      flex-direction: column;
+      animation: fadeIn 0.25s ease forwards;
+    }
+    .view.active { display: flex; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Top Nav */
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 22px;
+    }
+
+    .brand-wrap {
+      display: flex;
+      flex-direction: column;
     }
 
     .brand-title {
       font-size: 1.35rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
+      font-weight: 900;
+      letter-spacing: -0.6px;
       background: linear-gradient(135deg, #ffffff 40%, #a1a1aa 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
-    .header-actions {
-      display: flex;
-      gap: 10px;
-    }
-
-    .btn-icon {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-muted);
-      border-radius: 12px;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      backdrop-filter: blur(10px);
-      transition: all 0.2s;
-    }
-
-    .btn-icon:hover {
-      border-color: rgba(255, 255, 255, 0.2);
-      color: var(--text-main);
-    }
-
-    /* Day Navigation Pill Bar */
-    .day-nav {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 12px;
-      margin-bottom: 16px;
-      scrollbar-width: none;
-    }
-    .day-nav::-webkit-scrollbar { display: none; }
-
-    .day-btn {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-muted);
-      padding: 9px 15px;
-      border-radius: 999px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .day-btn.active {
-      background: var(--primary);
-      color: #042f22;
-      border-color: var(--primary);
-      box-shadow: 0 4px 15px var(--primary-glow);
-      font-weight: 700;
-    }
-
-    /* Progress & Day Summary */
-    .day-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius);
-      padding: 16px 20px;
-      margin-bottom: 18px;
-      backdrop-filter: blur(16px);
-    }
-
-    .day-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 10px;
-    }
-
-    .day-title {
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .progress-text {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-
-    .progress-bar-container {
-      width: 100%;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent), var(--primary));
-      width: 0%;
-      border-radius: 999px;
-      transition: width 0.35s ease;
-    }
-
-    /* Exercise Card */
-    .exercise-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .exercise-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius);
-      padding: 16px;
-      backdrop-filter: blur(12px);
-      transition: border-color 0.2s, transform 0.15s;
-    }
-
-    .exercise-card:focus-within {
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .ex-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 8px;
-    }
-
-    .ex-name {
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .badge-wrap {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-
-    .badge {
-      font-size: 0.72rem;
-      font-weight: 600;
-      padding: 3px 8px;
-      border-radius: 6px;
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text-muted);
-    }
-
-    .badge.tempo {
-      background: rgba(99, 102, 241, 0.15);
-      color: #a5b4fc;
-      border: 1px solid rgba(99, 102, 241, 0.25);
-    }
-
-    .badge.rest {
-      background: rgba(16, 185, 129, 0.15);
-      color: #6ee7b7;
-      border: 1px solid rgba(16, 185, 129, 0.25);
-    }
-
-    /* Sets Grid */
-    .sets-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .set-btn {
-      flex: 1;
-      min-width: 58px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--card-border);
-      border-radius: 10px;
-      padding: 10px 6px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .set-btn span.set-num {
+    .brand-sub {
       font-size: 0.75rem;
       color: var(--text-muted);
       font-weight: 600;
     }
 
-    .set-btn span.set-icon {
-      font-size: 1.1rem;
-      line-height: 1;
-      color: var(--text-sub);
-    }
-
-    .set-btn.completed {
-      background: rgba(16, 185, 129, 0.18);
-      border-color: rgba(16, 185, 129, 0.4);
-    }
-
-    .set-btn.completed span.set-num {
-      color: #a7f3d0;
-    }
-
-    .set-btn.completed span.set-icon {
-      color: var(--primary);
-    }
-
-    /* Rest Day Banner */
-    .rest-banner {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius);
-      padding: 36px 24px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .rest-icon {
-      font-size: 2.8rem;
-      margin-bottom: 4px;
-    }
-
-    .rest-text {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      line-height: 1.5;
-      max-width: 340px;
-    }
-
-    /* Floating Timer Bar */
-    .timer-bar {
-      position: fixed;
-      bottom: calc(16px + var(--safe-bottom));
-      left: 50%;
-      transform: translateX(-50%) translateY(140%);
-      width: calc(100% - 32px);
-      max-width: 500px;
-      background: rgba(18, 18, 22, 0.92);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      backdrop-filter: blur(20px);
-      border-radius: 20px;
-      padding: 14px 18px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-      z-index: 1000;
-    }
-
-    .timer-bar.active {
-      transform: translateX(-50%) translateY(0);
-    }
-
-    .timer-info {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .timer-circle {
-      position: relative;
-      width: 48px;
-      height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .timer-circle svg {
-      transform: rotate(-90deg);
-      width: 48px;
-      height: 48px;
-    }
-
-    .timer-circle circle {
-      fill: none;
-      stroke-width: 4;
-      stroke-linecap: round;
-    }
-
-    .timer-circle .bg-ring {
-      stroke: rgba(255, 255, 255, 0.1);
-    }
-
-    .timer-circle .val-ring {
-      stroke: var(--primary);
-      stroke-dasharray: 126;
-      stroke-dashoffset: 0;
-      transition: stroke-dashoffset 1s linear;
-    }
-
-    .timer-text-wrap {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .timer-label {
-      font-size: 0.7rem;
-      color: var(--text-sub);
-      text-transform: uppercase;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-    }
-
-    .timer-clock {
-      font-size: 1.4rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      color: var(--text-main);
-      font-variant-numeric: tabular-nums;
-    }
-
-    .timer-actions {
+    .header-icons {
       display: flex;
       gap: 8px;
     }
 
-    .timer-btn {
-      background: rgba(255, 255, 255, 0.08);
+    .icon-btn {
+      background: var(--card);
       border: 1px solid var(--card-border);
-      color: var(--text-main);
-      padding: 8px 12px;
+      color: var(--text-muted);
       border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 600;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      transition: background 0.15s;
+      font-size: 1rem;
+      backdrop-filter: blur(12px);
+      transition: all 0.2s;
+    }
+    .icon-btn:active { transform: scale(0.95); }
+
+    /* ================= MENU VIEW ================= */
+    .section-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 12px;
     }
 
-    .timer-btn.primary {
+    .day-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .menu-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      cursor: pointer;
+      backdrop-filter: blur(16px);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .menu-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--card-border);
+      transition: background 0.2s;
+    }
+
+    .menu-card:hover, .menu-card:active {
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .menu-card.active-day::before { background: var(--primary); }
+    .menu-card.rest-day::before { background: var(--accent); }
+
+    .menu-card-info h3 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .menu-card-info p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .badge-pill {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text-muted);
+    }
+
+    .menu-card-arrow {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* ================= ACTIVE WORKOUT / STEP VIEW ================= */
+    .quest-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .quit-btn {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #f87171;
+      padding: 7px 14px;
+      border-radius: 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .step-progress-text {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .quest-progress-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.07);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 22px;
+    }
+
+    .quest-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--primary));
+      width: 0%;
+      border-radius: 999px;
+      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .quest-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      backdrop-filter: blur(20px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .quest-badge {
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+      text-transform: uppercase;
+    }
+
+    .quest-ex-title {
+      font-size: 1.45rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      margin-bottom: 14px;
+      color: var(--text);
+      line-height: 1.25;
+    }
+
+    .set-indicator-pills {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .set-pill {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 800;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-sub);
+    }
+
+    .set-pill.done {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: var(--primary);
+    }
+
+    .set-pill.current {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #042f22;
+      box-shadow: 0 0 16px var(--primary-glow);
+    }
+
+    .target-box {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .target-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .target-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+    }
+
+    .target-val {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .note-box {
+      font-size: 0.8rem;
+      color: #fca5a5;
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      padding: 8px 12px;
+      border-radius: 10px;
+      width: 100%;
+      margin-bottom: 18px;
+    }
+
+    .complete-set-btn {
+      width: 100%;
       background: var(--primary);
       color: #042f22;
       border: none;
+      padding: 18px;
+      border-radius: 16px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 8px 24px var(--primary-glow);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    /* Reset button */
-    .reset-btn {
+    .complete-set-btn:active {
+      transform: scale(0.98);
+    }
+
+    .nav-controls {
+      display: flex;
+      justify-content: space-between;
       width: 100%;
-      background: transparent;
-      border: 1px dashed var(--card-border);
-      color: var(--text-sub);
+      gap: 10px;
+    }
+
+    .secondary-step-btn {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
       padding: 12px;
       border-radius: 12px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-top: 20px;
+      font-size: 0.82rem;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s;
     }
 
-    .reset-btn:hover {
-      border-color: var(--danger);
-      color: var(--danger);
+    /* ================= REST COUNTDOWN SCREEN ================= */
+    .rest-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      justify-content: center;
+      min-height: 480px;
+    }
+
+    .rest-timer-ring {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .rest-timer-ring svg {
+      transform: rotate(-90deg);
+      width: 200px;
+      height: 200px;
+    }
+
+    .rest-timer-ring circle {
+      fill: none;
+      stroke-width: 8;
+      stroke-linecap: round;
+    }
+
+    .rest-timer-ring .bg-circle {
+      stroke: rgba(255, 255, 255, 0.08);
+    }
+
+    .rest-timer-ring .progress-circle {
+      stroke: var(--primary);
+      stroke-dasharray: 565.48;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear;
+    }
+
+    .rest-clock-text {
+      position: absolute;
+      font-size: 2.8rem;
+      font-weight: 900;
+      letter-spacing: -1px;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rest-sub-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 6px;
+    }
+
+    .next-task-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 14px 20px;
+      width: 100%;
+      margin-bottom: 24px;
+      backdrop-filter: blur(16px);
+    }
+
+    .next-task-name {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .rest-actions {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+    }
+
+    /* ================= SUMMARY / REST DAY SCREEN ================= */
+    .summary-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 40px 24px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .big-badge-icon {
+      font-size: 3.5rem;
+    }
+
+    .summary-title {
+      font-size: 1.5rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+    }
+
+    .summary-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 320px;
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <!-- Header -->
+  <div class="app-container">
+    <!-- Top Bar -->
     <header>
-      <div>
-        <h1 class="brand-title">ATHLETE LAB</h1>
-        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Scientific Upper / Lower Split</div>
+      <div class="brand-wrap">
+        <h1 class="brand-title">ATHLETE QUEST</h1>
+        <span class="brand-sub">Step-by-Step Hypertrophy</span>
       </div>
-      <div class="header-actions">
-        <button id="soundToggleBtn" class="btn-icon" title="Ses Aç/Kapat">🔊</button>
-        <button id="wakeLockBtn" class="btn-icon" title="Ekran Uykusunu Engelle">⚡</button>
+      <div class="header-icons">
+        <button id="soundToggleBtn" class="icon-btn" title="Ses Aç/Kapat">🔊</button>
+        <button id="wakeLockBtn" class="icon-btn" title="Ekranı Açık Tut">⚡</button>
       </div>
     </header>
 
-    <!-- Day Selector -->
-    <nav class="day-nav" id="dayNav">
-      <button class="day-btn active" data-day="0">1. Gün (Üst A)</button>
-      <button class="day-btn" data-day="1">2. Gün (Alt A)</button>
-      <button class="day-btn" data-day="2">3. Gün (Rest)</button>
-      <button class="day-btn" data-day="3">4. Gün (Üst B)</button>
-      <button class="day-btn" data-day="4">5. Gün (Alt B)</button>
-      <button class="day-btn" data-day="5">Hafta Sonu</button>
-    </nav>
-
-    <!-- Summary & Progress Card -->
-    <div class="day-card" id="dayHeaderCard">
-      <div class="day-header">
-        <div class="day-title" id="currentDayTitle">1. Gün: Üst Vücut A</div>
-        <div class="progress-text" id="progressStatus">0 / 17 Set</div>
+    <!-- 1. VIEW: MAIN MENU (DAY SELECTION) -->
+    <main id="viewMenu" class="view active">
+      <div class="section-title">Antrenman Programı (Haftalık Döngü)</div>
+      <div class="day-grid" id="dayMenuGrid">
+        <!-- Injected via JavaScript -->
       </div>
-      <div class="progress-bar-container">
-        <div class="progress-fill" id="progressBar"></div>
-      </div>
-    </div>
+    </main>
 
-    <!-- Workout Content Container -->
-    <div id="exerciseContainer" class="exercise-list">
-      <!-- Injected via JavaScript -->
-    </div>
-
-    <!-- Reset Day Button -->
-    <button class="reset-btn" id="resetDayBtn">🔄 Bu Günün Setlerini Sıfırla</button>
-  </div>
-
-  <!-- Floating Intelligent Rest Timer -->
-  <div class="timer-bar" id="timerBar">
-    <div class="timer-info">
-      <div class="timer-circle">
-        <svg>
-          <circle class="bg-ring" cx="24" cy="24" r="20"></circle>
-          <circle class="val-ring" id="timerSvgRing" cx="24" cy="24" r="20"></circle>
-        </svg>
+    <!-- 2. VIEW: ACTIVE STEP WORKOUT -->
+    <main id="viewActiveWorkout" class="view">
+      <div class="quest-header">
+        <button class="quit-btn" id="quitWorkoutBtn">✕ Vazgeç</button>
+        <div class="step-progress-text" id="questStepStatus">Görev 1 / 17</div>
       </div>
-      <div class="timer-text-wrap">
-        <span class="timer-label" id="timerTargetName">Dinlenme</span>
-        <span class="timer-clock" id="timerClock">01:30</span>
+      <div class="quest-progress-bar">
+        <div class="quest-progress-fill" id="questProgressFill"></div>
       </div>
-    </div>
-    <div class="timer-actions">
-      <button class="timer-btn" id="timerAdd15">+15s</button>
-      <button class="timer-btn primary" id="timerToggleBtn">Durdur</button>
-      <button class="timer-btn" id="timerCloseBtn">Bitir</button>
-    </div>
+
+      <div class="quest-card">
+        <div class="quest-badge" id="questCategoryBadge">DİKEY ÇEKİŞ</div>
+        <h2 class="quest-ex-title" id="questExTitle">Barfiks (Geniş Tutuş)</h2>
+
+        <div class="set-indicator-pills" id="questSetPills">
+          <!-- Set pills -->
+        </div>
+
+        <div class="target-box">
+          <div class="target-item">
+            <span class="target-label">Hedef Tekrar / RIR</span>
+            <span class="target-val" id="questTargetVal">RIR 1–2</span>
+          </div>
+          <div class="target-item">
+            <span class="target-label">Tempo Kuralı</span>
+            <span class="target-val" id="questTempoVal">Kontrollü</span>
+          </div>
+        </div>
+
+        <div class="note-box" id="questNoteBox" style="display: none;"></div>
+
+        <button class="complete-set-btn" id="completeSetBtn">
+          <span>✓ Seti Tamamla & Dinlen</span>
+        </button>
+      </div>
+
+      <div class="nav-controls">
+        <button class="secondary-step-btn" id="prevTaskBtn">◀ Önceki</button>
+        <button class="secondary-step-btn" id="skipTaskBtn">Sonraki (Atla) ▶</button>
+      </div>
+    </main>
+
+    <!-- 3. VIEW: REST SCREEN -->
+    <main id="viewRest" class="view">
+      <div class="rest-screen">
+        <div class="rest-sub-title">Dinlenme Süresi</div>
+        <div class="rest-timer-ring">
+          <svg>
+            <circle class="bg-circle" cx="100" cy="100" r="90"></circle>
+            <circle class="progress-circle" id="restProgressCircle" cx="100" cy="100" r="90"></circle>
+          </svg>
+          <div class="rest-clock-text" id="restClock">02:00</div>
+        </div>
+
+        <div class="next-task-card">
+          <div class="target-label" style="margin-bottom: 4px;">Sıradaki Görev</div>
+          <div class="next-task-name" id="nextTaskName">Dips (Göğüs) - Set 1</div>
+        </div>
+
+        <div class="rest-actions">
+          <button class="secondary-step-btn" id="add15RestBtn">+15 Saniye</button>
+          <button class="complete-set-btn" style="flex: 1.5; padding: 14px;" id="skipRestBtn">Dinlenmeyi Bitir ⏭</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- 4. VIEW: WORKOUT SUMMARY / REST DAY SCREEN -->
+    <main id="viewSummary" class="view">
+      <div class="summary-card">
+        <div class="big-badge-icon" id="summaryIcon">🏆</div>
+        <h2 class="summary-title" id="summaryTitle">Tebrikler!</h2>
+        <p class="summary-desc" id="summaryDesc">Antrenmandaki tüm setleri başarıyla tamamladınız. Kas proteini sentezi tetiklendi!</p>
+        <button class="complete-set-btn" id="returnMenuBtn" style="margin-top: 10px;">Ana Menüye Dön</button>
+      </div>
+    </main>
   </div>
 
   <script>
-    /* ==========================================================================
-       1. SCIENTIFIC PROGRAM CONFIGURATION
-       ========================================================================== */
-    const WORKOUT_DAYS = [
+    /* ================= PROGRAM DATA ================= */
+    const WORKOUT_PROGRAM = [
       {
         id: 0,
-        name: "1. Gün: Üst Vücut A (Dikey Çekiş & Göğüs)",
+        name: "1. Gün: Üst Vücut A",
+        desc: "Dikey Çekiş & Göğüs Öncelikli",
         isRest: false,
         exercises: [
-          { name: "Barfiks (Geniş/Normal Tutuş)", sets: 3, target: "RIR 1–2", tempo: "Kontrollü İniş", rest: 120 },
-          { name: "Dips (Gövde Öne Eğik - Göğüs)", sets: 3, target: "8–10 Tekrar", tempo: "Kontrollü", rest: 120 },
-          { name: "Decline Şınav", sets: 2, target: "RIR 1", tempo: "Sabit Gerilim", rest: 90 },
-          { name: "Biceps Curl", sets: 2, target: "10–12 Tekrar", tempo: "2-0-1-0", rest: 90 },
-          { name: "Lateral Raise", sets: 3, target: "12–15 Tekrar", tempo: "Tepe 1s Sıkışma", rest: 90 },
-          { name: "Shrug", sets: 2, target: "12–15 Tekrar", tempo: "Tepe 2s Sıkışma", rest: 90 },
-          { name: "Boyun Egzersizi (10–12 kg)", sets: 2, target: "15–20 Tekrar", tempo: "Yavaş ve Güvenli", rest: 90 }
+          { name: "Barfiks (Geniş/Normal Tutuş)", category: "Dikey Çekiş", sets: 3, target: "RIR 1–2", tempo: "Kontrollü İniş", rest: 120 },
+          { name: "Dips (Gövde Öne Eğik)", category: "Göğüs İtiş", sets: 3, target: "8–10 Tekrar", tempo: "Kontrollü", rest: 120 },
+          { name: "Decline Şınav", category: "Üst Göğüs", sets: 2, target: "RIR 1", tempo: "Sürekli Gerilim", rest: 90 },
+          { name: "Biceps Curl", category: "Pazu İzolasyon", sets: 2, target: "10–12 Tekrar", tempo: "2-0-1-0", rest: 90 },
+          { name: "Lateral Raise", category: "Yan Omuz", sets: 3, target: "12–15 Tekrar", tempo: "Tepe 1s Bekle", rest: 90 },
+          { name: "Shrug", category: "Trapez", sets: 2, target: "12–15 Tekrar", tempo: "Tepe 2s Sıkışma", rest: 90 },
+          { name: "Boyun Egzersizi (10–12 kg)", category: "Boyun", sets: 2, target: "15–20 Tekrar", tempo: "Yavaş & Güvenli", rest: 90 }
         ]
       },
       {
         id: 1,
-        name: "2. Gün: Alt Vücut A (Ön Bacak Odaklı)",
+        name: "2. Gün: Alt Vücut A",
+        desc: "Ön Bacak (Kuadriseps) Odaklı",
         isRest: false,
         exercises: [
-          { name: "Split Squat (Bacak Başı)", sets: 3, target: "8–10 Tekrar", tempo: "3-1-1-0", rest: 90, note: "Bacak arası 45s dinlen" },
-          { name: "Dumbbell Deadlift / RDL", sets: 3, target: "8–10 Tekrar", tempo: "3-2-1-0", rest: 120, note: "Dipte 2 sn esneme" },
-          { name: "Normal Squat", sets: 3, target: "12–15 Tekrar", tempo: "3-1-1-0", rest: 90, note: "Dizleri kitlemeden sürekli tansiyon" },
-          { name: "Duvarda Calf Raise (Tek Bacak)", sets: 3, target: "12–15 Tekrar", tempo: "Dipte 2s, Tepede 1s", rest: 90 }
+          { name: "Split Squat", category: "Kuadriseps", sets: 3, target: "8–10 Tekrar (Bacak)", tempo: "3-1-1-0", rest: 90, note: "Bacaklar arası 45 sn soluklan" },
+          { name: "Dumbbell Deadlift / RDL", category: "Hamstring", sets: 3, target: "8–10 Tekrar", tempo: "3-2-1-0", rest: 120, note: "Dip noktada 2 sn gerilme" },
+          { name: "Normal Squat", category: "Kuadriseps", sets: 3, target: "12–15 Tekrar", tempo: "3-1-1-0", rest: 90, note: "Dizleri kitlemeden sürekli tansiyon" },
+          { name: "Duvarda Calf Raise", category: "Kalf", sets: 3, target: "12–15 Tekrar (Tek Bacak)", tempo: "Dip 2s / Tepe 1s", rest: 90 }
         ]
       },
       {
         id: 2,
-        name: "3. Gün: Dinlenme & Rejenerasyon",
+        name: "3. Gün: Dinlenme (Rest)",
+        desc: "Kas Onarımı & Rejenerasyon",
         isRest: true,
-        restMessage: "Kas proteini sentezi ve sinir sistemi toparlanma evresinde. Hafif yürüyüş, esneme ve bol su tüketimi ile yarınki seansa hazırlanın."
+        summaryIcon: "🧘‍♂️",
+        restMsg: "Kas liflerinizin onarılması ve sinir sisteminizin tazelenmesi için bugün aktif dinlenme günü. Bol su için ve kaliteli uykuya odaklanın."
       },
       {
         id: 3,
-        name: "4. Gün: Üst Vücut B (Sırt Kalınlığı & Kol Odaklı)",
+        name: "4. Gün: Üst Vücut B",
+        desc: "Sırt Kalınlığı & Kol Öncelikli",
         isRest: false,
         exercises: [
-          { name: "Inverted Row (Dips Barında)", sets: 3, target: "8–10 Tekrar", tempo: "Sırtı Sıkıştır", rest: 90 },
-          { name: "Dips (Gövde Öne Eğik - Göğüs)", sets: 3, target: "8–10 Tekrar", tempo: "Kontrollü", rest: 120 },
-          { name: "Barfiks", sets: 2, target: "RIR 1", tempo: "Tam Açılma", rest: 120 },
-          { name: "Triceps Overhead Extension", sets: 2, target: "10–12 Tekrar", tempo: "2-0-1-0", rest: 90 },
-          { name: "Lateral Raise", sets: 3, target: "12–15 Tekrar", tempo: "Tepe 1s Sıkışma", rest: 90 },
-          { name: "Shrug", sets: 2, target: "12–15 Tekrar", tempo: "Tepe 2s Sıkışma", rest: 90 },
-          { name: "Boyun Egzersizi (10–12 kg)", sets: 2, target: "15–20 Tekrar", tempo: "Yavaş ve Güvenli", rest: 90 }
+          { name: "Inverted Row (Dips Barında)", category: "Yatay Çekiş", sets: 3, target: "8–10 Tekrar", tempo: "Sırtı Tam Sıkıştır", rest: 90 },
+          { name: "Dips (Gövde Öne Eğik)", category: "Göğüs İtiş", sets: 3, target: "8–10 Tekrar", tempo: "Kontrollü", rest: 120 },
+          { name: "Barfiks", category: "Dikey Çekiş", sets: 2, target: "RIR 1", tempo: "Tam Açılma", rest: 120 },
+          { name: "Triceps Overhead Extension", category: "Triceps", sets: 2, target: "10–12 Tekrar", tempo: "2-0-1-0", rest: 90 },
+          { name: "Lateral Raise", category: "Yan Omuz", sets: 3, target: "12–15 Tekrar", tempo: "Tepe 1s Bekle", rest: 90 },
+          { name: "Shrug", category: "Trapez", sets: 2, target: "12–15 Tekrar", tempo: "Tepe 2s Sıkışma", rest: 90 },
+          { name: "Boyun Egzersizi (10–12 kg)", category: "Boyun", sets: 2, target: "15–20 Tekrar", tempo: "Yavaş & Güvenli", rest: 90 }
         ]
       },
       {
         id: 4,
-        name: "5. Gün: Alt Vücut B (Arka Zincir Odaklı)",
+        name: "5. Gün: Alt Vücut B",
+        desc: "Arka Zincir (Hamstring) Odaklı",
         isRest: false,
         exercises: [
-          { name: "Dumbbell Deadlift / RDL", sets: 3, target: "8–10 Tekrar", tempo: "3-2-1-0", rest: 120, note: "Hamstring tansiyonu" },
-          { name: "Split Squat (Bacak Başı)", sets: 3, target: "8–10 Tekrar", tempo: "3-1-1-0", rest: 90, note: "Bacak arası 45s dinlen" },
-          { name: "Normal Squat", sets: 3, target: "12–15 Tekrar", tempo: "3-1-1-0", rest: 90 },
-          { name: "Duvarda Calf Raise (Tek Bacak)", sets: 3, target: "12–15 Tekrar", tempo: "Dipte 2s, Tepede 1s", rest: 90 }
+          { name: "Dumbbell Deadlift / RDL", category: "Hamstring", sets: 3, target: "8–10 Tekrar", tempo: "3-2-1-0", rest: 120, note: "Dipte 2 sn esneme" },
+          { name: "Split Squat", category: "Kuadriseps", sets: 3, target: "8–10 Tekrar (Bacak)", tempo: "3-1-1-0", rest: 90, note: "Bacaklar arası 45 sn soluklan" },
+          { name: "Normal Squat", category: "Kuadriseps", sets: 3, target: "12–15 Tekrar", tempo: "3-1-1-0", rest: 90 },
+          { name: "Duvarda Calf Raise", category: "Kalf", sets: 3, target: "12–15 Tekrar (Tek Bacak)", tempo: "Dip 2s / Tepe 1s", rest: 90 }
         ]
       },
       {
         id: 5,
-        name: "Hafta Sonu: Tam Dinlenme",
+        name: "Hafta Sonu: Dinlenme",
+        desc: "Haftalık Döngü Tamamlandı",
         isRest: true,
-        restMessage: "Haftalık 4 günlük antrenman döngüsü tamamlandı! Yeterli protein ve kaliteli uyku ile kas liflerinizi onarın."
+        summaryIcon: "🌱",
+        restMsg: "Haftalık 4 günlük antrenman programını başarıyla tamamladınız. Yeni haftaya kadar vücudunuzu besleyin ve dinlenin."
       }
     ];
 
-    /* ==========================================================================
-       2. AUDIO CONTROLLER & AUDIO SYSTEM
-       ========================================================================== */
+    /* ================= AUDIO SYSTEM ================= */
     let isSoundEnabled = true;
     const audioClips = {
       '60': new Audio('1dk.mp3'),
@@ -587,329 +705,315 @@
       '5':  new Audio('5s.mp3')
     };
 
-    // Synthesized Web Audio fallback for final bell/alert
-    let audioCtx = null;
-    function playSyntheticChime() {
+    let webAudioCtx = null;
+    function playFallbackBeep() {
       try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const now = audioCtx.currentTime;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
+        if (!webAudioCtx) webAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const now = webAudioCtx.currentTime;
+        const osc = webAudioCtx.createOscillator();
+        const gain = webAudioCtx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(880, now);
-        osc.frequency.exponentialRampToValueAtTime(440, now + 0.4);
+        osc.frequency.exponentialRampToValueAtTime(440, now + 0.35);
         gain.gain.setValueAtTime(0.3, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
         osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(webAudioCtx.destination);
         osc.start(now);
-        osc.stop(now + 0.4);
-      } catch (e) {
-        console.warn("AudioContext chime failed", e);
-      }
+        osc.stop(now + 0.35);
+      } catch (e) {}
     }
 
-    function playAlertSound(secondsLeft) {
+    function playSoundNotice(sec) {
       if (!isSoundEnabled) return;
-      const key = String(secondsLeft);
+      const key = String(sec);
       if (audioClips[key]) {
         audioClips[key].currentTime = 0;
-        audioClips[key].play().catch(() => {
-          playSyntheticChime();
-        });
-      } else if (secondsLeft === 0) {
-        playSyntheticChime();
+        audioClips[key].play().catch(() => playFallbackBeep());
+      } else if (sec === 0) {
+        playFallbackBeep();
       }
     }
 
-    // Unlocking Audio on first mobile user interaction
-    function unlockAudioContext() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
+    function unlockAudio() {
+      if (!webAudioCtx) webAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (webAudioCtx.state === 'suspended') webAudioCtx.resume();
     }
-    document.addEventListener('touchstart', unlockAudioContext, { once: true });
-    document.addEventListener('click', unlockAudioContext, { once: true });
+    document.addEventListener('click', unlockAudio, { once: true });
+    document.addEventListener('touchstart', unlockAudio, { once: true });
 
-    /* ==========================================================================
-       3. WAKE LOCK API (SCREEN AWAKE)
-       ========================================================================== */
-    let wakeLock = null;
+    /* ================= WAKE LOCK (KEEP SCREEN ON) ================= */
+    let wakeLockInstance = null;
     const wakeLockBtn = document.getElementById('wakeLockBtn');
-
-    async function toggleWakeLock() {
+    async function toggleScreenWake() {
       if ('wakeLock' in navigator) {
         try {
-          if (!wakeLock) {
-            wakeLock = await navigator.wakeLock.request('screen');
+          if (!wakeLockInstance) {
+            wakeLockInstance = await navigator.wakeLock.request('screen');
             wakeLockBtn.style.color = 'var(--primary)';
             wakeLockBtn.style.borderColor = 'var(--primary)';
           } else {
-            await wakeLock.release();
-            wakeLock = null;
+            await wakeLockInstance.release();
+            wakeLockInstance = null;
             wakeLockBtn.style.color = 'var(--text-muted)';
             wakeLockBtn.style.borderColor = 'var(--card-border)';
           }
-        } catch (err) {
-          console.warn("Wake lock error:", err);
-        }
-      } else {
-        alert("Tarayıcınız Wake Lock özelliğini desteklemiyor.");
+        } catch(e) {}
       }
     }
-    wakeLockBtn.addEventListener('click', toggleWakeLock);
+    wakeLockBtn.addEventListener('click', toggleScreenWake);
 
-    /* ==========================================================================
-       4. REST TIMER ENGINE
-       ========================================================================== */
-    let timerTotal = 90;
-    let timerRemaining = 90;
-    let timerInterval = null;
-    let isTimerRunning = false;
+    /* ================= NAVIGATION & STATE ================= */
+    const views = {
+      menu: document.getElementById('viewMenu'),
+      workout: document.getElementById('viewActiveWorkout'),
+      rest: document.getElementById('viewRest'),
+      summary: document.getElementById('viewSummary')
+    };
 
-    const timerBar = document.getElementById('timerBar');
-    const timerClock = document.getElementById('timerClock');
-    const timerTargetName = document.getElementById('timerTargetName');
-    const timerSvgRing = document.getElementById('timerSvgRing');
-    const timerToggleBtn = document.getElementById('timerToggleBtn');
-    const timerCloseBtn = document.getElementById('timerCloseBtn');
-    const timerAdd15 = document.getElementById('timerAdd15');
-
-    const RING_CIRCUMFERENCE = 2 * Math.PI * 20; // ~125.66
-
-    function formatTime(sec) {
-      const m = Math.floor(sec / 60);
-      const s = sec % 60;
-      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    function showView(viewKey) {
+      Object.values(views).forEach(v => v.classList.remove('active'));
+      views[viewKey].classList.add('active');
+      window.scrollTo(0, 0);
     }
 
-    function updateTimerUI() {
-      timerClock.textContent = formatTime(timerRemaining);
-      const fraction = timerRemaining / timerTotal;
-      const offset = RING_CIRCUMFERENCE * (1 - fraction);
-      timerSvgRing.style.strokeDasharray = `${RING_CIRCUMFERENCE}`;
-      timerSvgRing.style.strokeDashoffset = `${offset}`;
+    let activeDay = null;
+    let workoutTasks = []; // Flattened list of every individual set
+    let currentTaskIndex = 0;
+
+    /* Build flattened tasks from selected day */
+    function buildTasksForDay(dayObj) {
+      const list = [];
+      dayObj.exercises.forEach((ex, exIdx) => {
+        for (let s = 1; s <= ex.sets; s++) {
+          list.push({
+            exIndex: exIdx,
+            name: ex.name,
+            category: ex.category,
+            setNumber: s,
+            totalSets: ex.sets,
+            target: ex.target,
+            tempo: ex.tempo,
+            restSec: ex.rest,
+            note: ex.note || null
+          });
+        }
+      });
+      return list;
     }
 
-    function startRestTimer(durationSeconds, label = "Dinlenme") {
-      clearInterval(timerInterval);
-      timerTotal = durationSeconds;
-      timerRemaining = durationSeconds;
-      timerTargetName.textContent = label;
-      isTimerRunning = true;
-      timerToggleBtn.textContent = "Durdur";
-      
-      updateTimerUI();
-      timerBar.classList.add('active');
+    /* ================= MENU RENDER ================= */
+    const dayMenuGrid = document.getElementById('dayMenuGrid');
+    function renderMenu() {
+      dayMenuGrid.innerHTML = '';
+      WORKOUT_PROGRAM.forEach((d) => {
+        const totalSets = d.isRest ? 0 : d.exercises.reduce((acc, x) => acc + x.sets, 0);
+        const card = document.createElement('div');
+        card.className = `menu-card ${d.isRest ? 'rest-day' : 'active-day'}`;
+        card.innerHTML = `
+          <div class="menu-card-info">
+            <h3>${d.name}</h3>
+            <p>
+              <span>${d.desc}</span>
+              ${!d.isRest ? `<span class="badge-pill">${totalSets} Set</span>` : '<span class="badge-pill">Off</span>'}
+            </p>
+          </div>
+          <div class="menu-card-arrow">➔</div>
+        `;
+        card.addEventListener('click', () => handleDaySelect(d));
+        dayMenuGrid.appendChild(card);
+      });
+    }
 
-      timerInterval = setInterval(() => {
-        if (!isTimerRunning) return;
+    function handleDaySelect(day) {
+      if (day.isRest) {
+        document.getElementById('summaryIcon').textContent = day.summaryIcon || "🧘‍♂️";
+        document.getElementById('summaryTitle').textContent = day.name;
+        document.getElementById('summaryDesc').textContent = day.restMsg;
+        showView('summary');
+        return;
+      }
+      activeDay = day;
+      workoutTasks = buildTasksForDay(day);
+      currentTaskIndex = 0;
+      showView('workout');
+      renderTask();
+    }
 
-        timerRemaining--;
-        updateTimerUI();
+    /* ================= ACTIVE TASK RENDER ================= */
+    const questStepStatus = document.getElementById('questStepStatus');
+    const questProgressFill = document.getElementById('questProgressFill');
+    const questCategoryBadge = document.getElementById('questCategoryBadge');
+    const questExTitle = document.getElementById('questExTitle');
+    const questSetPills = document.getElementById('questSetPills');
+    const questTargetVal = document.getElementById('questTargetVal');
+    const questTempoVal = document.getElementById('questTempoVal');
+    const questNoteBox = document.getElementById('questNoteBox');
 
-        // Check for specific audio alerts: 60s, 30s, 15s, 5s, 0s
-        if ([60, 30, 15, 5, 0].includes(timerRemaining)) {
-          playAlertSound(timerRemaining);
-          if ('vibrate' in navigator) navigator.vibrate(timerRemaining === 0 ? [100, 50, 100] : 40);
+    function renderTask() {
+      const task = workoutTasks[currentTaskIndex];
+      const totalTasks = workoutTasks.length;
+
+      // Status & Progress
+      questStepStatus.textContent = `Görev ${currentTaskIndex + 1} / ${totalTasks}`;
+      const pct = Math.round(((currentTaskIndex) / totalTasks) * 100);
+      questProgressFill.style.width = `${pct}%`;
+
+      // Details
+      questCategoryBadge.textContent = task.category;
+      questExTitle.textContent = task.name;
+      questTargetVal.textContent = task.target;
+      questTempoVal.textContent = task.tempo;
+
+      if (task.note) {
+        questNoteBox.style.display = 'block';
+        questNoteBox.textContent = `💡 ${task.note}`;
+      } else {
+        questNoteBox.style.display = 'none';
+      }
+
+      // Set indicator pills
+      questSetPills.innerHTML = '';
+      for (let s = 1; s <= task.totalSets; s++) {
+        const pill = document.createElement('div');
+        pill.className = 'set-pill';
+        pill.textContent = s;
+        if (s < task.setNumber) {
+          pill.classList.add('done');
+          pill.textContent = '✓';
+        } else if (s === task.setNumber) {
+          pill.classList.add('current');
+        }
+        questSetPills.appendChild(pill);
+      }
+    }
+
+    /* Complete Set Button Action */
+    document.getElementById('completeSetBtn').addEventListener('click', () => {
+      if ('vibrate' in navigator) navigator.vibrate(40);
+      const finishedTask = workoutTasks[currentTaskIndex];
+
+      if (currentTaskIndex + 1 >= workoutTasks.length) {
+        // Last task of the whole day finished!
+        document.getElementById('summaryIcon').textContent = "🏆";
+        document.getElementById('summaryTitle').textContent = "Antrenman Tamamlandı!";
+        document.getElementById('summaryDesc').textContent = `${activeDay.name} programındaki ${workoutTasks.length} setin tamamını bitirdiniz. Harika bir iş!`;
+        showView('summary');
+        return;
+      }
+
+      // Transition to Rest Timer
+      const nextTask = workoutTasks[currentTaskIndex + 1];
+      startRestCountdown(finishedTask.restSec, nextTask);
+    });
+
+    /* Step Navigation Controls */
+    document.getElementById('prevTaskBtn').addEventListener('click', () => {
+      if (currentTaskIndex > 0) {
+        currentTaskIndex--;
+        renderTask();
+      }
+    });
+
+    document.getElementById('skipTaskBtn').addEventListener('click', () => {
+      if (currentTaskIndex + 1 < workoutTasks.length) {
+        currentTaskIndex++;
+        renderTask();
+      }
+    });
+
+    document.getElementById('quitWorkoutBtn').addEventListener('click', () => {
+      if (confirm("Mevcut antrenmandan çıkıp ana menüye dönmek istiyor musunuz?")) {
+        clearInterval(restInterval);
+        showView('menu');
+      }
+    });
+
+    /* ================= REST TIMER ENGINE ================= */
+    let restInterval = null;
+    let restSecondsLeft = 90;
+    let restTotalSeconds = 90;
+    const CIRCUMFERENCE = 2 * Math.PI * 90; // ~565.48
+
+    const restClock = document.getElementById('restClock');
+    const restProgressCircle = document.getElementById('restProgressCircle');
+    const nextTaskName = document.getElementById('nextTaskName');
+
+    function formatMinSec(s) {
+      const min = Math.floor(s / 60);
+      const sec = s % 60;
+      return `${min < 10 ? '0' : ''}${min}:${sec < 10 ? '0' : ''}${sec}`;
+    }
+
+    function updateRestClockUI() {
+      restClock.textContent = formatMinSec(restSecondsLeft);
+      const fraction = restSecondsLeft / restTotalSeconds;
+      const offset = CIRCUMFERENCE * (1 - fraction);
+      restProgressCircle.style.strokeDasharray = `${CIRCUMFERENCE}`;
+      restProgressCircle.style.strokeDashoffset = `${offset}`;
+    }
+
+    function startRestCountdown(duration, nextTask) {
+      clearInterval(restInterval);
+      restTotalSeconds = duration;
+      restSecondsLeft = duration;
+      nextTaskName.textContent = `${nextTask.name} (Set ${nextTask.setNumber})`;
+
+      updateRestClockUI();
+      showView('rest');
+
+      restInterval = setInterval(() => {
+        restSecondsLeft--;
+        updateRestClockUI();
+
+        // Sound triggers
+        if ([60, 30, 15, 5, 0].includes(restSecondsLeft)) {
+          playSoundNotice(restSecondsLeft);
+          if ('vibrate' in navigator) navigator.vibrate(restSecondsLeft === 0 ? [80, 40, 80] : 30);
         }
 
-        if (timerRemaining <= 0) {
-          clearInterval(timerInterval);
-          isTimerRunning = false;
-          setTimeout(() => {
-            timerBar.classList.remove('active');
-          }, 1800);
+        if (restSecondsLeft <= 0) {
+          finishRestAndProceed();
         }
       }, 1000);
     }
 
-    timerToggleBtn.addEventListener('click', () => {
-      isTimerRunning = !isTimerRunning;
-      timerToggleBtn.textContent = isTimerRunning ? "Durdur" : "Başlat";
-    });
-
-    timerCloseBtn.addEventListener('click', () => {
-      clearInterval(timerInterval);
-      isTimerRunning = false;
-      timerBar.classList.remove('active');
-    });
-
-    timerAdd15.addEventListener('click', () => {
-      timerRemaining += 15;
-      timerTotal = Math.max(timerTotal, timerRemaining);
-      updateTimerUI();
-    });
-
-    /* ==========================================================================
-       5. STATE MANAGEMENT & LOCAL STORAGE
-       ========================================================================== */
-    let currentDayIndex = 0;
-    const STORAGE_KEY = 'aesthetic_workout_state_v1';
-
-    function loadSavedState() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : {};
-      } catch (e) {
-        return {};
-      }
+    function finishRestAndProceed() {
+      clearInterval(restInterval);
+      currentTaskIndex++;
+      showView('workout');
+      renderTask();
     }
 
-    function saveState(state) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch (e) {}
-    }
+    document.getElementById('skipRestBtn').addEventListener('click', finishRestAndProceed);
 
-    /* ==========================================================================
-       6. RENDER LOGIC
-       ========================================================================== */
-    const dayNav = document.getElementById('dayNav');
-    const exerciseContainer = document.getElementById('exerciseContainer');
-    const currentDayTitle = document.getElementById('currentDayTitle');
-    const progressStatus = document.getElementById('progressStatus');
-    const progressBar = document.getElementById('progressBar');
-    const resetDayBtn = document.getElementById('resetDayBtn');
+    document.getElementById('add15RestBtn').addEventListener('click', () => {
+      restSecondsLeft += 15;
+      restTotalSeconds = Math.max(restTotalSeconds, restSecondsLeft);
+      updateRestClockUI();
+    });
+
+    /* ================= SUMMARY & RETURN ================= */
+    document.getElementById('returnMenuBtn').addEventListener('click', () => {
+      showView('menu');
+    });
+
+    // Sound toggle
     const soundToggleBtn = document.getElementById('soundToggleBtn');
-
     soundToggleBtn.addEventListener('click', () => {
       isSoundEnabled = !isSoundEnabled;
       soundToggleBtn.textContent = isSoundEnabled ? "🔊" : "🔇";
     });
 
-    function renderDay(dayIndex) {
-      currentDayIndex = dayIndex;
-      const dayData = WORKOUT_DAYS[dayIndex];
-      const savedState = loadSavedState();
-      const dayState = savedState[dayIndex] || {};
-
-      // Update Nav Buttons
-      document.querySelectorAll('.day-btn').forEach((btn, idx) => {
-        btn.classList.toggle('active', idx === dayIndex);
-      });
-
-      // Update Header
-      currentDayTitle.textContent = dayData.name;
-
-      if (dayData.isRest) {
-        resetDayBtn.style.display = 'none';
-        progressStatus.textContent = "Dinlenme Günü";
-        progressBar.style.width = '100%';
-        exerciseContainer.innerHTML = `
-          <div class="rest-banner">
-            <div class="rest-icon">🧘‍♂️</div>
-            <h3 style="font-weight: 700; color: var(--text-main);">Toparlanma & Rejenerasyon</h3>
-            <p class="rest-text">${dayData.restMessage}</p>
-          </div>
-        `;
-        return;
-      }
-
-      resetDayBtn.style.display = 'block';
-
-      // Count totals
-      let totalSets = 0;
-      let completedSets = 0;
-
-      let html = '';
-      dayData.exercises.forEach((ex, exIdx) => {
-        totalSets += ex.sets;
-        let setsHtml = '';
-
-        for (let s = 1; s <= ex.sets; s++) {
-          const isDone = dayState[`${exIdx}_${s}`] === true;
-          if (isDone) completedSets++;
-
-          setsHtml += `
-            <div class="set-btn ${isDone ? 'completed' : ''}" 
-                 data-ex-idx="${exIdx}" 
-                 data-set-num="${s}" 
-                 data-rest="${ex.rest}">
-              <span class="set-num">${s}. Set</span>
-              <span class="set-icon">${isDone ? '✓' : '○'}</span>
-            </div>
-          `;
-        }
-
-        html += `
-          <div class="exercise-card">
-            <div class="ex-top">
-              <div class="ex-name">${ex.name}</div>
-            </div>
-            <div class="badge-wrap">
-              <span class="badge">${ex.target}</span>
-              <span class="badge tempo">Tempo: ${ex.tempo}</span>
-              <span class="badge rest">⏱ ${ex.rest}s</span>
-              ${ex.note ? `<span class="badge" style="background: rgba(239, 68, 68, 0.12); color: #fca5a5;">${ex.note}</span>` : ''}
-            </div>
-            <div class="sets-row">
-              ${setsHtml}
-            </div>
-          </div>
-        `;
-      });
-
-      exerciseContainer.innerHTML = html;
-
-      // Update progress bar
-      const pct = totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
-      progressStatus.textContent = `${completedSets} / ${totalSets} Set (${pct}%)`;
-      progressBar.style.width = `${pct}%`;
-
-      // Attach Set Click Handlers
-      document.querySelectorAll('.set-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const exIdx = btn.dataset.exIdx;
-          const setNum = btn.dataset.setNum;
-          const rest = parseInt(btn.dataset.rest, 10);
-          const key = `${exIdx}_${setNum}`;
-
-          const state = loadSavedState();
-          if (!state[currentDayIndex]) state[currentDayIndex] = {};
-
-          const currentlyDone = state[currentDayIndex][key] === true;
-          state[currentDayIndex][key] = !currentlyDone;
-          saveState(state);
-
-          if (!currentlyDone) {
-            // Checkmark completed -> trigger intelligent rest timer
-            const exName = dayData.exercises[exIdx].name.split('(')[0].trim();
-            startRestTimer(rest, `${exName} (#${setNum})`);
-            if ('vibrate' in navigator) navigator.vibrate(30);
-          }
-
-          renderDay(currentDayIndex);
-        });
-      });
-    }
-
-    // Day nav click
-    dayNav.addEventListener('click', (e) => {
-      const btn = e.target.closest('.day-btn');
-      if (btn) {
-        renderDay(parseInt(btn.dataset.day, 10));
-      }
-    });
-
-    // Reset Day
-    resetDayBtn.addEventListener('click', () => {
-      if (confirm("Bu günün tüm tamamlanan setleri sıfırlansın mı?")) {
-        const state = loadSavedState();
-        delete state[currentDayIndex];
-        saveState(state);
-        renderDay(currentDayIndex);
-      }
-    });
-
-    // Service Worker Registration
+    // PWA Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js').catch(() => {});
       });
     }
 
-    // Initial render
-    renderDay(0);
+    // Init
+    renderMenu();
   </script>
 </body>
 </html>
