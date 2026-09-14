@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Athlete Quest | Scientific Workout</title>
+  <title>Athlete Quest | Progressive Overload Tracker</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#09090b">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,16 +16,17 @@
   <style>
     :root {
       --bg: #09090b;
-      --card: rgba(24, 24, 27, 0.75);
+      --card: rgba(24, 24, 27, 0.78);
       --card-border: rgba(255, 255, 255, 0.08);
       --primary: #10b981;
-      --primary-glow: rgba(16, 185, 129, 0.28);
+      --primary-glow: rgba(16, 185, 129, 0.3);
       --accent: #6366f1;
       --accent-glow: rgba(99, 102, 241, 0.25);
       --text: #f4f4f5;
       --text-muted: #a1a1aa;
       --text-sub: #71717a;
       --danger: #ef4444;
+      --gold: #f59e0b;
       --radius: 20px;
       --safe-top: env(safe-area-inset-top, 16px);
       --safe-bottom: env(safe-area-inset-bottom, 16px);
@@ -47,8 +48,8 @@
       flex-direction: column;
       align-items: center;
       background-image: 
-        radial-gradient(circle at 15% 10%, rgba(99, 102, 241, 0.07) 0%, transparent 45%),
-        radial-gradient(circle at 85% 90%, rgba(16, 185, 129, 0.06) 0%, transparent 45%);
+        radial-gradient(circle at 15% 10%, rgba(99, 102, 241, 0.08) 0%, transparent 45%),
+        radial-gradient(circle at 85% 90%, rgba(16, 185, 129, 0.07) 0%, transparent 45%);
       padding: calc(12px + var(--safe-top)) 16px calc(24px + var(--safe-bottom));
       overflow-x: hidden;
     }
@@ -61,12 +62,11 @@
       min-height: calc(100vh - 40px);
     }
 
-    /* Views */
     .view {
       display: none;
       width: 100%;
       flex-direction: column;
-      animation: fadeIn 0.25s ease forwards;
+      animation: fadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     .view.active { display: flex; }
 
@@ -75,12 +75,12 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Top Nav */
+    /* Top Bar */
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 22px;
+      margin-bottom: 20px;
     }
 
     .brand-wrap {
@@ -127,7 +127,7 @@
 
     /* ================= MENU VIEW ================= */
     .section-title {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 700;
       color: var(--text-sub);
       text-transform: uppercase;
@@ -242,7 +242,7 @@
       background: rgba(255, 255, 255, 0.07);
       border-radius: 999px;
       overflow: hidden;
-      margin-bottom: 22px;
+      margin-bottom: 20px;
     }
 
     .quest-progress-fill {
@@ -250,14 +250,14 @@
       background: linear-gradient(90deg, var(--accent), var(--primary));
       width: 0%;
       border-radius: 999px;
-      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: width 0.3s ease;
     }
 
     .quest-card {
       background: var(--card);
       border: 1px solid var(--card-border);
       border-radius: var(--radius);
-      padding: 24px 20px;
+      padding: 22px 20px;
       backdrop-filter: blur(20px);
       display: flex;
       flex-direction: column;
@@ -271,20 +271,20 @@
       background: rgba(99, 102, 241, 0.15);
       border: 1px solid rgba(99, 102, 241, 0.3);
       color: #a5b4fc;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 800;
       letter-spacing: 0.6px;
       padding: 4px 12px;
       border-radius: 999px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       text-transform: uppercase;
     }
 
     .quest-ex-title {
-      font-size: 1.45rem;
+      font-size: 1.4rem;
       font-weight: 900;
       letter-spacing: -0.5px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       color: var(--text);
       line-height: 1.25;
     }
@@ -293,17 +293,18 @@
       display: flex;
       gap: 8px;
       justify-content: center;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
 
     .set-pill {
-      width: 32px;
-      height: 32px;
+      min-width: 34px;
+      height: 34px;
+      padding: 0 6px;
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 800;
       border: 1px solid var(--card-border);
       background: rgba(255, 255, 255, 0.03);
@@ -311,7 +312,7 @@
     }
 
     .set-pill.done {
-      background: rgba(16, 185, 129, 0.2);
+      background: rgba(16, 185, 129, 0.18);
       border-color: rgba(16, 185, 129, 0.4);
       color: var(--primary);
     }
@@ -328,7 +329,7 @@
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid var(--card-border);
       border-radius: 14px;
-      padding: 14px;
+      padding: 12px;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
@@ -338,31 +339,104 @@
     .target-item {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 2px;
     }
 
     .target-label {
-      font-size: 0.68rem;
+      font-size: 0.66rem;
       font-weight: 700;
       color: var(--text-sub);
       text-transform: uppercase;
     }
 
     .target-val {
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-weight: 800;
       color: var(--text);
     }
 
     .note-box {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: #fca5a5;
       background: rgba(239, 68, 68, 0.08);
       border: 1px solid rgba(239, 68, 68, 0.2);
       padding: 8px 12px;
       border-radius: 10px;
       width: 100%;
+      margin-bottom: 16px;
+    }
+
+    /* REPUTATION STEPPER & OVERLOAD RECORD BOX */
+    .rep-tracker-card {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       margin-bottom: 18px;
+      position: relative;
+    }
+
+    .prev-record-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      color: var(--gold);
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .stepper-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      width: 100%;
+    }
+
+    .stepper-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      font-size: 1.4rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .stepper-btn:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.14); }
+
+    .reps-input-field {
+      width: 100px;
+      background: transparent;
+      border: none;
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: #ffffff;
+      text-align: center;
+      letter-spacing: -1px;
+      font-variant-numeric: tabular-nums;
+      outline: none;
+    }
+
+    .stepper-caption {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-sub);
+      margin-top: 6px;
     }
 
     .complete-set-btn {
@@ -370,7 +444,7 @@
       background: var(--primary);
       color: #042f22;
       border: none;
-      padding: 18px;
+      padding: 16px;
       border-radius: 16px;
       font-size: 1.05rem;
       font-weight: 800;
@@ -382,10 +456,7 @@
       box-shadow: 0 8px 24px var(--primary-glow);
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
-
-    .complete-set-btn:active {
-      transform: scale(0.98);
-    }
+    .complete-set-btn:active { transform: scale(0.98); }
 
     .nav-controls {
       display: flex;
@@ -459,7 +530,7 @@
     }
 
     .rest-sub-title {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 700;
       color: var(--text-sub);
       text-transform: uppercase;
@@ -489,46 +560,68 @@
       width: 100%;
     }
 
-    /* ================= SUMMARY / REST DAY SCREEN ================= */
+    /* ================= SUMMARY SCREEN ================= */
     .summary-card {
       background: var(--card);
       border: 1px solid var(--card-border);
       border-radius: var(--radius);
-      padding: 40px 24px;
+      padding: 36px 20px;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 16px;
-      margin-top: 20px;
+      margin-top: 10px;
     }
 
-    .big-badge-icon {
-      font-size: 3.5rem;
-    }
+    .big-badge-icon { font-size: 3.5rem; }
 
     .summary-title {
-      font-size: 1.5rem;
+      font-size: 1.45rem;
       font-weight: 900;
       letter-spacing: -0.5px;
     }
 
     .summary-desc {
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       color: var(--text-muted);
       line-height: 1.6;
       max-width: 320px;
     }
+
+    .log-list {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 12px;
+      max-height: 220px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      text-align: left;
+    }
+
+    .log-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      padding: 6px 4px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .log-item:last-child { border-bottom: none; }
+    .log-ex-name { color: var(--text-muted); font-weight: 600; }
+    .log-reps-val { color: var(--primary); font-weight: 800; }
   </style>
 </head>
 <body>
 
   <div class="app-container">
-    <!-- Top Bar -->
     <header>
       <div class="brand-wrap">
         <h1 class="brand-title">ATHLETE QUEST</h1>
-        <span class="brand-sub">Step-by-Step Hypertrophy</span>
+        <span class="brand-sub">Progressive Overload Lab</span>
       </div>
       <div class="header-icons">
         <button id="soundToggleBtn" class="icon-btn" title="Ses Aç/Kapat">🔊</button>
@@ -536,15 +629,13 @@
       </div>
     </header>
 
-    <!-- 1. VIEW: MAIN MENU (DAY SELECTION) -->
+    <!-- 1. VIEW: MAIN MENU (DAY SELECT) -->
     <main id="viewMenu" class="view active">
-      <div class="section-title">Antrenman Programı (Haftalık Döngü)</div>
-      <div class="day-grid" id="dayMenuGrid">
-        <!-- Injected via JavaScript -->
-      </div>
+      <div class="section-title">Haftalık Döngü Programı</div>
+      <div class="day-grid" id="dayMenuGrid"></div>
     </main>
 
-    <!-- 2. VIEW: ACTIVE STEP WORKOUT -->
+    <!-- 2. VIEW: ACTIVE WORKOUT STEP -->
     <main id="viewActiveWorkout" class="view">
       <div class="quest-header">
         <button class="quit-btn" id="quitWorkoutBtn">✕ Vazgeç</button>
@@ -556,15 +647,13 @@
 
       <div class="quest-card">
         <div class="quest-badge" id="questCategoryBadge">DİKEY ÇEKİŞ</div>
-        <h2 class="quest-ex-title" id="questExTitle">Barfiks (Geniş Tutuş)</h2>
+        <h2 class="quest-ex-title" id="questExTitle">Barfiks</h2>
 
-        <div class="set-indicator-pills" id="questSetPills">
-          <!-- Set pills -->
-        </div>
+        <div class="set-indicator-pills" id="questSetPills"></div>
 
         <div class="target-box">
           <div class="target-item">
-            <span class="target-label">Hedef Tekrar / RIR</span>
+            <span class="target-label">Hedef Strateji</span>
             <span class="target-val" id="questTargetVal">RIR 1–2</span>
           </div>
           <div class="target-item">
@@ -575,14 +664,28 @@
 
         <div class="note-box" id="questNoteBox" style="display: none;"></div>
 
+        <!-- Reps Input & Overload Box -->
+        <div class="rep-tracker-card">
+          <div class="prev-record-badge" id="prevRecordWrap">
+            <span>🔥 Önceki Rekor:</span>
+            <strong id="prevRecordText">-- Tekrar</strong>
+          </div>
+          <div class="stepper-row">
+            <button class="stepper-btn" id="decRepsBtn">-</button>
+            <input type="number" id="repsInput" class="reps-input-field" value="10" min="0" max="999">
+            <button class="stepper-btn" id="incRepsBtn">+</button>
+          </div>
+          <span class="stepper-caption">Tükenişe (Failure) kadar çıkardığın net tekrar</span>
+        </div>
+
         <button class="complete-set-btn" id="completeSetBtn">
-          <span>✓ Seti Tamamla & Dinlen</span>
+          <span>✓ Seti Kaydet & Dinlen</span>
         </button>
       </div>
 
       <div class="nav-controls">
-        <button class="secondary-step-btn" id="prevTaskBtn">◀ Önceki</button>
-        <button class="secondary-step-btn" id="skipTaskBtn">Sonraki (Atla) ▶</button>
+        <button class="secondary-step-btn" id="prevTaskBtn">◀ Önceki Set</button>
+        <button class="secondary-step-btn" id="skipTaskBtn">Seti Atla ▶</button>
       </div>
     </main>
 
@@ -599,8 +702,8 @@
         </div>
 
         <div class="next-task-card">
-          <div class="target-label" style="margin-bottom: 4px;">Sıradaki Görev</div>
-          <div class="next-task-name" id="nextTaskName">Dips (Göğüs) - Set 1</div>
+          <div class="target-label" style="margin-bottom: 4px;">Sıradaki Egzersiz</div>
+          <div class="next-task-name" id="nextTaskName">Dips - Set 1</div>
         </div>
 
         <div class="rest-actions">
@@ -610,12 +713,13 @@
       </div>
     </main>
 
-    <!-- 4. VIEW: WORKOUT SUMMARY / REST DAY SCREEN -->
+    <!-- 4. VIEW: SUMMARY SCREEN -->
     <main id="viewSummary" class="view">
       <div class="summary-card">
         <div class="big-badge-icon" id="summaryIcon">🏆</div>
         <h2 class="summary-title" id="summaryTitle">Tebrikler!</h2>
-        <p class="summary-desc" id="summaryDesc">Antrenmandaki tüm setleri başarıyla tamamladınız. Kas proteini sentezi tetiklendi!</p>
+        <p class="summary-desc" id="summaryDesc">Antrenmandaki tüm setleri başarıyla tamamladınız.</p>
+        <div class="log-list" id="summaryLogList" style="display: none;"></div>
         <button class="complete-set-btn" id="returnMenuBtn" style="margin-top: 10px;">Ana Menüye Dön</button>
       </div>
     </main>
@@ -630,13 +734,13 @@
         desc: "Dikey Çekiş & Göğüs Öncelikli",
         isRest: false,
         exercises: [
-          { name: "Barfiks (Geniş/Normal Tutuş)", category: "Dikey Çekiş", sets: 3, target: "RIR 1–2", tempo: "Kontrollü İniş", rest: 120 },
-          { name: "Dips (Gövde Öne Eğik)", category: "Göğüs İtiş", sets: 3, target: "8–10 Tekrar", tempo: "Kontrollü", rest: 120 },
-          { name: "Decline Şınav", category: "Üst Göğüs", sets: 2, target: "RIR 1", tempo: "Sürekli Gerilim", rest: 90 },
-          { name: "Biceps Curl", category: "Pazu İzolasyon", sets: 2, target: "10–12 Tekrar", tempo: "2-0-1-0", rest: 90 },
-          { name: "Lateral Raise", category: "Yan Omuz", sets: 3, target: "12–15 Tekrar", tempo: "Tepe 1s Bekle", rest: 90 },
-          { name: "Shrug", category: "Trapez", sets: 2, target: "12–15 Tekrar", tempo: "Tepe 2s Sıkışma", rest: 90 },
-          { name: "Boyun Egzersizi (10–12 kg)", category: "Boyun", sets: 2, target: "15–20 Tekrar", tempo: "Yavaş & Güvenli", rest: 90 }
+          { name: "Barfiks (Geniş/Normal Tutuş)", category: "Dikey Çekiş", sets: 3, target: "RIR 1–2", tempo: "Kontrollü İniş", rest: 120, defReps: 8 },
+          { name: "Dips (Gövde Öne Eğik)", category: "Göğüs İtiş", sets: 3, target: "8–10 Tekrar", tempo: "Kontrollü", rest: 120, defReps: 10 },
+          { name: "Decline Şınav", category: "Üst Göğüs", sets: 2, target: "RIR 1", tempo: "Sürekli Gerilim", rest: 90, defReps: 12 },
+          { name: "Biceps Curl", category: "Pazu İzolasyon", sets: 2, target: "10–12 Tekrar", tempo: "2-0-1-0", rest: 90, defReps: 12 },
+          { name: "Lateral Raise", category: "Yan Omuz", sets: 3, target: "12–15 Tekrar", tempo: "Tepe 1s Bekle", rest: 90, defReps: 15 },
+          { name: "Shrug", category: "Trapez", sets: 2, target: "12–15 Tekrar", tempo: "Tepe 2s Sıkışma", rest: 90, defReps: 15 },
+          { name: "Boyun Egzersizi (10–12 kg)", category: "Boyun", sets: 2, target: "15–20 Tekrar", tempo: "Yavaş & Güvenli", rest: 90, defReps: 15 }
         ]
       },
       {
@@ -645,10 +749,10 @@
         desc: "Ön Bacak (Kuadriseps) Odaklı",
         isRest: false,
         exercises: [
-          { name: "Split Squat", category: "Kuadriseps", sets: 3, target: "8–10 Tekrar (Bacak)", tempo: "3-1-1-0", rest: 90, note: "Bacaklar arası 45 sn soluklan" },
-          { name: "Dumbbell Deadlift / RDL", category: "Hamstring", sets: 3, target: "8–10 Tekrar", tempo: "3-2-1-0", rest: 120, note: "Dip noktada 2 sn gerilme" },
-          { name: "Normal Squat", category: "Kuadriseps", sets: 3, target: "12–15 Tekrar", tempo: "3-1-1-0", rest: 90, note: "Dizleri kitlemeden sürekli tansiyon" },
-          { name: "Duvarda Calf Raise", category: "Kalf", sets: 3, target: "12–15 Tekrar (Tek Bacak)", tempo: "Dip 2s / Tepe 1s", rest: 90 }
+          { name: "Split Squat", category: "Kuadriseps", sets: 3, target: "8–10 Tekrar (Bacak)", tempo: "3-1-1-0", rest: 90, note: "Bacaklar arası 45 sn dinlen", defReps: 10 },
+          { name: "Dumbbell Deadlift / RDL", category: "Hamstring", sets: 3, target: "8–10 Tekrar", tempo: "3-2-1-0", rest: 120, note: "Dip noktada 2 sn gerilme", defReps: 10 },
+          { name: "Normal Squat", category: "Kuadriseps", sets: 3, target: "12–15 Tekrar", tempo: "3-1-1-0", rest: 90, note: "Dizleri kitlemeden sürekli tansiyon", defReps: 15 },
+          { name: "Duvarda Calf Raise", category: "Kalf", sets: 3, target: "12–15 Tekrar (Tek Bacak)", tempo: "Dip 2s / Tepe 1s", rest: 90, defReps: 15 }
         ]
       },
       {
@@ -657,7 +761,7 @@
         desc: "Kas Onarımı & Rejenerasyon",
         isRest: true,
         summaryIcon: "🧘‍♂️",
-        restMsg: "Kas liflerinizin onarılması ve sinir sisteminizin tazelenmesi için bugün aktif dinlenme günü. Bol su için ve kaliteli uykuya odaklanın."
+        restMsg: "Kas liflerinizin tamir olması ve sinir sisteminizin tazelenmesi için aktif dinlenme günü. Bol su için ve kaliteli uykuya odaklanın."
       },
       {
         id: 3,
@@ -665,13 +769,13 @@
         desc: "Sırt Kalınlığı & Kol Öncelikli",
         isRest: false,
         exercises: [
-          { name: "Inverted Row (Dips Barında)", category: "Yatay Çekiş", sets: 3, target: "8–10 Tekrar", tempo: "Sırtı Tam Sıkıştır", rest: 90 },
-          { name: "Dips (Gövde Öne Eğik)", category: "Göğüs İtiş", sets: 3, target: "8–10 Tekrar", tempo: "Kontrollü", rest: 120 },
-          { name: "Barfiks", category: "Dikey Çekiş", sets: 2, target: "RIR 1", tempo: "Tam Açılma", rest: 120 },
-          { name: "Triceps Overhead Extension", category: "Triceps", sets: 2, target: "10–12 Tekrar", tempo: "2-0-1-0", rest: 90 },
-          { name: "Lateral Raise", category: "Yan Omuz", sets: 3, target: "12–15 Tekrar", tempo: "Tepe 1s Bekle", rest: 90 },
-          { name: "Shrug", category: "Trapez", sets: 2, target: "12–15 Tekrar", tempo: "Tepe 2s Sıkışma", rest: 90 },
-          { name: "Boyun Egzersizi (10–12 kg)", category: "Boyun", sets: 2, target: "15–20 Tekrar", tempo: "Yavaş & Güvenli", rest: 90 }
+          { name: "Inverted Row (Dips Barında)", category: "Yatay Çekiş", sets: 3, target: "8–10 Tekrar", tempo: "Sırtı Tam Sıkıştır", rest: 90, defReps: 10 },
+          { name: "Dips (Gövde Öne Eğik)", category: "Göğüs İtiş", sets: 3, target: "8–10 Tekrar", tempo: "Kontrollü", rest: 120, defReps: 10 },
+          { name: "Barfiks", category: "Dikey Çekiş", sets: 2, target: "RIR 1", tempo: "Tam Açılma", rest: 120, defReps: 8 },
+          { name: "Triceps Overhead Extension", category: "Triceps", sets: 2, target: "10–12 Tekrar", tempo: "2-0-1-0", rest: 90, defReps: 12 },
+          { name: "Lateral Raise", category: "Yan Omuz", sets: 3, target: "12–15 Tekrar", tempo: "Tepe 1s Bekle", rest: 90, defReps: 15 },
+          { name: "Shrug", category: "Trapez", sets: 2, target: "12–15 Tekrar", tempo: "Tepe 2s Sıkışma", rest: 90, defReps: 15 },
+          { name: "Boyun Egzersizi (10–12 kg)", category: "Boyun", sets: 2, target: "15–20 Tekrar", tempo: "Yavaş & Güvenli", rest: 90, defReps: 15 }
         ]
       },
       {
@@ -680,10 +784,10 @@
         desc: "Arka Zincir (Hamstring) Odaklı",
         isRest: false,
         exercises: [
-          { name: "Dumbbell Deadlift / RDL", category: "Hamstring", sets: 3, target: "8–10 Tekrar", tempo: "3-2-1-0", rest: 120, note: "Dipte 2 sn esneme" },
-          { name: "Split Squat", category: "Kuadriseps", sets: 3, target: "8–10 Tekrar (Bacak)", tempo: "3-1-1-0", rest: 90, note: "Bacaklar arası 45 sn soluklan" },
-          { name: "Normal Squat", category: "Kuadriseps", sets: 3, target: "12–15 Tekrar", tempo: "3-1-1-0", rest: 90 },
-          { name: "Duvarda Calf Raise", category: "Kalf", sets: 3, target: "12–15 Tekrar (Tek Bacak)", tempo: "Dip 2s / Tepe 1s", rest: 90 }
+          { name: "Dumbbell Deadlift / RDL", category: "Hamstring", sets: 3, target: "8–10 Tekrar", tempo: "3-2-1-0", rest: 120, note: "Dipte 2 sn esneme", defReps: 10 },
+          { name: "Split Squat", category: "Kuadriseps", sets: 3, target: "8–10 Tekrar (Bacak)", tempo: "3-1-1-0", rest: 90, note: "Bacaklar arası 45 sn dinlen", defReps: 10 },
+          { name: "Normal Squat", category: "Kuadriseps", sets: 3, target: "12–15 Tekrar", tempo: "3-1-1-0", rest: 90, defReps: 15 },
+          { name: "Duvarda Calf Raise", category: "Kalf", sets: 3, target: "12–15 Tekrar (Tek Bacak)", tempo: "Dip 2s / Tepe 1s", rest: 90, defReps: 15 }
         ]
       },
       {
@@ -692,7 +796,7 @@
         desc: "Haftalık Döngü Tamamlandı",
         isRest: true,
         summaryIcon: "🌱",
-        restMsg: "Haftalık 4 günlük antrenman programını başarıyla tamamladınız. Yeni haftaya kadar vücudunuzu besleyin ve dinlenin."
+        restMsg: "Haftalık 4 antrenman seansını tamamladınız. Vücudunuzu besleyin, dinlenin ve bir sonraki haftaya taze başlayın."
       }
     ];
 
@@ -706,7 +810,7 @@
     };
 
     let webAudioCtx = null;
-    function playFallbackBeep() {
+    function playSyntheticChime() {
       try {
         if (!webAudioCtx) webAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const now = webAudioCtx.currentTime;
@@ -729,9 +833,9 @@
       const key = String(sec);
       if (audioClips[key]) {
         audioClips[key].currentTime = 0;
-        audioClips[key].play().catch(() => playFallbackBeep());
+        audioClips[key].play().catch(() => playSyntheticChime());
       } else if (sec === 0) {
-        playFallbackBeep();
+        playSyntheticChime();
       }
     }
 
@@ -763,7 +867,32 @@
     }
     wakeLockBtn.addEventListener('click', toggleScreenWake);
 
-    /* ================= NAVIGATION & STATE ================= */
+    /* ================= REPS / OVERLOAD STORAGE ================= */
+    const OVERLOAD_STORAGE_KEY = 'athlete_quest_overload_records_v1';
+
+    function getSavedRecords() {
+      try {
+        const raw = localStorage.getItem(OVERLOAD_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveExerciseReps(taskKey, reps) {
+      try {
+        const records = getSavedRecords();
+        records[taskKey] = Number(reps);
+        localStorage.setItem(OVERLOAD_STORAGE_KEY, JSON.stringify(records));
+      } catch (e) {}
+    }
+
+    function getPrevReps(taskKey) {
+      const records = getSavedRecords();
+      return records[taskKey] !== undefined ? records[taskKey] : null;
+    }
+
+    /* ================= NAVIGATION & VIEWS ================= */
     const views = {
       menu: document.getElementById('viewMenu'),
       workout: document.getElementById('viewActiveWorkout'),
@@ -778,15 +907,16 @@
     }
 
     let activeDay = null;
-    let workoutTasks = []; // Flattened list of every individual set
+    let workoutTasks = [];
     let currentTaskIndex = 0;
+    let currentSessionLogs = []; // Session history
 
-    /* Build flattened tasks from selected day */
     function buildTasksForDay(dayObj) {
       const list = [];
       dayObj.exercises.forEach((ex, exIdx) => {
         for (let s = 1; s <= ex.sets; s++) {
           list.push({
+            taskKey: `D${dayObj.id}_EX${exIdx}_SET${s}`,
             exIndex: exIdx,
             name: ex.name,
             category: ex.category,
@@ -795,7 +925,8 @@
             target: ex.target,
             tempo: ex.tempo,
             restSec: ex.rest,
-            note: ex.note || null
+            note: ex.note || null,
+            defReps: ex.defReps || 10
           });
         }
       });
@@ -830,11 +961,13 @@
         document.getElementById('summaryIcon').textContent = day.summaryIcon || "🧘‍♂️";
         document.getElementById('summaryTitle').textContent = day.name;
         document.getElementById('summaryDesc').textContent = day.restMsg;
+        document.getElementById('summaryLogList').style.display = 'none';
         showView('summary');
         return;
       }
       activeDay = day;
       workoutTasks = buildTasksForDay(day);
+      currentSessionLogs = [];
       currentTaskIndex = 0;
       showView('workout');
       renderTask();
@@ -849,17 +982,17 @@
     const questTargetVal = document.getElementById('questTargetVal');
     const questTempoVal = document.getElementById('questTempoVal');
     const questNoteBox = document.getElementById('questNoteBox');
+    const prevRecordText = document.getElementById('prevRecordText');
+    const repsInput = document.getElementById('repsInput');
 
     function renderTask() {
       const task = workoutTasks[currentTaskIndex];
       const totalTasks = workoutTasks.length;
 
-      // Status & Progress
       questStepStatus.textContent = `Görev ${currentTaskIndex + 1} / ${totalTasks}`;
       const pct = Math.round(((currentTaskIndex) / totalTasks) * 100);
       questProgressFill.style.width = `${pct}%`;
 
-      // Details
       questCategoryBadge.textContent = task.category;
       questExTitle.textContent = task.name;
       questTargetVal.textContent = task.target;
@@ -870,6 +1003,16 @@
         questNoteBox.textContent = `💡 ${task.note}`;
       } else {
         questNoteBox.style.display = 'none';
+      }
+
+      // Check Previous Record for Overload Target
+      const prevReps = getPrevReps(task.taskKey);
+      if (prevReps !== null) {
+        prevRecordText.textContent = `${prevReps} Tekrar`;
+        repsInput.value = prevReps; // default to previous score to beat
+      } else {
+        prevRecordText.textContent = `İlk Kez Yapılıyor`;
+        repsInput.value = task.defReps;
       }
 
       // Set indicator pills
@@ -888,17 +1031,36 @@
       }
     }
 
+    // Stepper buttons
+    document.getElementById('decRepsBtn').addEventListener('click', () => {
+      let v = parseInt(repsInput.value, 10) || 0;
+      if (v > 0) repsInput.value = v - 1;
+    });
+
+    document.getElementById('incRepsBtn').addEventListener('click', () => {
+      let v = parseInt(repsInput.value, 10) || 0;
+      repsInput.value = v + 1;
+    });
+
     /* Complete Set Button Action */
     document.getElementById('completeSetBtn').addEventListener('click', () => {
       if ('vibrate' in navigator) navigator.vibrate(40);
       const finishedTask = workoutTasks[currentTaskIndex];
+      const performedReps = parseInt(repsInput.value, 10) || 0;
+
+      // Save to progressive overload storage
+      saveExerciseReps(finishedTask.taskKey, performedReps);
+
+      // Save to current session log
+      currentSessionLogs.push({
+        name: finishedTask.name,
+        set: finishedTask.setNumber,
+        reps: performedReps
+      });
 
       if (currentTaskIndex + 1 >= workoutTasks.length) {
-        // Last task of the whole day finished!
-        document.getElementById('summaryIcon').textContent = "🏆";
-        document.getElementById('summaryTitle').textContent = "Antrenman Tamamlandı!";
-        document.getElementById('summaryDesc').textContent = `${activeDay.name} programındaki ${workoutTasks.length} setin tamamını bitirdiniz. Harika bir iş!`;
-        showView('summary');
+        // Workout Finished
+        showWorkoutSummary();
         return;
       }
 
@@ -907,7 +1069,29 @@
       startRestCountdown(finishedTask.restSec, nextTask);
     });
 
-    /* Step Navigation Controls */
+    function showWorkoutSummary() {
+      document.getElementById('summaryIcon').textContent = "🏆";
+      document.getElementById('summaryTitle').textContent = "Antrenman Tamamlandı!";
+      document.getElementById('summaryDesc').textContent = `${activeDay.name} seansındaki tüm setler kaydedildi. Yeni rekorların sisteme işlendi!`;
+
+      const summaryLogList = document.getElementById('summaryLogList');
+      summaryLogList.style.display = 'flex';
+      summaryLogList.innerHTML = '';
+
+      currentSessionLogs.forEach(log => {
+        const row = document.createElement('div');
+        row.className = 'log-item';
+        row.innerHTML = `
+          <span class="log-ex-name">${log.name} (Set ${log.set})</span>
+          <span class="log-reps-val">${log.reps} Tekrar</span>
+        `;
+        summaryLogList.appendChild(row);
+      });
+
+      showView('summary');
+    }
+
+    /* Navigation Controls */
     document.getElementById('prevTaskBtn').addEventListener('click', () => {
       if (currentTaskIndex > 0) {
         currentTaskIndex--;
@@ -933,7 +1117,7 @@
     let restInterval = null;
     let restSecondsLeft = 90;
     let restTotalSeconds = 90;
-    const CIRCUMFERENCE = 2 * Math.PI * 90; // ~565.48
+    const CIRCUMFERENCE = 2 * Math.PI * 90;
 
     const restClock = document.getElementById('restClock');
     const restProgressCircle = document.getElementById('restProgressCircle');
@@ -966,7 +1150,6 @@
         restSecondsLeft--;
         updateRestClockUI();
 
-        // Sound triggers
         if ([60, 30, 15, 5, 0].includes(restSecondsLeft)) {
           playSoundNotice(restSecondsLeft);
           if ('vibrate' in navigator) navigator.vibrate(restSecondsLeft === 0 ? [80, 40, 80] : 30);
@@ -998,21 +1181,18 @@
       showView('menu');
     });
 
-    // Sound toggle
     const soundToggleBtn = document.getElementById('soundToggleBtn');
     soundToggleBtn.addEventListener('click', () => {
       isSoundEnabled = !isSoundEnabled;
       soundToggleBtn.textContent = isSoundEnabled ? "🔊" : "🔇";
     });
 
-    // PWA Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js').catch(() => {});
       });
     }
 
-    // Init
     renderMenu();
   </script>
 </body>
