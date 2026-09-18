@@ -32,12 +32,22 @@
       --safe-bottom: env(safe-area-inset-bottom, 16px);
     }
 
-    * {
+    /* Çift tıklama ve yakınlaşmayı global olarak engelleyen kural */
+    *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
       -webkit-tap-highlight-color: transparent;
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      touch-action: manipulation;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow-x: hidden;
+      touch-action: manipulation;
+      -webkit-text-size-adjust: 100%;
     }
 
     body {
@@ -51,7 +61,8 @@
         radial-gradient(circle at 15% 10%, rgba(99, 102, 241, 0.08) 0%, transparent 45%),
         radial-gradient(circle at 85% 90%, rgba(16, 185, 129, 0.07) 0%, transparent 45%);
       padding: calc(12px + var(--safe-top)) 16px calc(24px + var(--safe-bottom));
-      overflow-x: hidden;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .app-container {
@@ -429,9 +440,10 @@
       letter-spacing: -1px;
       font-variant-numeric: tabular-nums;
       outline: none;
+      user-select: text;
+      -webkit-user-select: text;
     }
 
-    /* Quick Action Reps Pills */
     .quick-reps-container {
       width: 100%;
       margin-top: 14px;
@@ -723,7 +735,6 @@
 
           <!-- Quick Action Buttons Row -->
           <div class="quick-reps-container">
-            <!-- Preset Values -->
             <div class="quick-reps-row">
               <button type="button" class="quick-rep-btn" data-val="12">12</button>
               <button type="button" class="quick-rep-btn" data-val="15">15</button>
@@ -732,7 +743,6 @@
               <button type="button" class="quick-rep-btn" data-val="30">30</button>
               <button type="button" class="quick-rep-btn" data-val="40">40</button>
             </div>
-            <!-- Quick Increments -->
             <div class="quick-reps-row">
               <button type="button" class="quick-rep-btn add" data-add="5">+5 Ekle</button>
               <button type="button" class="quick-rep-btn add" data-add="10">+10 Ekle</button>
@@ -791,6 +801,11 @@
   </div>
 
   <script>
+    /* ================= PREVENT ACCIDENTAL ZOOM ================= */
+    // iOS Safari jest yakınlaştırmalarını ve çift dokunma zoom'unu iptal eder
+    document.addEventListener('gesturestart', (e) => e.preventDefault());
+    document.addEventListener('dblclick', (e) => e.preventDefault());
+
     /* ================= PROGRAM DATA ================= */
     const WORKOUT_PROGRAM = [
       {
@@ -911,7 +926,7 @@
     document.addEventListener('click', unlockAudio, { once: true });
     document.addEventListener('touchstart', unlockAudio, { once: true });
 
-    /* ================= WAKE LOCK (KEEP SCREEN ON) ================= */
+    /* ================= WAKE LOCK ================= */
     let wakeLockInstance = null;
     const wakeLockBtn = document.getElementById('wakeLockBtn');
     async function toggleScreenWake() {
@@ -1070,7 +1085,6 @@
         questNoteBox.style.display = 'none';
       }
 
-      // Check Previous Record
       const prevReps = getPrevReps(task.taskKey);
       if (prevReps !== null) {
         prevRecordText.textContent = `${prevReps} Tekrar`;
@@ -1080,7 +1094,6 @@
         repsInput.value = task.defReps;
       }
 
-      // Set indicator pills
       questSetPills.innerHTML = '';
       for (let s = 1; s <= task.totalSets; s++) {
         const pill = document.createElement('div');
@@ -1096,7 +1109,7 @@
       }
     }
 
-    // Standard stepper buttons (-1 / +1)
+    // Step buttons
     document.getElementById('decRepsBtn').addEventListener('click', () => {
       let v = parseInt(repsInput.value, 10) || 0;
       if (v > 0) repsInput.value = v - 1;
@@ -1107,7 +1120,7 @@
       repsInput.value = v + 1;
     });
 
-    // Quick Action Reps Buttons Event Delegation (Direct values & Increments)
+    // Quick Action Reps delegation
     document.querySelector('.quick-reps-container').addEventListener('click', (e) => {
       const btn = e.target.closest('.quick-rep-btn');
       if (!btn) return;
@@ -1116,13 +1129,10 @@
       let currentVal = parseInt(repsInput.value, 10) || 0;
 
       if (btn.dataset.val !== undefined) {
-        // Direct jump to 12, 15, 20, 25, 30, 40
         repsInput.value = parseInt(btn.dataset.val, 10);
       } else if (btn.dataset.add !== undefined) {
-        // Add +5 or +10
         repsInput.value = currentVal + parseInt(btn.dataset.add, 10);
       } else if (btn.dataset.sub !== undefined) {
-        // Subtract -5
         repsInput.value = Math.max(0, currentVal - parseInt(btn.dataset.sub, 10));
       }
     });
