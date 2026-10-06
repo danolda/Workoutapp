@@ -38,6 +38,8 @@
       --fig-far: #6b6b74;
       --fig-hl: #10b981;
       --fig-hl-far: #047857;
+      --chart-series: #10b981;
+      --chart-surface: #17171a;
     }
 
     /* Çift tıklama ve yakınlaşmayı global olarak engelleyen kural */
@@ -979,6 +981,402 @@
       line-height: 1.55;
     }
     .info-box strong { color: var(--text); }
+    .backup-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .backup-row .test-btn { margin: 8px 0 0; }
+
+    /* ================= TAB BAR ================= */
+    .tabbar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 40;
+      display: none;
+      justify-content: center;
+      padding: 8px 12px calc(8px + var(--safe-bottom));
+      background: rgba(9, 9, 11, 0.88);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-top: 1px solid var(--card-border);
+    }
+    body.tabs-on .tabbar { display: flex; }
+    body.tabs-on { padding-bottom: calc(96px + var(--safe-bottom)); }
+    .tabbar-inner {
+      width: 100%;
+      max-width: 480px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 7px 0;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .tab-btn .ico { font-size: 1.15rem; line-height: 1; }
+    .tab-btn[aria-current="page"] { color: var(--primary); background: rgba(16, 185, 129, 0.1); }
+
+    /* ================= LEVEL / XP ================= */
+    .profile-mini {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(99, 102, 241, 0.10));
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 10px 14px 10px 10px;
+      margin-bottom: 18px;
+      cursor: pointer;
+      text-align: left;
+    }
+    .profile-mini .av {
+      flex: 0 0 60px;
+      height: 75px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #18181b;
+    }
+    .profile-mini .av svg, .tier-item .av svg, .lu-avatar svg, .summary-avatar svg { width: 100%; height: 100%; display: block; }
+    .pm-info { flex: 1; min-width: 0; }
+    .pm-level {
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+    }
+    .pm-name { font-size: 1.02rem; font-weight: 900; margin-top: 1px; }
+    .xp-bar {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 7px;
+    }
+    .xp-bar.big { height: 12px; }
+    .xp-fill {
+      height: 100%;
+      width: 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #d97706, var(--gold), #fcd34d);
+      transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .xp-text {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      margin-top: 5px;
+    }
+    .xp-text strong { color: var(--text-muted); }
+
+    /* ================= PROGRESS (İLERLEME) ================= */
+    .stat-row.spaced { margin-bottom: 18px; }
+    .ex-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .ex-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 8px 12px 8px 8px;
+      cursor: pointer;
+      text-align: left;
+      color: inherit;
+      width: 100%;
+    }
+    .ex-row:active { transform: scale(0.99); }
+    .ex-row .thumb {
+      flex: 0 0 58px;
+      height: 52px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      overflow: hidden;
+    }
+    .ex-row .thumb svg, .detail-hero .thumb svg { width: 100%; height: 100%; display: block; }
+    .ex-row-info { flex: 1; min-width: 0; }
+    .ex-row-info b {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ex-row-info small { display: block; font-size: 0.72rem; color: var(--text-sub); font-weight: 600; margin-top: 2px; }
+    .ex-row-nums { text-align: right; flex: 0 0 auto; }
+    .ex-row-nums strong { display: block; font-size: 1.15rem; font-weight: 900; line-height: 1.1; }
+    .ex-row-nums span { font-size: 0.6rem; color: var(--text-sub); font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; }
+    .ex-row.empty .ex-row-nums strong { color: var(--text-sub); }
+
+    .back-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .detail-hero { display: flex; gap: 14px; align-items: center; margin-bottom: 14px; }
+    .detail-hero .thumb {
+      flex: 0 0 116px;
+      height: 100px;
+      border-radius: 16px;
+      border: 1px solid var(--card-border);
+      background: radial-gradient(ellipse at 50% 85%, rgba(16, 185, 129, 0.10), transparent 60%), rgba(255, 255, 255, 0.02);
+      overflow: hidden;
+    }
+    .detail-title h2 { font-size: 1.25rem; font-weight: 900; line-height: 1.2; margin-top: 6px; }
+    .detail-title .quest-badge { margin-bottom: 0; display: inline-block; }
+
+    .chart-card, .table-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 14px 12px 12px;
+      margin-bottom: 18px;
+    }
+    .chart-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .chart-title { font-size: 0.9rem; font-weight: 800; padding-left: 2px; }
+    .chart-sub { font-size: 0.7rem; color: var(--text-sub); font-weight: 600; padding-left: 2px; margin-top: 1px; }
+    .chip-row {
+      display: inline-flex;
+      gap: 2px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 3px;
+    }
+    .chip-row button {
+      border: none;
+      background: none;
+      color: var(--text-sub);
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 6px 9px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .chip-row button[aria-pressed="true"] { background: rgba(255, 255, 255, 0.12); color: var(--text); }
+    .chart-filters { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .chart { position: relative; width: 100%; }
+    .chart-svg { display: block; width: 100%; height: auto; touch-action: pan-y; outline: none; overflow: visible; }
+    .chart-svg:focus-visible { outline: 2px solid rgba(16, 185, 129, 0.5); outline-offset: 4px; border-radius: 8px; }
+    .chart-grid { stroke: rgba(255, 255, 255, 0.06); stroke-width: 1; }
+    .chart-base { stroke: rgba(255, 255, 255, 0.16); stroke-width: 1; }
+    .chart-tick { fill: var(--text-sub); font-size: 10.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .chart-line { fill: none; stroke: var(--chart-series); stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
+    .chart-dot { fill: var(--chart-series); stroke: var(--chart-surface); stroke-width: 2; }
+    .chart-label { fill: var(--text); font-size: 11px; font-weight: 800; }
+    .chart-cross { stroke: rgba(255, 255, 255, 0.35); stroke-width: 1; }
+    .chart-tip {
+      position: absolute;
+      pointer-events: none;
+      background: #27272a;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 6px 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      white-space: nowrap;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+      z-index: 2;
+    }
+    .chart-tip strong { font-size: 0.9rem; color: var(--text); }
+    .chart-tip span { font-size: 0.68rem; color: var(--text-muted); }
+    .chart-empty { padding: 30px 10px; text-align: center; color: var(--text-sub); font-size: 0.8rem; line-height: 1.5; }
+    .chart-note { font-size: 0.7rem; color: var(--text-sub); margin-top: 6px; padding-left: 2px; }
+
+    .data-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .data-table th {
+      text-align: left;
+      color: var(--text-sub);
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      padding: 4px 6px 8px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .data-table td {
+      padding: 9px 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      vertical-align: top;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table .num { text-align: right; }
+    .data-table td.num { color: var(--text); font-weight: 800; }
+    .data-table td small { display: block; font-size: 0.66rem; color: var(--text-sub); }
+    .data-table .pr { color: var(--gold); }
+    .table-empty { text-align: center; color: var(--text-sub); padding: 14px 0; font-size: 0.8rem; }
+
+    /* ================= PROFILE ================= */
+    .avatar-stage {
+      perspective: 900px;
+      display: flex;
+      justify-content: center;
+      margin: 2px 0 14px;
+      touch-action: pan-y;
+    }
+    .avatar-card {
+      position: relative;
+      width: 232px;
+      height: 290px;
+      border-radius: 26px;
+      transform-style: preserve-3d;
+      transition: transform 0.18s ease-out;
+      box-shadow: 0 26px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      animation: avFloat 5s ease-in-out infinite;
+      cursor: grab;
+    }
+    .avatar-card > div:first-child, .avatar-card > div:first-child svg { width: 100%; height: 100%; display: block; border-radius: 26px; overflow: hidden; }
+    .avatar-card.locked-preview > div:first-child svg { filter: grayscale(1) brightness(0.3); }
+    .avatar-glare {
+      position: absolute;
+      inset: 0;
+      border-radius: 26px;
+      pointer-events: none;
+      background: radial-gradient(circle at var(--gx, 30%) var(--gy, 18%), rgba(255, 255, 255, 0.16), transparent 48%);
+    }
+    .avatar-lock {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 6px;
+      color: #e4e4e7;
+      font-weight: 800;
+      font-size: 0.85rem;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+    }
+    .avatar-lock b { font-size: 2rem; }
+    .avatar-card.locked-preview .avatar-lock { display: flex; }
+    @keyframes avFloat { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
+    @media (prefers-reduced-motion: reduce) { .avatar-card { animation: none; } }
+
+    .profile-head { text-align: center; margin-bottom: 16px; }
+    .tier-name { font-size: 1.45rem; font-weight: 900; letter-spacing: -0.4px; margin: 2px 0 2px; }
+    .next-unlock { font-size: 0.76rem; color: var(--text-muted); margin-top: 10px; line-height: 1.5; }
+    .next-unlock strong { color: var(--text); }
+    .split-note { font-size: 0.74rem; color: var(--text-sub); text-align: center; margin: -8px 0 18px; }
+    .tier-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 2px 2px 10px;
+      margin-bottom: 14px;
+      scroll-snap-type: x proximity;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tier-item {
+      flex: 0 0 74px;
+      text-align: center;
+      scroll-snap-align: start;
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      padding: 0;
+    }
+    .tier-item .av {
+      width: 74px;
+      height: 92px;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid var(--card-border);
+      background: #18181b;
+    }
+    .tier-item.locked .av svg { filter: grayscale(1) brightness(0.32); }
+    .tier-item.locked .av::after {
+      content: '🔒';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+    .tier-item.current .av { border: 2px solid var(--gold); box-shadow: 0 0 14px rgba(245, 158, 11, 0.35); }
+    .tier-item small { display: block; font-size: 0.6rem; color: var(--text-sub); font-weight: 800; margin-top: 4px; line-height: 1.25; }
+    .tier-item small b { display: block; color: var(--text-muted); font-size: 0.62rem; }
+    .history-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .history-item .log-ex-name small { display: block; font-size: 0.68rem; color: var(--text-sub); font-weight: 600; }
+    .xp-pill { color: var(--gold); font-weight: 900; white-space: nowrap; font-size: 0.82rem; }
+    .rule-note { font-size: 0.7rem; color: var(--text-sub); line-height: 1.55; margin-top: 4px; text-align: center; }
+
+    /* ================= SUMMARY XP + MODALS ================= */
+    .xp-gain-card {
+      width: 100%;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.03));
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      border-radius: 16px;
+      padding: 14px 14px 12px;
+      text-align: left;
+    }
+    .xp-gain-top { display: flex; align-items: center; gap: 12px; }
+    .summary-avatar { flex: 0 0 52px; height: 65px; border-radius: 12px; overflow: hidden; background: #18181b; }
+    .xp-gain { font-size: 1.9rem; font-weight: 900; color: var(--gold); line-height: 1; }
+    .xp-sub { font-size: 0.74rem; color: var(--text-muted); font-weight: 600; margin-top: 4px; }
+
+    .sheet-backdrop.center { align-items: center; padding: 16px; }
+    .modal {
+      width: 100%;
+      max-width: 380px;
+      background: #131316;
+      border: 1px solid var(--card-border);
+      border-radius: 22px;
+      padding: 22px 20px 18px;
+      text-align: center;
+      animation: sheetUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .modal h2 { font-size: 1.15rem; font-weight: 900; margin-bottom: 8px; }
+    .modal p { font-size: 0.84rem; color: var(--text-muted); line-height: 1.55; }
+    .modal-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+    .secondary-step-btn.danger { color: #f87171; border-color: rgba(239, 68, 68, 0.25); }
+    .lu-burst {
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      color: var(--gold);
+      text-transform: uppercase;
+    }
+    .lu-level {
+      font-size: 3.4rem;
+      font-weight: 900;
+      line-height: 1.05;
+      background: linear-gradient(180deg, #fde68a, var(--gold));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .lu-avatar {
+      width: 168px;
+      height: 210px;
+      margin: 10px auto 6px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(245, 158, 11, 0.35);
+      animation: luPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes luPop { from { transform: scale(0.6) rotate(-6deg); opacity: 0; } to { transform: none; opacity: 1; } }
   </style>
 </head>
 <body>
@@ -997,6 +1395,15 @@
 
     <!-- 1. VIEW: MAIN MENU (DAY SELECT) -->
     <main id="viewMenu" class="view active">
+      <div class="profile-mini" id="profileMini" role="button" tabindex="0" aria-label="Profili aç">
+        <div class="av" id="pmAvatar"></div>
+        <div class="pm-info">
+          <div class="pm-level" id="pmLevel">Seviye 0</div>
+          <div class="pm-name" id="pmTier">Çaylak</div>
+          <div class="xp-bar"><div class="xp-fill" id="pmXpFill"></div></div>
+          <div class="xp-text"><span id="pmXpText">0 / 200 XP</span><span id="pmNext">Lv 1</span></div>
+        </div>
+      </div>
       <div class="section-title">Haftalık Program</div>
       <div class="day-grid" id="dayMenuGrid"></div>
       <button type="button" class="tip-card" id="menuTip">
@@ -1125,6 +1532,17 @@
         <div class="big-badge-icon">🏆</div>
         <h2 class="summary-title">Antrenman Tamamlandı!</h2>
         <p class="summary-desc" id="summaryDesc">Antrenmandaki tüm setleri başarıyla tamamladınız.</p>
+        <div class="xp-gain-card">
+          <div class="xp-gain-top">
+            <div class="summary-avatar" id="sumAvatar"></div>
+            <div>
+              <div class="xp-gain" id="sumXp">+0 XP</div>
+              <div class="xp-sub" id="sumXpSub"></div>
+            </div>
+          </div>
+          <div class="xp-bar big"><div class="xp-fill" id="sumXpFill"></div></div>
+          <div class="xp-text"><strong id="sumLevel">Seviye 0</strong><span id="sumXpText"></span></div>
+        </div>
         <div class="stat-row">
           <div class="stat-tile"><strong id="statSets">0</strong><span>Set</span></div>
           <div class="stat-tile"><strong id="statReps">0</strong><span>Tekrar</span></div>
@@ -1134,6 +1552,132 @@
         <button class="complete-set-btn" id="returnMenuBtn" style="margin-top: 6px;">Ana Menüye Dön</button>
       </div>
     </main>
+
+    <!-- 5. VIEW: PROGRESS (İLERLEME) -->
+    <main id="viewProgress" class="view">
+      <div class="section-title">Genel Durum</div>
+      <div class="stat-row spaced">
+        <div class="stat-tile"><strong id="pgSessions">0</strong><span>Antrenman</span></div>
+        <div class="stat-tile"><strong id="pgSets">0</strong><span>Set</span></div>
+        <div class="stat-tile"><strong id="pgReps">0</strong><span>Tekrar</span></div>
+      </div>
+      <div id="progressGroups"></div>
+    </main>
+
+    <!-- 6. VIEW: EXERCISE DETAIL -->
+    <main id="viewExercise" class="view">
+      <div class="back-row">
+        <button class="icon-btn" id="exBackBtn" aria-label="İlerlemeye dön">←</button>
+        <div class="section-title" style="margin: 0;">Hareket Gelişimi</div>
+      </div>
+      <div class="detail-hero">
+        <div class="thumb" id="exDetailFig"></div>
+        <div class="detail-title">
+          <span class="quest-badge" id="exDetailCat">Kategori</span>
+          <h2 id="exDetailName">Hareket</h2>
+        </div>
+      </div>
+      <div class="stat-row spaced">
+        <div class="stat-tile gold"><strong id="exBest">0</strong><span>Set başı max</span></div>
+        <div class="stat-tile"><strong id="exTotal">0</strong><span>Toplam tekrar</span></div>
+        <div class="stat-tile"><strong id="exSessions">0</strong><span>Seans</span></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-filters">
+          <div class="chip-row" role="group" aria-label="Gösterilen değer">
+            <button type="button" data-metric="best">Max / set</button>
+            <button type="button" data-metric="total">Toplam</button>
+          </div>
+          <div class="chip-row" role="group" aria-label="Tarih aralığı">
+            <button type="button" data-range="30">30G</button>
+            <button type="button" data-range="90">90G</button>
+            <button type="button" data-range="all">Tümü</button>
+          </div>
+        </div>
+        <div class="chart-head">
+          <div>
+            <div class="chart-title" id="chartTitle">Set başı max tekrar</div>
+            <div class="chart-sub" id="chartSub"></div>
+          </div>
+        </div>
+        <div id="exChart"></div>
+        <div class="chart-note" id="chartNote"></div>
+      </div>
+
+      <div class="section-title">Kayıt Tablosu</div>
+      <div class="table-card">
+        <table class="data-table">
+          <thead><tr><th>Tarih</th><th>Setler</th><th class="num">Max</th><th class="num">Toplam</th></tr></thead>
+          <tbody id="exTableBody"></tbody>
+        </table>
+      </div>
+    </main>
+
+    <!-- 7. VIEW: PROFILE -->
+    <main id="viewProfile" class="view">
+      <div class="avatar-stage" id="avatarStage">
+        <div class="avatar-card" id="avatarCard">
+          <div id="profileAvatar"></div>
+          <div class="avatar-glare"></div>
+          <div class="avatar-lock"><b>🔒</b><span id="avatarLockText"></span></div>
+        </div>
+      </div>
+      <div class="profile-head">
+        <div class="pm-level" id="profLevel">Seviye 0</div>
+        <h2 class="tier-name" id="profTier">Çaylak</h2>
+        <div class="xp-bar big"><div class="xp-fill" id="profXpFill"></div></div>
+        <div class="xp-text"><strong id="profXpText">0 / 200 XP</strong><span id="profXpNext">Lv 1</span></div>
+        <p class="next-unlock" id="profNextUnlock"></p>
+      </div>
+      <div class="stat-row spaced">
+        <div class="stat-tile gold"><strong id="profTotalXp">0</strong><span>Toplam XP</span></div>
+        <div class="stat-tile"><strong id="profSessions">0</strong><span>Antrenman</span></div>
+        <div class="stat-tile"><strong id="profReps">0</strong><span>Tekrar</span></div>
+      </div>
+      <p class="split-note" id="profSplit"></p>
+
+      <div class="section-title">Avatar Koleksiyonu</div>
+      <div class="tier-strip" id="tierStrip"></div>
+
+      <div class="section-title">Son Antrenmanlar</div>
+      <div class="log-list" id="historyList" style="max-height: none; margin-bottom: 12px;"></div>
+      <p class="rule-note">Üst vücut günü <b>450 XP</b>, alt vücut günü <b>550 XP</b> (yarım bırakılan antrenmanda yapılan set oranında). Seviye 1 için 200 XP; her seviye biraz daha fazla ister. Seviye 100 = 80.000 XP ≈ 160 antrenman. Her 10 seviyede yeni avatar.</p>
+    </main>
+  </div>
+
+  <nav class="tabbar" id="tabbar" aria-label="Ana menü">
+    <div class="tabbar-inner">
+      <button type="button" class="tab-btn" data-tab="menu"><span class="ico">🏋️</span>Antrenman</button>
+      <button type="button" class="tab-btn" data-tab="progress"><span class="ico">📈</span>İlerleme</button>
+      <button type="button" class="tab-btn" data-tab="profile"><span class="ico">👤</span>Profil</button>
+    </div>
+  </nav>
+
+  <!-- QUIT MODAL -->
+  <div class="sheet-backdrop center" id="quitModal" role="dialog" aria-modal="true" aria-labelledby="quitTitle">
+    <div class="modal">
+      <h2 id="quitTitle">Antrenmandan çık?</h2>
+      <p id="quitText"></p>
+      <div class="modal-actions">
+        <button type="button" class="complete-set-btn" id="quitSaveBtn">💾 Kaydet ve Bitir</button>
+        <button type="button" class="secondary-step-btn danger" id="quitDiscardBtn">Kaydetmeden Çık</button>
+        <button type="button" class="secondary-step-btn" id="quitCancelBtn">Devam Et</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEVEL UP MODAL -->
+  <div class="sheet-backdrop center" id="levelUpModal" role="dialog" aria-modal="true" aria-labelledby="luTitle">
+    <div class="modal">
+      <div class="lu-burst" id="luTitle">Seviye Atladın!</div>
+      <div class="lu-level" id="luLevel">1</div>
+      <div class="lu-avatar" id="luAvatar"></div>
+      <p id="luText"></p>
+      <div class="modal-actions">
+        <button type="button" class="complete-set-btn" id="luCloseBtn">Harika! 💪</button>
+      </div>
+    </div>
   </div>
 
   <!-- SETTINGS SHEET -->
@@ -1180,11 +1724,26 @@
         <button class="switch" id="swAwake" role="switch" aria-checked="true" aria-label="Ekranı açık tut"></button>
       </div>
 
+      <div class="set-row" style="display: block;">
+        <div class="set-row-text">
+          <b>Verileri yedekle</b>
+          <small>Geçmiş, rekorlar ve seviye bu telefonda saklanır. Telefon değiştirirken veya tarayıcı verisini silmeden önce yedek al.</small>
+        </div>
+        <div class="backup-row">
+          <button type="button" class="test-btn" id="exportBtn">⬇️ Yedek indir</button>
+          <button type="button" class="test-btn" id="importBtn">⬆️ Yedek yükle</button>
+        </div>
+        <input type="file" id="importFile" accept="application/json,.json" hidden>
+      </div>
+
       <div class="info-box" id="platformInfo"></div>
     </div>
   </div>
 
   <script src="figures.js"></script>
+  <script src="tracker.js"></script>
+  <script src="charts.js"></script>
+  <script src="avatar.js"></script>
   <script>
     /* ================= PREVENT ACCIDENTAL ZOOM ================= */
     // iOS Safari jest yakınlaştırmalarını ve çift dokunma zoom'unu iptal eder
@@ -1197,6 +1756,7 @@
       {
         id: 0,
         name: "1. Gün: Üst Vücut A",
+        type: "upper",
         desc: "Dikey Çekiş & Göğüs Öncelikli",
         exercises: [
           { name: "Barfiks (Geniş/Normal Tutuş)", fig: "pullup", category: "Dikey Çekiş", sets: 3, target: "RIR 1–2", tempo: "Kontrollü İniş", rest: 120, defReps: 8 },
@@ -1211,6 +1771,7 @@
       {
         id: 1,
         name: "2. Gün: Alt Vücut A",
+        type: "lower",
         desc: "Ön Bacak (Kuadriseps) Odaklı",
         exercises: [
           { name: "Split Squat", fig: "splitSquat", category: "Kuadriseps", sets: 3, target: "8–10 Tekrar (Bacak)", tempo: "3-1-1-0", rest: 90, note: "Bacaklar arası 45 sn dinlen", defReps: 10 },
@@ -1222,6 +1783,7 @@
       {
         id: 3,
         name: "3. Gün: Üst Vücut B",
+        type: "upper",
         desc: "Sırt Kalınlığı & Kol Öncelikli",
         exercises: [
           { name: "Inverted Row (Dips Barında)", fig: "invertedRow", category: "Yatay Çekiş", sets: 3, target: "8–10 Tekrar", tempo: "Sırtı Tam Sıkıştır", rest: 90, defReps: 10 },
@@ -1236,6 +1798,7 @@
       {
         id: 4,
         name: "4. Gün: Alt Vücut B",
+        type: "lower",
         desc: "Arka Zincir (Hamstring) Odaklı",
         exercises: [
           { name: "Dumbbell Deadlift / RDL", fig: "rdl", category: "Hamstring", sets: 3, target: "8–10 Tekrar", tempo: "3-2-1-0", rest: 120, note: "Dipte 2 sn esneme", defReps: 10 },
@@ -1245,6 +1808,23 @@
         ]
       }
     ];
+
+    // İstatistikler hareket bazında tutulur (aynı hareket farklı günlerde olsa da tek kayıt)
+    const EXERCISES = {
+      pullup: { name: 'Barfiks', category: 'Dikey Çekiş', group: 'upper' },
+      dip: { name: 'Dips', category: 'Göğüs İtiş', group: 'upper' },
+      declinePushup: { name: 'Decline Şınav', category: 'Üst Göğüs', group: 'upper' },
+      invertedRow: { name: 'Inverted Row', category: 'Yatay Çekiş', group: 'upper' },
+      curl: { name: 'Biceps Curl', category: 'Pazu', group: 'upper' },
+      tricepsOverhead: { name: 'Triceps Overhead Ext.', category: 'Triceps', group: 'upper' },
+      lateralRaise: { name: 'Lateral Raise', category: 'Yan Omuz', group: 'upper' },
+      shrug: { name: 'Shrug', category: 'Trapez', group: 'upper' },
+      neck: { name: 'Boyun Egzersizi', category: 'Boyun', group: 'upper' },
+      splitSquat: { name: 'Split Squat', category: 'Kuadriseps', group: 'lower' },
+      squat: { name: 'Normal Squat', category: 'Kuadriseps', group: 'lower' },
+      rdl: { name: 'Dumbbell RDL', category: 'Hamstring', group: 'lower' },
+      calfRaise: { name: 'Calf Raise', category: 'Kalf', group: 'lower' }
+    };
 
     /* ================= PLATFORM ================= */
     const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -1570,13 +2150,27 @@
       menu: document.getElementById('viewMenu'),
       workout: document.getElementById('viewActiveWorkout'),
       rest: document.getElementById('viewRest'),
-      summary: document.getElementById('viewSummary')
+      summary: document.getElementById('viewSummary'),
+      progress: document.getElementById('viewProgress'),
+      exercise: document.getElementById('viewExercise'),
+      profile: document.getElementById('viewProfile')
     };
+    // Alt sekme çubuğu sadece ana ekranlarda görünür (antrenman/dinlenme sırasında gizli)
+    const TAB_OF = { menu: 'menu', progress: 'progress', exercise: 'progress', profile: 'profile' };
+    let currentView = 'menu';
 
     function showView(viewKey) {
+      currentView = viewKey;
       Object.values(views).forEach((v) => v.classList.remove('active'));
       views[viewKey].classList.add('active');
       window.scrollTo(0, 0);
+      const tab = TAB_OF[viewKey];
+      document.body.classList.toggle('tabs-on', !!tab);
+      document.querySelectorAll('.tab-btn').forEach((b) => {
+        if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page');
+        else b.removeAttribute('aria-current');
+      });
+      if (viewKey === 'menu') renderProfileMini();
       Figures.sync(viewKey);
       Wake.sync();
     }
@@ -1600,10 +2194,15 @@
         this.next = this.mount(document.getElementById('nextThumb'), figId, this.next);
         this.sync('rest');
       },
+      showDetail(figId) {
+        this.detail = this.mount(document.getElementById('exDetailFig'), figId, this.detail);
+        this.sync('exercise');
+      },
       // Sadece görünen ekrandaki figür oynar (pil dostu)
       sync(viewKey) {
         if (this.main) (viewKey === 'workout' ? this.main.fig.play() : this.main.fig.stop());
         if (this.next) (viewKey === 'rest' ? this.next.fig.play() : this.next.fig.stop());
+        if (this.detail) (viewKey === 'exercise' ? this.detail.fig.play() : this.detail.fig.stop());
       }
     };
 
@@ -1749,6 +2348,7 @@
 
     /* Complete Set Button Action */
     document.getElementById('completeSetBtn').addEventListener('click', () => {
+      if (!session || !views.workout.classList.contains('active')) return;
       if ('vibrate' in navigator) navigator.vibrate(40);
       Voice.unlock();
       const finishedTask = workoutTasks[session.index];
@@ -1785,13 +2385,32 @@
       renderTask();
     });
 
+    /* Vazgeç: yapılan setler kaydedilip bitirilebilir ya da kaydetmeden çıkılabilir */
+    const quitModal = document.getElementById('quitModal');
+    const loggedCount = () => (session ? Object.keys(session.logs).length : 0);
+
     document.querySelectorAll('[data-quit]').forEach((btn) => btn.addEventListener('click', () => {
-      if (confirm('Mevcut antrenmandan çıkıp ana menüye dönmek istiyor musunuz?')) {
-        stopRest();
-        clearSession();
-        showView('menu');
-      }
+      if (!session) return;
+      const done = loggedCount();
+      const xp = Tracker.sessionXp(activeDay.type, done, workoutTasks.length);
+      document.getElementById('quitText').textContent = done
+        ? `${workoutTasks.length} setin ${done} tanesini kaydettin. Kaydedip bitirirsen bu setler istatistiklerine eklenir ve +${xp} XP kazanırsın.`
+        : 'Henüz hiç set kaydetmedin. Çıkarsan bu antrenman kaydedilmez.';
+      document.getElementById('quitSaveBtn').hidden = !done;
+      quitModal.classList.add('open');
     }));
+    document.getElementById('quitCancelBtn').addEventListener('click', () => quitModal.classList.remove('open'));
+    quitModal.addEventListener('click', (e) => { if (e.target === quitModal) quitModal.classList.remove('open'); });
+    document.getElementById('quitSaveBtn').addEventListener('click', () => {
+      quitModal.classList.remove('open');
+      finishWorkout();
+    });
+    document.getElementById('quitDiscardBtn').addEventListener('click', () => {
+      quitModal.classList.remove('open');
+      stopRest();
+      clearSession();
+      showView('menu');
+    });
 
     /* ================= REST TIMER ENGINE ================= */
     // Süre, bitiş zaman damgasından (endAt) hesaplanır: uygulama arka plana atılsa,
@@ -1960,6 +2579,7 @@
 
     /* ================= SUMMARY & RETURN ================= */
     function finishWorkout() {
+      if (!session) return;
       stopRest();
       const entries = Object.keys(session.logs)
         .map(Number)
@@ -1969,8 +2589,30 @@
       const totalReps = entries.reduce((acc, e) => acc + e.log.reps, 0);
       const prs = entries.filter((e) => e.log.prev !== null && e.log.prev !== undefined && e.log.reps > e.log.prev).length;
 
+      // Seansı geçmişe yaz ve puanı ver (tam antrenman: üst 450 / alt 550 XP)
+      const history = Tracker.load();
+      const before = Tracker.levelInfo(Tracker.totalXp(history));
+      let gained = 0;
+      let saved = false;
+      if (entries.length) {
+        gained = Tracker.sessionXp(activeDay.type, entries.length, workoutTasks.length);
+        saved = !!Tracker.addSession({
+          id: Date.now(),
+          date: new Date().toISOString(),
+          dayId: activeDay.id,
+          dayName: activeDay.name,
+          type: activeDay.type,
+          xp: gained,
+          setsDone: entries.length,
+          setsTotal: workoutTasks.length,
+          sets: entries.map((e) => ({ ex: e.task.fig, s: e.task.setNumber, r: e.log.reps }))
+        });
+      }
+      const after = Tracker.levelInfo(before.xp + (saved ? gained : 0));
+      renderSummaryXp(before, after, saved ? gained : 0, entries.length);
+
       document.getElementById('summaryDesc').textContent =
-        `${activeDay.name} seansında ${entries.length} / ${workoutTasks.length} set kaydedildi. Yeni rekorların sisteme işlendi!`;
+        `${activeDay.name} seansında ${entries.length} / ${workoutTasks.length} set kaydedildi.` + (saved ? ' İstatistiklerin ve rekorların güncellendi!' : '');
       document.getElementById('statSets').textContent = entries.length;
       document.getElementById('statReps').textContent = totalReps;
       document.getElementById('statPRs').textContent = prs;
@@ -1999,10 +2641,425 @@
 
       clearSession();
       showView('summary');
+      if (after.level > before.level) setTimeout(() => showLevelUp(before, after), 700);
     }
 
     document.getElementById('returnMenuBtn').addEventListener('click', () => {
       showView('menu');
+    });
+
+    /* ================= LEVEL / AVATAR HELPERS ================= */
+    const TIER_NAMES = ['Çaylak', 'Acemi', 'Sokak Dövüşçüsü', 'Demir Yumruk', 'Çelik Kas', 'Arena Şampiyonu', 'Titan', 'Canavar', 'Savaş Tanrısı', 'Efsane', 'Yenilmez'];
+    const fmtNum = (n) => Math.round(n).toLocaleString('tr-TR');
+
+    function tierName(tier) {
+      try { if (window.AvatarArt && AvatarArt.name) return AvatarArt.name(tier); } catch (e) {}
+      return TIER_NAMES[tier] || '';
+    }
+
+    // Avatar SVG'si (avatar.js yüklenemezse sade bir yedek gösterilir)
+    function avatarSvg(tier) {
+      try { if (window.AvatarArt && AvatarArt.svg) return AvatarArt.svg(tier, {}); } catch (e) {}
+      return `<svg viewBox="0 0 240 300" xmlns="http://www.w3.org/2000/svg"><rect width="240" height="300" fill="#18181b"/><text x="120" y="165" font-size="90" text-anchor="middle">💪</text><text x="120" y="250" font-size="22" fill="#f59e0b" text-anchor="middle" font-weight="800">${tier * 10}+</text></svg>`;
+    }
+
+    function currentLevel() {
+      return Tracker.levelInfo(Tracker.totalXp(Tracker.load()));
+    }
+
+    function setXpBar(fillEl, info) {
+      fillEl.style.width = `${Math.round(info.progress * 1000) / 10}%`;
+    }
+
+    function xpLabel(info) {
+      return info.isMax ? `${fmtNum(info.xp)} XP · MAX` : `${fmtNum(info.into)} / ${fmtNum(info.need)} XP`;
+    }
+
+    function renderProfileMini() {
+      const info = currentLevel();
+      const av = document.getElementById('pmAvatar');
+      if (av.dataset.tier !== String(info.tier)) {
+        av.innerHTML = avatarSvg(info.tier);
+        av.dataset.tier = String(info.tier);
+      }
+      document.getElementById('pmLevel').textContent = `Seviye ${info.level}`;
+      document.getElementById('pmTier').textContent = tierName(info.tier);
+      setXpBar(document.getElementById('pmXpFill'), info);
+      document.getElementById('pmXpText').textContent = xpLabel(info);
+      document.getElementById('pmNext').textContent = info.isMax ? '👑' : `Lv ${info.level + 1}`;
+    }
+
+    function renderSummaryXp(before, after, gained, setsDone) {
+      document.getElementById('sumAvatar').innerHTML = avatarSvg(after.tier);
+      document.getElementById('sumXp').textContent = `+${fmtNum(gained)} XP`;
+      const full = setsDone >= workoutTasks.length;
+      document.getElementById('sumXpSub').textContent = !gained
+        ? 'Set kaydedilmediği için puan yok.'
+        : full
+          ? `${activeDay.type === 'upper' ? 'Üst vücut' : 'Alt vücut'} antrenmanı tamamlandı`
+          : `${setsDone}/${workoutTasks.length} set yapıldı (tam antrenman: ${Tracker.XP_BY_TYPE[activeDay.type]} XP)`;
+      document.getElementById('sumLevel').textContent = after.level > before.level
+        ? `Seviye ${before.level} → ${after.level} 🎉`
+        : `Seviye ${after.level} · ${tierName(after.tier)}`;
+      document.getElementById('sumXpText').textContent = xpLabel(after);
+      // Çubuk eski değerden yeni değere dolar
+      const fill = document.getElementById('sumXpFill');
+      fill.style.transition = 'none';
+      fill.style.width = after.level > before.level ? '0%' : `${Math.round(before.progress * 1000) / 10}%`;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        fill.style.transition = '';
+        setXpBar(fill, after);
+      }));
+    }
+
+    const levelUpModal = document.getElementById('levelUpModal');
+    function showLevelUp(before, after) {
+      const newTier = after.tier > before.tier;
+      document.getElementById('luTitle').textContent = newTier ? 'Yeni Avatar Açıldı!' : 'Seviye Atladın!';
+      document.getElementById('luLevel').textContent = after.level;
+      document.getElementById('luAvatar').innerHTML = avatarSvg(after.tier);
+      const nextTierLevel = (after.tier + 1) * Tracker.TIER_EVERY;
+      document.getElementById('luText').textContent = newTier
+        ? `Artık "${tierName(after.tier)}" seviyesindesin. Vücudun da avatarın da güçleniyor!`
+        : after.isMax
+          ? 'Seviye 100! Zirvedesin.'
+          : `Bir sonraki avatar Seviye ${nextTierLevel}'de açılacak.`;
+      levelUpModal.classList.add('open');
+      if ('vibrate' in navigator) navigator.vibrate([60, 40, 60, 40, 120]);
+    }
+    document.getElementById('luCloseBtn').addEventListener('click', () => levelUpModal.classList.remove('open'));
+    levelUpModal.addEventListener('click', (e) => { if (e.target === levelUpModal) levelUpModal.classList.remove('open'); });
+
+    /* ================= PROGRESS (İLERLEME) ================= */
+    function renderProgress() {
+      const list = Tracker.load();
+      const ov = Tracker.overall(list);
+      document.getElementById('pgSessions').textContent = fmtNum(ov.sessions);
+      document.getElementById('pgSets').textContent = fmtNum(ov.sets);
+      document.getElementById('pgReps').textContent = fmtNum(ov.reps);
+
+      const wrap = document.getElementById('progressGroups');
+      wrap.innerHTML = '';
+      [['upper', 'Üst Vücut'], ['lower', 'Alt Vücut']].forEach(([group, title]) => {
+        const h = document.createElement('div');
+        h.className = 'section-title';
+        h.textContent = title;
+        const box = document.createElement('div');
+        box.className = 'ex-list';
+        Object.entries(EXERCISES).filter(([, e]) => e.group === group).forEach(([key, ex]) => {
+          const sm = Tracker.exerciseSummary(list, key);
+          const row = document.createElement('button');
+          row.type = 'button';
+          row.className = 'ex-row' + (sm.sessions ? '' : ' empty');
+
+          const thumb = document.createElement('span');
+          thumb.className = 'thumb';
+          thumb.appendChild(ExerciseFigures.create(key, { t: 1 }).svg);
+
+          const info = document.createElement('span');
+          info.className = 'ex-row-info';
+          const b = document.createElement('b');
+          b.textContent = ex.name;
+          const small = document.createElement('small');
+          small.textContent = sm.sessions
+            ? `Toplam ${fmtNum(sm.total)} tekrar · son ${Charts.fmtDate(sm.last.t)}`
+            : 'Henüz kayıt yok';
+          info.append(b, small);
+
+          const nums = document.createElement('span');
+          nums.className = 'ex-row-nums';
+          const strong = document.createElement('strong');
+          strong.textContent = sm.sessions ? sm.best : '–';
+          const lbl = document.createElement('span');
+          lbl.textContent = 'Max / set';
+          nums.append(strong, lbl);
+
+          row.append(thumb, info, nums);
+          row.addEventListener('click', () => openExercise(key));
+          box.appendChild(row);
+        });
+        wrap.append(h, box);
+      });
+    }
+
+    /* ================= EXERCISE DETAIL ================= */
+    const exState = { key: null, metric: 'best', range: 'all' };
+
+    function openExercise(key) {
+      exState.key = key;
+      Figures.showDetail(key);
+      showView('exercise');
+      renderExercise();
+    }
+
+    function renderExercise() {
+      const key = exState.key;
+      const ex = EXERCISES[key];
+      if (!ex) return;
+      const list = Tracker.load();
+      const sm = Tracker.exerciseSummary(list, key);
+      document.getElementById('exDetailCat').textContent = ex.category;
+      document.getElementById('exDetailName').textContent = ex.name;
+      document.getElementById('exBest').textContent = sm.sessions ? sm.best : '–';
+      document.getElementById('exTotal').textContent = fmtNum(sm.total);
+      document.getElementById('exSessions').textContent = sm.sessions;
+
+      document.querySelectorAll('[data-metric]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.metric === exState.metric)));
+      document.querySelectorAll('[data-range]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.range === exState.range)));
+
+      const isBest = exState.metric === 'best';
+      document.getElementById('chartTitle').textContent = isBest ? 'Set başı max tekrar' : 'Seans başına toplam tekrar';
+      const from = exState.range === 'all' ? 0 : Date.now() - Number(exState.range) * 86400000;
+      const daily = Tracker.exerciseDaily(list, key).filter((d) => d.t >= from);
+      document.getElementById('chartSub').textContent = daily.length
+        ? `${Charts.fmtDateLong(daily[0].t)} – ${Charts.fmtDateLong(daily[daily.length - 1].t)}`
+        : '';
+      const points = daily.map((d) => ({ t: d.t, v: isBest ? d.best : d.total, detail: `Setler: ${d.reps.join(' · ')}` }));
+      Charts.line(document.getElementById('exChart'), points, {
+        unit: 'tekrar',
+        label: document.getElementById('chartTitle').textContent,
+        emptyText: sm.sessions
+          ? 'Bu tarih aralığında kayıt yok.'
+          : 'Henüz kayıt yok. Bu hareketi içeren bir antrenmanı bitirince grafik burada oluşur.'
+      });
+      document.getElementById('chartNote').textContent = points.length === 1
+        ? 'Eğrinin oluşması için en az 2 farklı günde kayıt gerekir.'
+        : points.length > 1 ? 'Noktaya dokun veya parmağını kaydır: o günün setleri görünür. ★ = rekor.' : '';
+
+      // Kayıt tablosu (yeniden eskiye)
+      const tbody = document.getElementById('exTableBody');
+      tbody.innerHTML = '';
+      const rows = Tracker.exerciseSessions(list, key).reverse();
+      if (!rows.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 4;
+        td.className = 'table-empty';
+        td.textContent = 'Kayıt yok';
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+      }
+      // Rekor ilk ulaşıldığı seansta işaretlenir
+      const prId = [...rows].reverse().find((r) => r.best === sm.best)?.id;
+      rows.forEach((r) => {
+        const tr = document.createElement('tr');
+        const tdDate = document.createElement('td');
+        tdDate.textContent = Charts.fmtDateLong(r.t);
+        const sub = document.createElement('small');
+        sub.textContent = r.dayName;
+        tdDate.appendChild(sub);
+        const tdSets = document.createElement('td');
+        tdSets.textContent = r.reps.join(' · ');
+        const tdMax = document.createElement('td');
+        tdMax.className = 'num' + (r.id === prId ? ' pr' : '');
+        tdMax.textContent = (r.id === prId ? '★ ' : '') + r.best;
+        const tdTotal = document.createElement('td');
+        tdTotal.className = 'num';
+        tdTotal.textContent = r.total;
+        tr.append(tdDate, tdSets, tdMax, tdTotal);
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.querySelectorAll('[data-metric]').forEach((b) => b.addEventListener('click', () => { exState.metric = b.dataset.metric; renderExercise(); }));
+    document.querySelectorAll('[data-range]').forEach((b) => b.addEventListener('click', () => { exState.range = b.dataset.range; renderExercise(); }));
+    document.getElementById('exBackBtn').addEventListener('click', () => { renderProgress(); showView('progress'); });
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { if (currentView === 'exercise') renderExercise(); }, 150);
+    });
+
+    /* ================= PROFILE ================= */
+    const avatarCard = document.getElementById('avatarCard');
+    let previewTier = null;
+
+    function setProfileAvatar(tier, info) {
+      document.getElementById('profileAvatar').innerHTML = avatarSvg(tier);
+      const locked = tier > info.tier;
+      avatarCard.classList.toggle('locked-preview', locked);
+      document.getElementById('avatarLockText').textContent = locked ? `Seviye ${tier * Tracker.TIER_EVERY}'de açılır` : '';
+    }
+
+    function renderProfile() {
+      const list = Tracker.load();
+      const info = Tracker.levelInfo(Tracker.totalXp(list));
+      const ov = Tracker.overall(list);
+      previewTier = null;
+      setProfileAvatar(info.tier, info);
+
+      document.getElementById('profLevel').textContent = `Seviye ${info.level} / ${Tracker.MAX_LEVEL}`;
+      document.getElementById('profTier').textContent = tierName(info.tier);
+      setXpBar(document.getElementById('profXpFill'), info);
+      document.getElementById('profXpText').textContent = xpLabel(info);
+      document.getElementById('profXpNext').textContent = info.isMax ? 'Maksimum seviye' : `Lv ${info.level + 1}'e ${fmtNum(info.need - info.into)} XP`;
+
+      const unlock = document.getElementById('profNextUnlock');
+      unlock.textContent = '';
+      if (info.tier < Tracker.MAX_TIER) {
+        const nextTier = info.tier + 1;
+        const lvl = nextTier * Tracker.TIER_EVERY;
+        const xpLeft = Tracker.xpForLevel(lvl) - info.xp;
+        const b = document.createElement('strong');
+        b.textContent = tierName(nextTier);
+        unlock.append('Sonraki avatar ', b, ` · Seviye ${lvl} · ${fmtNum(xpLeft)} XP kaldı (≈ ${Math.max(1, Math.ceil(xpLeft / 500))} antrenman)`);
+      } else {
+        unlock.textContent = 'Tüm avatarları açtın. Efsanesin! 👑';
+      }
+
+      document.getElementById('profTotalXp').textContent = fmtNum(info.xp);
+      document.getElementById('profSessions').textContent = fmtNum(ov.sessions);
+      document.getElementById('profReps').textContent = fmtNum(ov.reps);
+      document.getElementById('profSplit').textContent = ov.sessions
+        ? `Üst vücut: ${ov.upper} antrenman · Alt vücut: ${ov.lower} antrenman · ${fmtNum(ov.sets)} set`
+        : 'İlk antrenmanını bitir, XP kazanmaya başla!';
+
+      // Avatar koleksiyonu
+      const strip = document.getElementById('tierStrip');
+      strip.innerHTML = '';
+      for (let t = 0; t <= Tracker.MAX_TIER; t++) {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'tier-item' + (t > info.tier ? ' locked' : '') + (t === info.tier ? ' current' : '');
+        const av = document.createElement('div');
+        av.className = 'av';
+        av.innerHTML = avatarSvg(t);
+        const cap = document.createElement('small');
+        const nm = document.createElement('b');
+        nm.textContent = tierName(t);
+        cap.append(nm, `Lv ${t * Tracker.TIER_EVERY}`);
+        item.append(av, cap);
+        item.setAttribute('aria-label', `${tierName(t)} avatarı, seviye ${t * Tracker.TIER_EVERY}${t > info.tier ? ', kilitli' : ''}`);
+        item.addEventListener('click', () => {
+          previewTier = previewTier === t ? null : t;
+          setProfileAvatar(previewTier === null ? info.tier : t, info);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        strip.appendChild(item);
+      }
+      const cur = strip.children[info.tier];
+      if (cur) strip.scrollLeft = Math.max(0, cur.offsetLeft - 8);
+
+      // Son antrenmanlar
+      const hl = document.getElementById('historyList');
+      hl.innerHTML = '';
+      const recent = list.slice(-20).reverse();
+      if (!recent.length) {
+        const empty = document.createElement('div');
+        empty.className = 'table-empty';
+        empty.textContent = 'Henüz antrenman yok';
+        hl.appendChild(empty);
+      }
+      recent.forEach((sess) => {
+        const row = document.createElement('div');
+        row.className = 'log-item history-item';
+        const name = document.createElement('span');
+        name.className = 'log-ex-name';
+        name.textContent = sess.dayName || 'Antrenman';
+        const sub = document.createElement('small');
+        sub.textContent = `${Charts.fmtDateLong(Date.parse(sess.date))} · ${sess.setsDone || sess.sets.length}/${sess.setsTotal || sess.sets.length} set`;
+        name.appendChild(sub);
+        const xp = document.createElement('span');
+        xp.className = 'xp-pill';
+        xp.textContent = `+${fmtNum(sess.xp || 0)} XP`;
+        row.append(name, xp);
+        hl.appendChild(row);
+      });
+    }
+
+    // 3D kart: parmakla/fareyle eğ, parlama ışığı takip etsin
+    (function setupAvatarTilt() {
+      const stage = document.getElementById('avatarStage');
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce) return;
+      const tilt = (clientX, clientY) => {
+        const r = avatarCard.getBoundingClientRect();
+        const px = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
+        const py = Math.min(1, Math.max(0, (clientY - r.top) / r.height));
+        avatarCard.style.transform = `rotateY(${(px - 0.5) * 26}deg) rotateX(${(0.5 - py) * 22}deg)`;
+        avatarCard.style.setProperty('--gx', `${px * 100}%`);
+        avatarCard.style.setProperty('--gy', `${py * 100}%`);
+      };
+      const reset = () => {
+        avatarCard.style.transform = '';
+        avatarCard.style.removeProperty('--gx');
+        avatarCard.style.removeProperty('--gy');
+      };
+      stage.addEventListener('pointermove', (e) => tilt(e.clientX, e.clientY));
+      stage.addEventListener('pointerdown', (e) => tilt(e.clientX, e.clientY));
+      stage.addEventListener('pointerleave', reset);
+      stage.addEventListener('pointerup', (e) => { if (e.pointerType !== 'mouse') setTimeout(reset, 600); });
+      // Android: telefonu eğince kart da hafifçe eğilir (izin gerektirmez)
+      if (!IS_IOS && 'DeviceOrientationEvent' in window) {
+        window.addEventListener('deviceorientation', (e) => {
+          if (currentView !== 'profile' || e.gamma === null || e.beta === null) return;
+          const gx = Math.max(-1, Math.min(1, e.gamma / 30));
+          const gy = Math.max(-1, Math.min(1, (e.beta - 45) / 30));
+          avatarCard.style.transform = `rotateY(${gx * 12}deg) rotateX(${-gy * 10}deg)`;
+        });
+      }
+    })();
+
+    /* ================= TABS ================= */
+    function openTab(tab) {
+      if (tab === 'progress') renderProgress();
+      if (tab === 'profile') renderProfile();
+      showView(tab);
+    }
+    document.querySelectorAll('.tab-btn').forEach((b) => b.addEventListener('click', () => openTab(b.dataset.tab)));
+    const profileMini = document.getElementById('profileMini');
+    profileMini.addEventListener('click', () => openTab('profile'));
+    profileMini.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openTab('profile'); } });
+
+    /* ================= BACKUP ================= */
+    function todayStamp() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    document.getElementById('exportBtn').addEventListener('click', async () => {
+      const json = Tracker.exportData({ records: getSavedRecords() });
+      const fileName = `athlete-quest-yedek-${todayStamp()}.json`;
+      let file = null;
+      try { file = new File([json], fileName, { type: 'application/json' }); } catch (e) {}
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: 'Athlete Quest yedeği' });
+          return;
+        } catch (e) {
+          if (e && e.name === 'AbortError') return;
+        }
+      }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    });
+
+    const importFile = document.getElementById('importFile');
+    document.getElementById('importBtn').addEventListener('click', () => importFile.click());
+    importFile.addEventListener('change', async () => {
+      const f = importFile.files && importFile.files[0];
+      importFile.value = '';
+      if (!f) return;
+      try {
+        const data = Tracker.parseBackup(await f.text());
+        const current = Tracker.load();
+        const ids = new Set(current.map((x) => x.id));
+        const added = data.history.filter((x) => !ids.has(x.id));
+        if (!confirm(`Yedekte ${data.history.length} antrenman var; ${added.length} tanesi yeni. Mevcut kayıtlarla birleştirilsin mi?`)) return;
+        Tracker.replaceHistory(current.concat(added));
+        if (data.records) lsSet(OVERLOAD_STORAGE_KEY, Object.assign({}, data.records, getSavedRecords()));
+        renderProfileMini();
+        if (currentView === 'profile') renderProfile();
+        if (currentView === 'progress') renderProgress();
+        alert(`Yedek yüklendi: ${added.length} antrenman eklendi.`);
+      } catch (e) {
+        alert(e.message || 'Yedek yüklenemedi.');
+      }
     });
 
     /* ================= SETTINGS UI ================= */
@@ -2158,7 +3215,8 @@
     Voice.init();
     renderSettings();
     renderMenu();
-    restoreSession();
+    renderProfileMini();
+    if (!restoreSession()) showView('menu');
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

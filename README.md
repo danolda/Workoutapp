@@ -16,7 +16,31 @@
 - Dinlenme sayacı **bitiş zamanına göre** hesaplanır: uygulama arka plana atılsa, telefon kilitlense
   ya da uygulama kapanıp açılsa bile süre doğru devam eder; dinlenme bittiyse sıradaki sete geçilir
 - Sesli uyarılar: 1 dk, 30 sn, 15 sn ve 5-4-3-2-1 geri sayım — **Spotify'ı durdurmaz**
-- ⚙️ Ayarlar: ses türü (telefon sesi / kayıtlı ses), ses testi, kilit ekranı bildirimi, ekranı açık tutma
+- ⚙️ Ayarlar: ses türü (telefon sesi / kayıtlı ses), ses testi, kilit ekranı bildirimi, ekranı açık tutma,
+  verileri yedekle / geri yükle
+
+## Kişisel Takip (📈 İlerleme)
+
+- Her hareket için **set başı max tekrar** ve **toplam tekrar** telefonda (localStorage) saklanır
+- Harekete dokununca tarihe göre **eğri grafik** (Max / set veya seans toplamı; 30 gün / 90 gün / tümü)
+  ve tüm seansların **tablosu** açılır (★ = rekor)
+- Aynı hareket farklı günlerde olsa da (ör. Dips 1. ve 3. gün) tek hareket olarak toplanır
+
+## Seviye ve Avatar (👤 Profil)
+
+| | |
+|---|---|
+| Üst vücut günü | **450 XP** |
+| Alt vücut günü | **550 XP** |
+| Yarım bırakılan antrenman | Yapılan set oranında XP (ör. 17 setin 2'si → 53 XP) |
+| Seviye 1 | 200 XP |
+| Her seviye | bir öncekinden ~12 XP daha fazla ister |
+| Seviye 100 | toplam **80.000 XP** = yarı yarıya üst/alt ile **160 antrenman** |
+
+Formül: `n. seviye için toplam XP = 200·n + round(200·n·(n−1) / 33)`
+
+Her 10 seviyede avatar daha kaslı bir forma geçer (11 form: Çaylak → Yenilmez). Profilde avatar kartı
+parmakla eğilebilen 3D bir kart olarak görünür; tüm formlar "Avatar Koleksiyonu"nda listelenir.
 
 ## Arka planda sesli uyarı (müzik açıkken)
 
@@ -55,6 +79,9 @@ Bu 4 MP3'ü kendin kaydedip aynı klasöre koy:
 📁 repo/
 ├── index.html      ← Ana uygulama
 ├── figures.js      ← Egzersiz animasyonları (SVG)
+├── tracker.js      ← Geçmiş, istatistik, XP / seviye hesabı
+├── charts.js       ← İlerleme grafikleri (SVG)
+├── avatar.js       ← Seviyeye göre gelişen avatar (SVG)
 ├── manifest.json   ← PWA ayarları
 ├── sw.js           ← Service Worker (offline + arka plan bildirimleri)
 ├── icon-192.png    ← Uygulama ikonu
