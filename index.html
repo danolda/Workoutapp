@@ -2124,7 +2124,7 @@
 
     /* ================= ANDROID BACKGROUND KEEP-ALIVE ================= */
     // Chrome (Android) arka plandaki sayfanın zamanlayıcılarını yavaşlatır, bir süre sonra dondurur;
-    // ses çalan sayfalar bundan muaftır. Antrenman sırasında uygulama arka plandayken duyulamayacak kadar
+    // ses çalan sayfalar bundan muaftır. Dinlenme sırasında uygulama arka plandayken duyulamayacak kadar
     // kısık 22 Hz'lik bir ton Web Audio ile çalınır: Chrome sayfayı "ses çalıyor" sayar ve uyarılar zamanında
     // çalar. Web Audio Android'de ses odağı istemez (Chromium: ambient player) → YouTube Music/Spotify durmaz.
     const KeepAlive = {
@@ -2150,9 +2150,10 @@
           this.gain = null;
         }
       },
+      // Sadece dinlenmede ve uygulama arka plandayken çalışır (set sırasında zamanlayıcı yok → pil harcamasın)
       sync() {
         if (!this.ctx) return;
-        const active = !!session && document.visibilityState === 'hidden';
+        const active = !!(session && session.rest) && document.visibilityState === 'hidden';
         try {
           if (active) {
             this.gain.gain.value = 0.0015; // ≈ -57 dBFS, 22 Hz: kulakla duyulmaz
@@ -2850,6 +2851,7 @@
         saveSession();
       }
       Notify.post({ type: 'rest-stop' });
+      KeepAlive.sync();
       document.title = 'Athlete Quest | Progressive Overload Tracker';
     }
 
