@@ -987,6 +987,47 @@
     }
     .info-box strong { color: var(--text); }
     .backup-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .ntfy-steps {
+      margin: 10px 0 0 18px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .ntfy-steps a { color: #a5b4fc; font-weight: 700; }
+    .ntfy-topic {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-top: 4px;
+    }
+    .ntfy-topic code {
+      flex: 1;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.8rem;
+      color: var(--text);
+      user-select: all;
+      -webkit-user-select: all;
+    }
+    .mini-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
     .backup-row .test-btn { margin: 8px 0 0; }
 
     /* ================= TAB BAR ================= */
@@ -1694,6 +1735,19 @@
     </div>
   </div>
 
+  <!-- NOTIFICATION PERMISSION MODAL -->
+  <div class="sheet-backdrop center" id="notifyModal" role="dialog" aria-modal="true" aria-labelledby="notifyTitle">
+    <div class="modal">
+      <div style="font-size: 2.4rem; line-height: 1;">🔒</div>
+      <h2 id="notifyTitle" style="margin-top: 8px;">Kilit ekranı kartı</h2>
+      <p>Telefon kilitliyken ya da müzik uygulamasındayken <strong>dinlenme süresini, sıradaki seti ve tekrarlarını</strong> kilit ekranında gör; 1 dk / 30 sn / bitti uyarıları bildirim olarak gelsin.</p>
+      <div class="modal-actions">
+        <button type="button" class="complete-set-btn" id="notifyAllowBtn">🔔 Bildirimlere izin ver</button>
+        <button type="button" class="secondary-step-btn" id="notifyLaterBtn">Şimdi değil</button>
+      </div>
+    </div>
+  </div>
+
   <!-- LEVEL UP MODAL -->
   <div class="sheet-backdrop center" id="levelUpModal" role="dialog" aria-modal="true" aria-labelledby="luTitle">
     <div class="modal">
@@ -1741,6 +1795,25 @@
           <small id="notifyHelp">Uygulama arka plandayken "30 saniye kaldı" bildirimi gönderir.</small>
         </div>
         <button class="switch" id="swNotify" role="switch" aria-checked="false" aria-label="Kilit ekranı bildirimi"></button>
+      </div>
+
+      <div class="set-row" style="display: block;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <div class="set-row-text">
+            <b>Kilit ekranı uyarıları (ntfy)</b>
+            <small id="ntfyHelp"></small>
+          </div>
+          <button class="switch" id="swNtfy" role="switch" aria-checked="false" aria-label="ntfy kilit ekranı uyarıları"></button>
+        </div>
+        <ol class="ntfy-steps" id="ntfySetup" hidden>
+          <li>Ücretsiz <b>ntfy</b> uygulamasını kur:
+            <a href="https://apps.apple.com/us/app/ntfy/id1625396347" target="_blank" rel="noopener">App Store</a> ·
+            <a href="https://play.google.com/store/apps/details?id=io.heckel.ntfy" target="_blank" rel="noopener">Google Play</a></li>
+          <li>ntfy'de <b>+</b>'ya dokun, bu konu adını yapıştır ve abone ol:
+            <span class="ntfy-topic"><code id="ntfyTopic"></code><button type="button" class="mini-btn" id="ntfyCopyBtn">Kopyala</button></span>
+            <span id="ntfyAndroidLink" hidden>Android'de: <a id="ntfyDeepLink" href="#">tek dokunuşla abone ol</a></span></li>
+          <li><button type="button" class="test-btn" id="ntfyTestBtn" style="margin: 2px 0 0;">📨 Test bildirimi gönder</button></li>
+        </ol>
       </div>
 
       <div class="set-row">
@@ -1874,10 +1947,17 @@
     const SETTINGS_KEY = 'athlete_quest_settings_v1';
     // iPhone: konuşma sentezi müziği kısar (durdurmaz). Android: <5 sn'lik kayıtlar müziği kısar.
     const settings = Object.assign(
-      { sound: true, voice: IS_IOS ? 'tts' : 'clip', notify: true, keepAwake: true },
+      { sound: true, voice: 'clip', notify: true, keepAwake: true, ntfy: false, ntfyTopic: '' },
       lsGet(SETTINGS_KEY, {})
     );
     const saveSettings = () => lsSet(SETTINGS_KEY, settings);
+    // Kayıtlı sesler müziğin üstünde duyulacak şekilde yeniden işlendi (~20 dB daha yüksek):
+    // iki platformda da varsayılan artık kayıtlı ses (Telefon sesi müziğin altında kalıyordu)
+    if (!settings.audioV2) {
+      settings.voice = 'clip';
+      settings.audioV2 = true;
+      saveSettings();
+    }
 
     /* ================= VOICE / AUDIO SYSTEM ================= */
     // Önemli: Spotify vb. müziği DURDURMAMAK için
@@ -1901,7 +1981,7 @@
         for (let i = Math.floor(t0 * CHIME_RATE); i < n; i++) {
           const t = i / CHIME_RATE - t0;
           const env = Math.min(1, t / 0.005) * Math.exp(-t * 6);
-          out[i] += 0.35 * env * (Math.sin(2 * Math.PI * f * t) + 0.25 * Math.sin(4 * Math.PI * f * t));
+          out[i] += 0.5 * env * (Math.sin(2 * Math.PI * f * t) + 0.25 * Math.sin(4 * Math.PI * f * t));
         }
       });
       return out;
@@ -2042,6 +2122,141 @@
       }
     };
 
+    /* ================= ANDROID BACKGROUND KEEP-ALIVE ================= */
+    // Chrome (Android) arka plandaki sayfanın zamanlayıcılarını yavaşlatır, bir süre sonra dondurur;
+    // ses çalan sayfalar bundan muaftır. Antrenman sırasında uygulama arka plandayken duyulamayacak kadar
+    // kısık 22 Hz'lik bir ton Web Audio ile çalınır: Chrome sayfayı "ses çalıyor" sayar ve uyarılar zamanında
+    // çalar. Web Audio Android'de ses odağı istemez (Chromium: ambient player) → YouTube Music/Spotify durmaz.
+    const KeepAlive = {
+      ctx: null,
+      gain: null,
+      supported: !IS_IOS && !!(window.AudioContext || window.webkitAudioContext),
+      // Kullanıcı dokunuşunda hazırlanır (tarayıcı sesi ancak dokunuştan sonra başlatmaya izin verir)
+      prepare() {
+        if (!this.supported || this.ctx) return;
+        try {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AC({ latencyHint: 'playback' });
+          const osc = this.ctx.createOscillator();
+          osc.frequency.value = 22;
+          this.gain = this.ctx.createGain();
+          this.gain.gain.value = 0;
+          osc.connect(this.gain);
+          this.gain.connect(this.ctx.destination);
+          osc.start();
+          this.ctx.suspend().catch(() => {});
+        } catch (e) {
+          this.ctx = null;
+          this.gain = null;
+        }
+      },
+      sync() {
+        if (!this.ctx) return;
+        const active = !!session && document.visibilityState === 'hidden';
+        try {
+          if (active) {
+            this.gain.gain.value = 0.0015; // ≈ -57 dBFS, 22 Hz: kulakla duyulmaz
+            this.ctx.resume().catch(() => {});
+          } else {
+            this.gain.gain.value = 0;
+            this.ctx.suspend().catch(() => {});
+          }
+        } catch (e) {}
+      },
+      close() {
+        if (!this.ctx) return;
+        this.ctx.close().catch(() => {});
+        this.ctx = null;
+        this.gain = null;
+      }
+    };
+
+    /* ================= NTFY: KİLİT EKRANI UYARILARI (OPSİYONEL) ================= */
+    // iPhone'da web uygulamaları arka planda çalışamaz. Açılırsa, uygulamadan çıkarken dinlenme uyarıları
+    // ücretsiz ntfy.sh sunucusunda ileri tarihli mesaj olarak planlanır; telefondaki ntfy uygulaması bunları
+    // uygulama kapalıyken bile kilit ekranında gösterir. Uygulamaya dönünce / dinlenme bitince silinir.
+    const NTFY_BASE = 'https://ntfy.sh';
+    const NTFY_CUES = [60, 30, 0];
+    const NTFY_EARLY_MS = 5000;     // ntfy.sh ileri tarihli mesajları 10 sn'lik adımlarla yollar (0-10 sn gecikme)
+    const NTFY_MIN_LEAD_MS = 11000; // ntfy en az 10 sn sonrası için planlama kabul eder
+    const Ntfy = {
+      get enabled() { return !!(settings.ntfy && settings.ntfyTopic); },
+      request(method, seq, params, body) {
+        const q = params ? `?${new URLSearchParams(params).toString()}` : '';
+        const init = { method, keepalive: true, mode: 'cors' };
+        if (body !== undefined) {
+          init.body = body;
+          init.headers = { 'Content-Type': 'text/plain; charset=utf-8' };
+        }
+        return fetch(`${NTFY_BASE}/${encodeURIComponent(settings.ntfyTopic)}/${seq}${q}`, init).catch(() => null);
+      },
+      pending() {
+        if (!session || !session.rest) return {};
+        session.rest.ntfy = session.rest.ntfy || {};
+        return session.rest.ntfy;
+      },
+      // Uygulamadan çıkarken: kalan uyarıları planla (aynı sıra numarası eskisinin yerine geçer)
+      schedule() {
+        if (!this.enabled || !session || !session.rest) return;
+        const now = Date.now();
+        const pending = this.pending();
+        NTFY_CUES.forEach((cue) => {
+          const at = session.rest.endAt - cue * 1000 - NTFY_EARLY_MS;
+          if (at - now >= NTFY_MIN_LEAD_MS) {
+            const m = ntfyMessage(cue);
+            this.request('PUT', `aq-${cue}`, { title: m.title, priority: m.priority, at: String(Math.round(at / 1000)) }, m.body);
+            pending[cue] = at;
+          } else if (pending[cue] > now + 1000) {
+            this.request('DELETE', `aq-${cue}`);
+            delete pending[cue];
+          }
+        });
+        saveSession();
+      },
+      // Uygulamaya dönünce / dinlenme bitince: henüz gönderilmemiş uyarıları sil
+      cancel() {
+        if (!session || !session.rest || !session.rest.ntfy) return;
+        const now = Date.now();
+        Object.keys(session.rest.ntfy).forEach((cue) => {
+          if (session.rest.ntfy[cue] > now + 1000 && settings.ntfyTopic) this.request('DELETE', `aq-${cue}`);
+        });
+        session.rest.ntfy = {};
+        saveSession();
+      },
+      test() {
+        return this.request('PUT', 'aq-test', { title: '✅ Athlete Quest bağlandı', priority: '4' },
+          'Kilit ekranı uyarıları bu telefonda çalışıyor. Dinlenmedeyken uygulamadan çıkınca 1 dk / 30 sn / bitti uyarıları buraya gelir.');
+      }
+    };
+
+    function ntfyMessage(cue) {
+      const next = workoutTasks[session.index + 1];
+      const doneSets = Object.keys(session.logs).length;
+      const lastLog = session.logs[session.index];
+      if (cue === 0) {
+        return {
+          title: '✅ Dinlenme bitti — sıradaki set!',
+          priority: '5',
+          body: next ? `${next.name} · Set ${next.setNumber}/${next.totalSets}\nHedef: ${next.target}` : 'Sıradaki sete geç.'
+        };
+      }
+      return {
+        title: cueTitle(cue),
+        priority: '4',
+        body: [
+          next ? `Sıradaki: ${next.name} · Set ${next.setNumber}/${next.totalSets}` : '',
+          `${lastLog ? `Son set: ${lastLog.reps} tekrar · ` : ''}✔ ${doneSets}/${workoutTasks.length} set`,
+          `Bitiş: ${clockTime(session.rest.endAt)}`
+        ].filter(Boolean).join('\n')
+      };
+    }
+
+    function randomTopic() {
+      const bytes = new Uint8Array(10);
+      crypto.getRandomValues(bytes);
+      return 'aq-' + Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+    }
+
     /* ================= WAKE LOCK ================= */
     const Wake = {
       lock: null,
@@ -2066,7 +2281,9 @@
     };
 
     /* ================= NOTIFICATIONS (SERVICE WORKER) ================= */
-    const NOTIFY_TAG = 'rest-timer';
+    // Tek bir "antrenman kartı" bildirimi: kilit ekranında set/tekrar bilgisi + dinlenme süresi.
+    // Uyarı anlarında aynı kart sesli/titreşimli güncellenir (bildirimler üst üste yığılmaz).
+    const NOTIFY_TAG = 'workout-card';
     const NOTIFY_CUES = [60, 30, 15, 0];
     const Notify = {
       get supported() { return 'Notification' in window && 'serviceWorker' in navigator; },
@@ -2088,15 +2305,32 @@
           if (target) target.postMessage(msg);
         } catch (e) {}
       },
-      async show(sec, nextText, silent) {
-        if (!this.enabled) return;
+      // Kartı göster/güncelle. alert=true: ses + titreşim (uyarı anı); aksi halde sessiz güncelleme
+      async card(opts) {
+        opts = opts || {};
+        if (!this.enabled || !session) return;
+        const c = cardContent(opts.cue);
+        if (!c) return;
         try {
           const reg = await navigator.serviceWorker.ready;
-          const opts = { body: 'Sıradaki: ' + nextText, tag: NOTIFY_TAG, renotify: true, icon: 'icon-192.png', badge: 'icon-192.png', silent: !!silent };
-          if (!silent) opts.vibrate = sec === 0 ? [300, 120, 300] : [200, 100, 200];
-          await reg.showNotification(cueTitle(sec), opts);
+          const o = {
+            body: c.body,
+            tag: NOTIFY_TAG,
+            renotify: !!opts.alert,
+            silent: !opts.alert,
+            requireInteraction: true,
+            icon: 'icon-192.png',
+            badge: 'icon-192.png',
+            timestamp: c.timestamp,
+            actions: c.actions,
+            data: { kind: 'card', restId: session.rest ? session.rest.id : null }
+          };
+          if (opts.alert) o.vibrate = opts.cue === 0 ? [300, 120, 300] : [200, 100, 200];
+          await reg.showNotification(c.title, o);
+          this.cardShownAt = Date.now();
         } catch (e) {}
       },
+      cardShownAt: 0,
       async clear() {
         if (!this.supported) return;
         try {
@@ -2110,6 +2344,46 @@
       if (sec === 0) return '✅ Dinlenme bitti!';
       if (sec === 60) return '⏱ 1 dakika kaldı';
       return `⏱ ${sec} saniye kaldı`;
+    }
+
+    function clockTime(t) {
+      const d = new Date(t);
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+    }
+
+    // Kilit ekranı kartının içeriği (o anki set veya dinlenme durumu)
+    function cardContent(cue) {
+      if (!session || !workoutTasks.length) return null;
+      const total = workoutTasks.length;
+      const doneSets = Object.keys(session.logs).length;
+      const repsToday = Object.values(session.logs).reduce((a, l) => a + (l.reps || 0), 0);
+      const progress = `✔ ${doneSets}/${total} set · ${repsToday} tekrar`;
+      if (session.rest) {
+        const next = workoutTasks[session.index + 1];
+        const left = Math.max(0, Math.ceil((session.rest.endAt - Date.now()) / 1000));
+        const lastLog = session.logs[session.index];
+        const title = cue !== undefined ? cueTitle(cue) : left > 0 ? `⏱ Dinlenme · ${formatMinSec(left)} kaldı` : cueTitle(0);
+        const lines = [
+          next ? `Sıradaki: ${next.name} · Set ${next.setNumber}/${next.totalSets}` : '',
+          lastLog ? `Son set: ${lastLog.reps} tekrar · ${progress}` : progress,
+          left > 0 ? `Bitiş: ${clockTime(session.rest.endAt)}` : ''
+        ].filter(Boolean);
+        return {
+          title,
+          body: lines.join('\n'),
+          timestamp: session.rest.endAt,
+          actions: left > 0 ? [{ action: 'skip-rest', title: '⏭ Dinlenmeyi bitir' }, { action: 'add15', title: '+15 sn' }] : [{ action: 'open', title: '▶ Sete başla' }]
+        };
+      }
+      const task = workoutTasks[session.index];
+      const prev = getPrevReps(task.taskKey);
+      return {
+        title: `🏋️ ${task.name} · Set ${task.setNumber}/${task.totalSets}`,
+        body: [`Toplam set: ${session.index + 1}/${total} · Hedef: ${task.target}`,
+          `${prev !== null ? `Önceki: ${prev} tekrar · ` : ''}${progress}`].join('\n'),
+        timestamp: Date.now(),
+        actions: [{ action: 'open', title: '✓ Seti kaydet' }]
+      };
     }
 
     /* ================= REPS / OVERLOAD STORAGE ================= */
@@ -2147,6 +2421,8 @@
     function clearSession() {
       session = null;
       try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+      Notify.clear();
+      KeepAlive.close();
     }
 
     function buildTasksForDay(dayObj) {
@@ -2273,12 +2549,22 @@
 
     function startWorkout(day) {
       Voice.unlock();
+      KeepAlive.prepare();
       activeDay = day;
       workoutTasks = buildTasksForDay(day);
       session = { dayId: day.id, index: 0, logs: {}, rest: null };
       saveSession();
       showView('workout');
       renderTask();
+      maybeAskNotifications();
+    }
+
+    // İlk antrenmanda bir kez: kilit ekranı kartı için bildirim izni iste (ayarlardan sonra da açılabilir)
+    function maybeAskNotifications() {
+      if (!Notify.supported || settings.notifyAsked || Notification.permission !== 'default') return;
+      settings.notifyAsked = true;
+      saveSettings();
+      openModal(document.getElementById('notifyModal'), document.getElementById('notifyAllowBtn'));
     }
 
     /* ================= ACTIVE TASK RENDER ================= */
@@ -2495,8 +2781,16 @@
     }
 
     function scheduleNotifications() {
-      if (!Notify.enabled) return;
-      Notify.post({ type: 'rest-start', id: session.rest.id, endAt: session.rest.endAt, cues: NOTIFY_CUES, next: nextTaskText() });
+      if (!Notify.enabled || !session || !session.rest) return;
+      const doneSets = Object.keys(session.logs).length;
+      Notify.post({
+        type: 'rest-start',
+        id: session.rest.id,
+        endAt: session.rest.endAt,
+        cues: NOTIFY_CUES,
+        next: nextTaskText(),
+        progress: `✔ ${doneSets}/${workoutTasks.length} set`
+      });
     }
 
     function startRestCountdown(duration) {
@@ -2516,6 +2810,7 @@
       const left = Math.max(0, Math.ceil(ms / 1000));
       updateRestClockUI(left);
       processCues(ms);
+      if (document.visibilityState === 'hidden' && Date.now() - Notify.cardShownAt > 9500) Notify.card();
       if (ms <= 0) {
         finishRestAndProceed();
         return;
@@ -2537,19 +2832,20 @@
     }
 
     async function fireCue(sec, restId) {
-      const nextText = nextTaskText();
       let played = false;
       if (settings.sound) played = await Voice.play(sec);
       if ('vibrate' in navigator) navigator.vibrate(sec === 0 ? [120, 60, 120] : sec <= 5 ? 25 : [60, 40, 60]);
       if (NOTIFY_CUES.includes(sec)) {
         Notify.post({ type: 'cue-done', id: restId, sec });
-        if (document.visibilityState === 'hidden') Notify.show(sec, nextText, played);
+        // Arka plandaysa kilit ekranı kartı uyarıyla güncellenir (ses çaldıysa kart sessiz kalır, sadece titrer)
+        if (document.visibilityState === 'hidden') Notify.card({ alert: !played || sec === 0, cue: sec });
       }
     }
 
     function stopRest() {
       clearTimeout(restTimer);
       if (session && session.rest) {
+        Ntfy.cancel();
         session.rest = null;
         saveSession();
       }
@@ -2571,21 +2867,42 @@
       finishRestAndProceed();
     });
 
-    document.getElementById('add15RestBtn').addEventListener('click', () => {
-      const r = session.rest;
+    function addRestTime(sec) {
+      const r = session && session.rest;
       if (!r) return;
-      r.endAt += 15000;
+      r.endAt += sec * 1000;
       const ms = r.endAt - Date.now();
       r.total = Math.max(r.total, Math.ceil(ms / 1000));
       r.fired = r.fired.filter((c) => c * 1000 >= ms); // süre uzadıysa geçmiş uyarılar tekrar çalar
       saveSession();
       scheduleNotifications();
+      if (document.visibilityState === 'hidden') Ntfy.schedule();
       restTick();
-    });
+    }
+    document.getElementById('add15RestBtn').addEventListener('click', () => addRestTime(15));
+
+    // Kilit ekranı kartındaki düğmeler (servis çalışanından gelir)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (e) => {
+        const d = e.data || {};
+        if (d.type !== 'notif-action' || !session) return;
+        const sameRest = session.rest && (!d.restId || d.restId === session.rest.id);
+        if (d.action === 'add15' && sameRest) addRestTime(15);
+        else if (d.action === 'skip-rest' && sameRest) finishRestAndProceed();
+        if (document.visibilityState === 'hidden') Notify.card();
+      });
+    }
 
     // Uygulama öne geldiğinde: süreyi hemen düzelt, ekran kilidini yenile, bildirimleri temizle
     function onForeground() {
-      if (document.visibilityState !== 'visible') return;
+      KeepAlive.sync();
+      if (document.visibilityState !== 'visible') {
+        // Uygulamadan çıkınca / ekran kilitlenince: kilit ekranı kartı + (açıksa) ntfy uyarılarını planla
+        if (session) Notify.card();
+        if (session && session.rest) Ntfy.schedule();
+        return;
+      }
+      if (session && session.rest) Ntfy.cancel();
       if (session && session.rest) restTick();
       Wake.sync();
       Notify.clear();
@@ -2599,15 +2916,22 @@
       const el = document.getElementById('bgHint');
       el.innerHTML = '';
       let text;
-      if (IS_IOS) {
-        text = 'iPhone, kilitli ekranda web uygulamalarını duraklatır. Uyarıları kaçırmamak için ekranı açık bırak — telefonu kilitlesen de geri döndüğünde süre doğru devam eder.';
+      if (IS_IOS && !Ntfy.enabled) {
+        text = 'iPhone uygulamadan çıkınca uyarıları durdurur. Kilit ekranında uyarı için ';
+      } else if (IS_IOS) {
+        text = 'Uygulamadan çıkarsan 1 dk / 30 sn / bitti uyarıları ntfy ile kilit ekranına gelir.';
       } else if (!Notify.enabled && Notify.supported) {
-        text = 'Telefon kilitliyken de haber almak için ';
+        text = 'Kilit ekranında set kartı ve uyarılar için ';
       } else {
-        text = 'Uygulama arka plandayken de süre işler; müziğin durmadan sesli uyarı alırsın.';
+        text = 'Telefon kilitliyken de süre işler; müzik durmadan sesli uyarı ve kilit ekranı kartı gelir.';
       }
       el.append(text);
-      if (!IS_IOS && !Notify.enabled && Notify.supported) {
+      if (IS_IOS && !Ntfy.enabled) {
+        const b = document.createElement('button');
+        b.textContent = 'ntfy\'yi aç';
+        b.addEventListener('click', openSettings);
+        el.append(b, '.');
+      } else if (!IS_IOS && !Notify.enabled && Notify.supported) {
         const b = document.createElement('button');
         b.textContent = 'bildirimlere izin ver';
         b.addEventListener('click', enableNotifications);
@@ -2780,6 +3104,11 @@
       if ('vibrate' in navigator) navigator.vibrate([60, 40, 60, 40, 120]);
     }
     document.getElementById('luCloseBtn').addEventListener('click', () => closeModal(levelUpModal));
+    document.getElementById('notifyAllowBtn').addEventListener('click', async () => {
+      closeModal(document.getElementById('notifyModal'));
+      await enableNotifications();
+    });
+    document.getElementById('notifyLaterBtn').addEventListener('click', () => closeModal(document.getElementById('notifyModal')));
     levelUpModal.addEventListener('click', (e) => { if (e.target === levelUpModal) closeModal(levelUpModal); });
 
     /* ================= PROGRESS (İLERLEME) ================= */
@@ -3185,12 +3514,12 @@
       const help = document.getElementById('voiceModeHelp');
       if (settings.voice === 'tts') {
         help.textContent = IS_IOS
-          ? 'Önerilen (iPhone): Spotify çalarken müziği kısar, uyarıyı söyler, sonra sesi geri açar. Şarkı durmaz.'
-          : 'Telefonun Türkçe sesiyle konuşur. Müziğin kısılması telefona göre değişebilir; test et.';
+          ? 'Telefonun Türkçe sesi. Müzik açıkken kayıtlı sese göre daha kısık kalabilir; müziğin üstünde duymak için "Kayıtlı ses"i seç.'
+          : 'Telefonun Türkçe sesiyle konuşur. Müzik açıkken kayıtlı sese göre daha kısık kalabilir.';
       } else {
         help.textContent = IS_IOS
-          ? 'Kendi kayıtların çalar ve müzikle karışır (şarkı durmaz, ama kısılmaz). Sessiz modda duyulmaz.'
-          : 'Önerilen (Android): Kendi kayıtların çalarken Spotify kısılır, durmaz; bitince ses geri gelir.';
+          ? 'Önerilen: Kayıtlar müziğin üstünde net duyulacak kadar yüksek çalar, şarkı durmaz. (iPhone web uygulamalarının müziği kısmasına izin vermiyor.) Yan tuş sessizdeyse ses çıkmaz.'
+          : 'Önerilen: Uyarı çalarken YouTube Music / Spotify kısılır, durmaz; kayıtlar müziğin üstünde net duyulacak şekilde yükseltildi.';
       }
 
       const nh = document.getElementById('notifyHelp');
@@ -3199,17 +3528,27 @@
         : 'Bu tarayıcı bildirimleri desteklemiyor.';
       else if (Notification.permission === 'denied') nh.textContent = 'Bildirim izni reddedilmiş; telefon ayarlarından izin vermelisin.';
       else nh.textContent = IS_IOS
-        ? 'iPhone kilitliyken uygulamayı duraklattığı için bildirim gecikebilir; ekranı açık tutmak daha güvenilir.'
-        : 'Uygulama arka plandayken "30 saniye kaldı" / "Dinlenme bitti" bildirimi gönderir.';
+        ? 'iPhone uygulamayı arka planda durdurduğu için bu bildirimler sadece çıkış anını gösterir. Kilit ekranında 1 dk / 30 sn / bitti uyarıları için aşağıdaki ntfy seçeneğini aç.'
+        : 'Kilit ekranında set / tekrar kartı ve dinlenme süresi; 1 dk / 30 sn / bitti anlarında uyarı. Karttan dinlenmeyi bitirebilir veya +15 sn ekleyebilirsin.';
+
+      const swNtfy = document.getElementById('swNtfy');
+      swNtfy.setAttribute('aria-checked', String(Ntfy.enabled));
+      document.getElementById('ntfyHelp').textContent = IS_IOS
+        ? 'iPhone için önerilir: uygulama kapalıyken / telefon kilitliyken dinlenme uyarıları ücretsiz ntfy uygulamasıyla bildirim olarak gelir (±5 sn).'
+        : 'Gerekmez (Android kartı yeterli). Telefonun pil tasarrufu uygulamayı durdurursa yedek olarak açabilirsin.';
+      document.getElementById('ntfySetup').hidden = !Ntfy.enabled;
+      document.getElementById('ntfyTopic').textContent = settings.ntfyTopic || '';
+      document.getElementById('ntfyAndroidLink').hidden = IS_IOS;
+      document.getElementById('ntfyDeepLink').href = settings.ntfyTopic ? `ntfy://ntfy.sh/${settings.ntfyTopic}` : '#';
 
       document.getElementById('platformInfo').innerHTML = IS_IOS
-        ? '<strong>iPhone notu:</strong> Apple, ana ekrana eklenen web uygulamalarını kilit ekranında ve başka uygulamaya geçince duraklatır; bu yüzden antrenmanda ekran açık kalır. Telefonu kilitlersen geri döndüğünde süre <strong>doğru yerden</strong> devam eder ve dinlenme bittiyse sıradaki sete geçilir. Uyarı sesi Spotify\'ı durdurmaz.'
-        : '<strong>Android notu:</strong> Ana ekrana eklenen uygulama arka plandayken de süreyi sayar ve sesli uyarı verir; Spotify durmaz, sadece uyarı sırasında kısılır. Bildirim izni verirsen kilit ekranında da "30 saniye kaldı" görürsün. Pil tasarrufu modu uygulamayı duraklatırsa bildirim yedek olarak çalışır.';
+        ? '<strong>iPhone notu:</strong> Apple, ana ekrana eklenen web uygulamalarını kilit ekranında ve başka uygulamaya geçince durdurur ve web uygulamalarının müziği kısmasına izin vermez. Bu yüzden: uygulama açıkken uyarılar müziğin üstünde yüksek sesle çalar; kapalıyken / kilitliyken uyarı için <strong>ntfy</strong> seçeneğini aç. Geri döndüğünde süre her zaman doğru yerden devam eder.'
+        : '<strong>Android notu:</strong> Antrenman sırasında uygulama arka plandayken ve telefon kilitliyken de süre işler; 1 dk / 30 sn / 5-4-3-2-1 uyarılarında YouTube Music / Spotify kısılır, durmaz. Kilit ekranındaki kart set, tekrar ve kalan süreyi gösterir. Pil tasarrufu modu uygulamayı yine de durdurursa kart uyarısı yedek olarak gelir.';
 
       const tip = document.getElementById('menuTipText');
       tip.innerHTML = IS_IOS
-        ? '<strong>Müzik + sesli uyarı:</strong> Uyarılar Spotify\'ı durdurmaz. ⚙️ Ayarlar\'dan sesi test et.'
-        : '<strong>Müzik + sesli uyarı:</strong> Uyarılar Spotify\'ı durdurmadan kısar. Kilit ekranı bildirimi için ⚙️ Ayarlar.';
+        ? '<strong>Müzik + sesli uyarı:</strong> Uyarılar müziğin üstünde çalar, şarkı durmaz. Kilit ekranında uyarı için ⚙️ Ayarlar → ntfy.'
+        : '<strong>Müzik + sesli uyarı:</strong> Uyarılar müziği durdurmadan kısar; telefon kilitliyken de çalışır. Kilit ekranı kartı için ⚙️ Ayarlar.';
     }
 
     function openSettings() {
@@ -3271,6 +3610,37 @@
       renderSettings();
       Voice.unlock();
     }));
+    document.getElementById('swNtfy').addEventListener('click', () => {
+      settings.ntfy = !Ntfy.enabled;
+      if (settings.ntfy && !settings.ntfyTopic) settings.ntfyTopic = randomTopic();
+      saveSettings();
+      renderSettings();
+      if (!settings.ntfy && session && session.rest) Ntfy.cancel();
+      if (session && session.rest) renderBgHint();
+    });
+    document.getElementById('ntfyCopyBtn').addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      try {
+        await navigator.clipboard.writeText(settings.ntfyTopic);
+        btn.textContent = 'Kopyalandı ✓';
+      } catch (err) {
+        const range = document.createRange();
+        range.selectNodeContents(document.getElementById('ntfyTopic'));
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        btn.textContent = 'Seçildi';
+      }
+      setTimeout(() => { btn.textContent = 'Kopyala'; }, 1800);
+    });
+    document.getElementById('ntfyTestBtn').addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      const res = await Ntfy.test();
+      btn.textContent = res && res.ok ? '✓ Gönderildi — ntfy\'de görünmeli' : '⚠️ Gönderilemedi (internet?)';
+      setTimeout(() => { btn.textContent = '📨 Test bildirimi gönder'; btn.disabled = false; }, 3500);
+    });
+
     document.getElementById('testVoiceBtn').addEventListener('click', () => {
       const wasOn = settings.sound;
       settings.sound = true;
@@ -3321,8 +3691,12 @@
       return true;
     }
 
-    // Her dokunuşta ses kilidini açık tut (iOS sesin zamanlayıcıdan çalabilmesi için gerekli)
-    document.addEventListener('pointerdown', () => Voice.unlock(), { passive: true });
+    // Her dokunuşta ses kilidini açık tut (iOS sesin zamanlayıcıdan çalabilmesi için gerekli);
+    // antrenman sırasında Android arka plan ses kanalını hazırla
+    document.addEventListener('pointerdown', () => {
+      Voice.unlock();
+      if (session) KeepAlive.prepare();
+    }, { passive: true });
 
     Voice.init();
     renderSettings();

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'workout-v8';
+const CACHE_NAME = 'workout-v9';
 const ASSETS = ['./', './index.html', './figures.js', './tracker.js', './charts.js', './avatar.js', './manifest.json', './icon-192.png', './icon-512.png', './1dk.mp3', './30s.mp3', './15s.mp3', './5s.mp3'];
 const NAV_TIMEOUT_MS = 3500;
 
@@ -116,12 +116,38 @@ async function rangeFromCache(req) {
 const GRACE_MS = 1500;
 let schedule = null;
 
+const CARD_TAG = 'workout-card';
+
 self.addEventListener('message', (e) => {
   const d = e.data || {};
   if (d.type === 'rest-start') e.waitUntil(startSchedule(d));
   else if (d.type === 'rest-stop') stopSchedule();
   else if (d.type === 'cue-done' && schedule && schedule.id === d.id) schedule.handled.add(d.sec);
 });
+
+const clockTime = (t) => {
+  const d = new Date(t);
+  return [d.getHours(), d.getMinutes(), d.getSeconds()].map((n) => String(n).padStart(2, '0')).join(':');
+};
+const cueTitle = (sec) => (sec === 0 ? '✅ Dinlenme bitti!' : sec === 60 ? '⏱ 1 dakika kaldı' : `⏱ ${sec} saniye kaldı`);
+
+// Sayfa donmuşken kartı servis çalışanı günceller (sıradaki set + bitiş saati)
+function cardOptions(d, sec, alert) {
+  const o = {
+    body: [d.next ? 'Sıradaki: ' + d.next : '', d.progress || '', sec === 0 ? '' : 'Bitiş: ' + clockTime(d.endAt)].filter(Boolean).join('\n'),
+    tag: CARD_TAG,
+    renotify: !!alert,
+    silent: !alert,
+    requireInteraction: true,
+    icon: 'icon-192.png',
+    badge: 'icon-192.png',
+    timestamp: d.endAt,
+    actions: sec === 0 ? [{ action: 'open', title: '▶ Sete başla' }] : [{ action: 'skip-rest', title: '⏭ Dinlenmeyi bitir' }, { action: 'add15', title: '+15 sn' }],
+    data: { kind: 'card', restId: d.id }
+  };
+  if (alert) o.vibrate = sec === 0 ? [300, 120, 300] : [200, 100, 200];
+  return o;
+}
 
 function stopSchedule() {
   if (!schedule) return;
@@ -133,12 +159,12 @@ function stopSchedule() {
 function startSchedule(d) {
   stopSchedule();
   return new Promise((resolve) => {
-    const s = { id: d.id, handled: new Set(), timers: [], resolve };
+    const s = { id: d.id, handled: new Set(), timers: [], resolve, data: d };
     schedule = s;
     const now = Date.now();
     (d.cues || []).forEach((sec) => {
       const delay = d.endAt - sec * 1000 - now + GRACE_MS;
-      if (delay > 0) s.timers.push(setTimeout(() => fallbackCue(s, sec, d.next), delay));
+      if (delay > 0) s.timers.push(setTimeout(() => fallbackCue(s, sec), delay));
     });
     s.timers.push(setTimeout(() => {
       if (schedule === s) schedule = null;
@@ -147,27 +173,31 @@ function startSchedule(d) {
   });
 }
 
-async function fallbackCue(s, sec, next) {
+async function fallbackCue(s, sec) {
   if (schedule !== s || s.handled.has(sec)) return;
   try {
     const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     if (wins.some((c) => c.visibilityState === 'visible')) return;
-    const title = sec === 0 ? '✅ Dinlenme bitti!' : sec === 60 ? '⏱ 1 dakika kaldı' : `⏱ ${sec} saniye kaldı`;
-    await self.registration.showNotification(title, {
-      body: next ? 'Sıradaki: ' + next : '',
-      tag: 'rest-timer',
-      renotify: true,
-      icon: 'icon-192.png',
-      badge: 'icon-192.png',
-      vibrate: sec === 0 ? [300, 120, 300] : [200, 100, 200]
-    });
+    await self.registration.showNotification(cueTitle(sec), cardOptions(s.data, sec, true));
   } catch (err) { /* izin geri alınmış olabilir */ }
 }
 
+// Kart düğmeleri: kilit ekranından dinlenmeyi bitir / +15 sn / uygulamayı aç
 self.addEventListener('notificationclick', (e) => {
-  e.notification.close();
+  const action = e.action || 'open';
+  const restId = e.notification.data && e.notification.data.restId;
   e.waitUntil((async () => {
     const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    wins.forEach((c) => c.postMessage({ type: 'notif-action', action, restId, at: Date.now() }));
+    if (action === 'add15' && schedule && schedule.id === restId) {
+      // Yedek zamanlayıcıyı da 15 sn kaydır (sayfa donmuş olsa bile uyarılar doğru anda gelsin)
+      const d = Object.assign({}, schedule.data, { endAt: schedule.data.endAt + 15000 });
+      const keep = startSchedule(d);
+      await self.registration.showNotification('⏱ +15 sn eklendi', cardOptions(d, 1, false));
+      return keep;
+    }
+    e.notification.close();
+    if (action === 'skip-rest') stopSchedule();
     for (const c of wins) {
       if ('focus' in c) return c.focus();
     }
