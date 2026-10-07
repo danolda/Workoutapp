@@ -1,5 +1,5 @@
-const CACHE_NAME = 'workout-v6';
-const ASSETS = ['./', './index.html', './figures.js', './tracker.js', './charts.js', './manifest.json', './icon-192.png', './icon-512.png', './1dk.mp3', './30s.mp3', './15s.mp3', './5s.mp3'];
+const CACHE_NAME = 'workout-v7';
+const ASSETS = ['./', './index.html', './figures.js', './tracker.js', './charts.js', './avatar.js', './manifest.json', './icon-192.png', './icon-512.png', './1dk.mp3', './30s.mp3', './15s.mp3', './5s.mp3'];
 const NAV_TIMEOUT_MS = 3500;
 
 self.addEventListener('install', (e) => {
