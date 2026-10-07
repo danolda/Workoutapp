@@ -53,8 +53,10 @@
     return { t: [2 * cx - spec.t[0], spec.t[1]], b: -(spec.b || 1) };
   }
 
-  function solve(p, front) {
-    const H = p.hip;
+  function solve(p, front, far) {
+    far = far || FAR;
+    // anchor: vücut bir noktanın (ör. topuk) etrafında dümdüz döner; kalça o yay üzerinde kalır
+    const H = p.anchor ? add(p.anchor, mul(dir(p.torso), p.anchorLen)) : p.hip;
     const td = dir(p.torso);
     const S = add(H, mul(td, SEG.torso));
     const Sh = add(S, mul(td, p.shrug || 0));
@@ -76,10 +78,10 @@
         g.legs.push(leg);
       }
     } else {
-      g.sR = [Sh, add(Sh, FAR)];
+      g.sR = [Sh, add(Sh, far)];
       const near = (specs, root, l1, l2) => {
         const n = limb(root, specs[0], l1, l2);
-        const f = specs[1] ? limb(add(root, FAR), specs[1], l1, l2) : shift(n, FAR);
+        const f = specs[1] ? limb(add(root, far), specs[1], l1, l2) : shift(n, far);
         return [n, f];
       };
       g.arms = near(armSpec, Sh, SEG.upper, SEG.fore);
@@ -163,12 +165,14 @@
       A: { hip: [100, 88], torso: -84, neck: -86, arm: { t: [147, 64], b: 1 }, legs: [{ t: [103, 154], b: -1 }, [100, 162]], feet: [0, 110] },
       B: { hip: [103.2, 79.5], legs: [{ t: [107.2, 145.3], b: -1 }, [100, 162]], feet: [52, 110] }
     },
+    // Çift dips barında inverted row: iki paralel barın arasında sırtüstü, her el bir barda (nötr tutuş),
+    // topuklar yerde, gövde dümdüz; göğüs barların arasına çekilir. Arka bar/uzuvlar hafif yukarıda (3/4 görünüm).
     invertedRow: {
-      label: 'Inverted Row', hl: ['torso', 'upperArm'], dur: 2.8,
-      eqBack: '<path class="eq" d="M128 74V158"/>',
-      eqFront: '<circle class="eq-bar" cx="128" cy="74" r="5.5"/>',
-      A: { hip: [121.9, 122], torso: -26.6, neck: -26.6, arm: { t: [128, 74], b: -1 }, leg: { t: [62, 152], b: 1 }, foot: -112 },
-      B: { hip: [110.4, 105.7], torso: -43.7, neck: -40, foot: -128 }
+      label: 'Inverted Row (Çift Dips Barı)', hl: ['torso', 'upperArm'], dur: 2.8, far: [-3, -6],
+      eqBack: '<path class="eq eq-far" d="M55 72V152M177 72V152"/><path class="eq-bar eq-bar-far" d="M47 72H183"/><path class="eq" d="M58 78V158M180 78V158"/>',
+      eqFront: '<path class="eq-bar" d="M50 78H186"/>',
+      A: { anchor: [41.3, 152], anchorLen: 67, torso: -20.9, neck: -20.9, arm: { t: [110, 78], b: -1 }, leg: { t: [41.3, 152], b: 1 }, foot: -111 },
+      B: { torso: -47.1, neck: -44, foot: -137 }
     }
   };
 
@@ -227,7 +231,7 @@
 
   Figure.prototype.update = function (t) {
     const def = this.def;
-    const g = solve(mix(def.A, def.B, t), def.front);
+    const g = solve(mix(def.A, def.B, t), def.front, def.far);
     for (let i = 0; i < 2; i++) {
       const arm = g.arms[i];
       const leg = g.legs[i];

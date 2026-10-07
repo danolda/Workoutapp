@@ -391,7 +391,7 @@
     .ex-legend {
       position: absolute;
       left: 10px;
-      bottom: 8px;
+      top: 8px;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -422,6 +422,8 @@
     .ex-fig .db { fill: #27272a; stroke: #a1a1aa; stroke-width: 3; }
     .ex-fig .db-far { stroke: #52525b; }
     .ex-fig .eq { fill: none; stroke: #3f3f46; stroke-width: 5; stroke-linecap: round; }
+    .ex-fig .eq-far { stroke: #2e2e33; }
+    .ex-fig .eq-bar.eq-bar-far { fill: none; stroke: #63636b; }
     .ex-fig .eq-bar { fill: #a1a1aa; stroke: #a1a1aa; stroke-width: 5; stroke-linecap: round; }
     .ex-fig .eq-box { fill: #27272a; stroke: #3f3f46; stroke-width: 2; }
     .ex-fig .eq-floor { stroke: rgba(255, 255, 255, 0.14); stroke-width: 2; stroke-linecap: round; }
@@ -1811,7 +1813,7 @@
         type: "upper",
         desc: "Sırt Kalınlığı & Kol Öncelikli",
         exercises: [
-          { name: "Inverted Row (Dips Barında)", fig: "invertedRow", category: "Yatay Çekiş", sets: 3, target: "8–10 Tekrar", tempo: "Sırtı Tam Sıkıştır", rest: 90, defReps: 10 },
+          { name: "Inverted Row (Çift Dips Barında)", fig: "invertedRow", category: "Yatay Çekiş", sets: 3, target: "8–10 Tekrar", tempo: "Sırtı Tam Sıkıştır", rest: 90, note: "İki paralel barın arasına sırtüstü gir, her elle bir barı tut (avuçlar içe bakar). Topuklar yerde, vücut dümdüz; göğsünü barların arasına çek.", defReps: 10 },
           { name: "Dips (Gövde Öne Eğik)", fig: "dip", category: "Göğüs İtiş", sets: 3, target: "8–10 Tekrar", tempo: "Kontrollü", rest: 120, defReps: 10 },
           { name: "Barfiks", fig: "pullup", category: "Dikey Çekiş", sets: 2, target: "RIR 1", tempo: "Tam Açılma", rest: 120, defReps: 8 },
           { name: "Triceps Overhead Extension", fig: "tricepsOverhead", category: "Triceps", sets: 2, target: "10–12 Tekrar", tempo: "2-0-1-0", rest: 90, defReps: 12 },
@@ -1839,7 +1841,7 @@
       pullup: { name: 'Barfiks', category: 'Dikey Çekiş', group: 'upper' },
       dip: { name: 'Dips', category: 'Göğüs İtiş', group: 'upper' },
       declinePushup: { name: 'Decline Şınav', category: 'Üst Göğüs', group: 'upper' },
-      invertedRow: { name: 'Inverted Row', category: 'Yatay Çekiş', group: 'upper' },
+      invertedRow: { name: 'Inverted Row (Çift Bar)', category: 'Yatay Çekiş', group: 'upper' },
       curl: { name: 'Biceps Curl', category: 'Pazu', group: 'upper' },
       tricepsOverhead: { name: 'Triceps Overhead Ext.', category: 'Triceps', group: 'upper' },
       lateralRaise: { name: 'Lateral Raise', category: 'Yan Omuz', group: 'upper' },
