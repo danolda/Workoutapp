@@ -97,6 +97,8 @@
     const span = t1 - t0;
     const xOf = (t) => (span ? M.l + ((t - t0) / span) * iw : M.l + iw / 2);
 
+    points = points.filter((p) => Number.isFinite(p.t) && Number.isFinite(p.v));
+    if (!points.length) return;
     const vmax = Math.max(...points.map((p) => p.v), 1);
     const step = niceStep(vmax / 4);
     const yMax = Math.ceil((vmax * 1.08) / step) * step || step;
@@ -146,8 +148,8 @@
 
     // İşaretler: sık veride sadece son + rekor noktası
     const dense = pts.length > iw / 14;
-    let bestIdx = 0;
-    pts.forEach((q, i) => { if (q.p.v >= pts[bestIdx].p.v) bestIdx = i; });
+    let bestIdx = 0; // en yüksek değere İLK ulaşılan nokta (tablodaki ★ ile aynı)
+    pts.forEach((q, i) => { if (q.p.v > pts[bestIdx].p.v) bestIdx = i; });
     const lastIdx = pts.length - 1;
     pts.forEach((q, i) => {
       if (dense && i !== lastIdx && i !== bestIdx) return;
@@ -161,10 +163,12 @@
       t.textContent = text;
     };
     const showBest = bestIdx !== lastIdx && pts[bestIdx].p.v > pts[lastIdx].p.v;
+    // ★ sadece tüm zamanların rekoru bu aralıktaysa; aksi halde aralığın en yükseği yıldızsız yazılır
+    const star = opts.record === undefined || pts[bestIdx].p.v === opts.record ? '★ ' : '';
     // Rekor etiketi son noktaya yakınsa son değer noktanın altına yazılır (üst üste binmesin)
     const crowded = showBest && Math.abs(pts[bestIdx].x - pts[lastIdx].x) < 40;
     label(pts[lastIdx], `${pts[lastIdx].p.v}`, !crowded || pts[lastIdx].y + 22 > M.t + ih);
-    if (showBest) label(pts[bestIdx], `★ ${pts[bestIdx].p.v}`, true);
+    if (showBest) label(pts[bestIdx], `${star}${pts[bestIdx].p.v}`, true);
 
     // Etkileşim katmanı: imleç + vurgulu nokta
     const cross = el('line', { x1: 0, x2: 0, y1: M.t, y2: M.t + ih, class: 'chart-cross', visibility: 'hidden' }, svg);
@@ -202,7 +206,10 @@
       let left = q.x * scale - tw / 2;
       left = Math.max(0, Math.min(cw - tw, left));
       tip.style.left = `${left}px`;
-      tip.style.top = `${Math.max(0, q.y * scale - tip.offsetHeight - 14)}px`;
+      // Üstte yer yoksa ipucu noktanın altına iner (noktayı ve etiketi kapatmasın)
+      let top = q.y * scale - tip.offsetHeight - 14;
+      if (top < 0) top = q.y * scale + 14;
+      tip.style.top = `${top}px`;
     }
     function hide() {
       active = -1;
@@ -220,6 +227,7 @@
     hit.addEventListener('pointerdown', (e) => show(nearest(e.clientX)));
     hit.addEventListener('pointermove', (e) => show(nearest(e.clientX)));
     hit.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') hide(); });
+    hit.addEventListener('pointercancel', hide);
     svg.addEventListener('blur', hide);
     svg.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {

@@ -58,9 +58,14 @@
     try { return root.localStorage || null; } catch (e) { return null; }
   }
 
+  const MAX_SESSION_XP = Math.max(...Object.values(XP_BY_TYPE));
+
+  // Bozuk/elle düzenlenmiş kayıtlar seviyeyi veya grafikleri bozmasın
   function isValidSession(s) {
-    return s && typeof s === 'object' && typeof s.date === 'string' && !isNaN(Date.parse(s.date)) &&
-      Array.isArray(s.sets) && s.sets.every((x) => x && typeof x.ex === 'string' && Number.isFinite(x.r));
+    return !!s && typeof s === 'object' && typeof s.date === 'string' && !isNaN(Date.parse(s.date)) &&
+      Number.isFinite(s.xp) && s.xp >= 0 && s.xp <= MAX_SESSION_XP &&
+      Array.isArray(s.sets) &&
+      s.sets.every((x) => x && typeof x.ex === 'string' && Number.isInteger(x.r) && x.r >= 0 && x.r <= 999);
   }
 
   function load() {
@@ -92,7 +97,7 @@
   }
 
   function totalXp(list) {
-    return sum(list.map((s) => Math.max(0, s.xp || 0)));
+    return sum(list.map((s) => Math.max(0, Number(s.xp) || 0)));
   }
 
   /* ---------- Hareket istatistikleri ---------- */
@@ -177,8 +182,21 @@
     let data;
     try { data = JSON.parse(text); } catch (e) { throw new Error('Dosya okunamadı (geçersiz JSON).'); }
     if (!data || data.app !== 'athlete-quest' || !Array.isArray(data.history)) throw new Error('Bu bir Athlete Quest yedeği değil.');
-    const history = data.history.filter(isValidSession);
-    const records = data.records && typeof data.records === 'object' && !Array.isArray(data.records) ? data.records : null;
+    // Geçersiz ve aynı id'li (tekrarlanan) kayıtlar atılır: XP iki kez sayılmasın
+    const seen = new Set();
+    const history = data.history.filter((x) => {
+      if (!isValidSession(x) || x.id === undefined || x.id === null || seen.has(x.id)) return false;
+      seen.add(x.id);
+      return true;
+    });
+    let records = null;
+    if (data.records && typeof data.records === 'object' && !Array.isArray(data.records)) {
+      records = {};
+      Object.keys(data.records).forEach((k) => {
+        const v = data.records[k];
+        if (Number.isInteger(v) && v >= 0 && v <= 999) records[k] = v;
+      });
+    }
     return { history, records };
   }
 

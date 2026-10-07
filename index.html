@@ -28,7 +28,7 @@
       --accent-glow: rgba(99, 102, 241, 0.25);
       --text: #f4f4f5;
       --text-muted: #a1a1aa;
-      --text-sub: #71717a;
+      --text-sub: #8e8e97;
       --danger: #ef4444;
       --gold: #f59e0b;
       --radius: 20px;
@@ -41,6 +41,9 @@
       --chart-series: #10b981;
       --chart-surface: #17171a;
     }
+
+    /* display:flex kuralları [hidden] özniteliğini ezmesin */
+    [hidden] { display: none !important; }
 
     /* Çift tıklama ve yakınlaşmayı global olarak engelleyen kural */
     *, *::before, *::after {
@@ -1336,10 +1339,13 @@
     .xp-gain { font-size: 1.9rem; font-weight: 900; color: var(--gold); line-height: 1; }
     .xp-sub { font-size: 0.74rem; color: var(--text-muted); font-weight: 600; margin-top: 4px; }
 
-    .sheet-backdrop.center { align-items: center; padding: 16px; }
+    .sheet-backdrop.center { align-items: safe center; padding: 16px; overflow-y: auto; }
     .modal {
       width: 100%;
       max-width: 380px;
+      max-height: calc(100vh - 32px);
+      max-height: calc(100dvh - 32px);
+      overflow-y: auto;
       background: #131316;
       border: 1px solid var(--card-border);
       border-radius: 22px;
@@ -1368,13 +1374,30 @@
       -webkit-text-fill-color: transparent;
     }
     .lu-avatar {
-      width: 168px;
-      height: 210px;
+      height: min(210px, 30vh);
+      aspect-ratio: 4 / 5;
       margin: 10px auto 6px;
       border-radius: 20px;
       overflow: hidden;
       box-shadow: 0 0 40px rgba(245, 158, 11, 0.35);
       animation: luPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(104px + var(--safe-bottom));
+      transform: translateX(-50%);
+      z-index: 60;
+      max-width: calc(100% - 32px);
+      background: #27272a;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text);
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 10px 14px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      animation: sheetUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
     @keyframes luPop { from { transform: scale(0.6) rotate(-6deg); opacity: 0; } to { transform: none; opacity: 1; } }
   </style>
@@ -1653,6 +1676,8 @@
       <button type="button" class="tab-btn" data-tab="profile"><span class="ico">👤</span>Profil</button>
     </div>
   </nav>
+
+  <div class="toast" id="toast" role="status" hidden></div>
 
   <!-- QUIT MODAL -->
   <div class="sheet-backdrop center" id="quitModal" role="dialog" aria-modal="true" aria-labelledby="quitTitle">
@@ -2171,6 +2196,7 @@
         else b.removeAttribute('aria-current');
       });
       if (viewKey === 'menu') renderProfileMini();
+      if (window.__syncAvatarTilt) window.__syncAvatarTilt(viewKey);
       Figures.sync(viewKey);
       Wake.sync();
     }
@@ -2312,7 +2338,7 @@
 
       completeSetLabel.textContent = isLastTask() ? '✓ Son Seti Kaydet & Bitir' : `✓ Seti Kaydet & ${formatMinSec(task.restSec)} Dinlen`;
       prevTaskBtn.disabled = session.index === 0;
-      skipTaskBtn.textContent = isLastTask() ? 'Antrenmanı Bitir ✓' : 'Seti Atla ▶';
+      skipTaskBtn.textContent = isLastTask() ? 'Son Seti Atla & Bitir ⏭' : 'Seti Atla ▶';
     }
 
     function readReps() {
@@ -2397,16 +2423,26 @@
         ? `${workoutTasks.length} setin ${done} tanesini kaydettin. Kaydedip bitirirsen bu setler istatistiklerine eklenir ve +${xp} XP kazanırsın.`
         : 'Henüz hiç set kaydetmedin. Çıkarsan bu antrenman kaydedilmez.';
       document.getElementById('quitSaveBtn').hidden = !done;
-      quitModal.classList.add('open');
+      openModal(quitModal, document.getElementById('quitCancelBtn'));
     }));
-    document.getElementById('quitCancelBtn').addEventListener('click', () => quitModal.classList.remove('open'));
-    quitModal.addEventListener('click', (e) => { if (e.target === quitModal) quitModal.classList.remove('open'); });
+    document.getElementById('quitCancelBtn').addEventListener('click', () => closeModal(quitModal));
+    quitModal.addEventListener('click', (e) => { if (e.target === quitModal) closeModal(quitModal); });
     document.getElementById('quitSaveBtn').addEventListener('click', () => {
-      quitModal.classList.remove('open');
+      closeModal(quitModal);
       finishWorkout();
     });
     document.getElementById('quitDiscardBtn').addEventListener('click', () => {
-      quitModal.classList.remove('open');
+      closeModal(quitModal);
+      // Kaydedilmeyen antrenmanın tekrarları "önceki rekor" olarak kalmasın: eski değerleri geri yükle
+      const records = getSavedRecords();
+      Object.keys(session.logs).forEach((i) => {
+        const task = workoutTasks[i];
+        const prev = session.logs[i].prev;
+        if (!task) return;
+        if (prev === null || prev === undefined) delete records[task.taskKey];
+        else records[task.taskKey] = prev;
+      });
+      lsSet(OVERLOAD_STORAGE_KEY, records);
       stopRest();
       clearSession();
       showView('menu');
@@ -2578,41 +2614,55 @@
     }
 
     /* ================= SUMMARY & RETURN ================= */
+    // Seans kaydı (geçmiş + XP). Yarım bırakılan seansta XP yapılan set oranındadır.
+    function buildSessionRecord(day, tasks, logs, dateIso) {
+      const entries = Object.keys(logs)
+        .map(Number)
+        .filter((i) => tasks[i])
+        .sort((a, b) => a - b)
+        .map((i) => ({ task: tasks[i], log: logs[i] }));
+      return {
+        id: Date.parse(dateIso) || Date.now(),
+        date: dateIso,
+        dayId: day.id,
+        dayName: day.name,
+        type: day.type,
+        xp: Tracker.sessionXp(day.type, entries.length, tasks.length),
+        setsDone: entries.length,
+        setsTotal: tasks.length,
+        sets: entries.map((e) => ({ ex: e.task.fig, s: e.task.setNumber, r: e.log.reps }))
+      };
+    }
+
     function finishWorkout() {
       if (!session) return;
-      stopRest();
       const entries = Object.keys(session.logs)
         .map(Number)
         .sort((a, b) => a - b)
         .map((i) => ({ task: workoutTasks[i], log: session.logs[i] }));
 
-      const totalReps = entries.reduce((acc, e) => acc + e.log.reps, 0);
-      const prs = entries.filter((e) => e.log.prev !== null && e.log.prev !== undefined && e.log.reps > e.log.prev).length;
-
-      // Seansı geçmişe yaz ve puanı ver (tam antrenman: üst 450 / alt 550 XP)
+      // Önce kaydet: depolama doluysa antrenman kaybolmasın, kullanıcı tekrar deneyebilsin
       const history = Tracker.load();
       const before = Tracker.levelInfo(Tracker.totalXp(history));
       let gained = 0;
-      let saved = false;
       if (entries.length) {
-        gained = Tracker.sessionXp(activeDay.type, entries.length, workoutTasks.length);
-        saved = !!Tracker.addSession({
-          id: Date.now(),
-          date: new Date().toISOString(),
-          dayId: activeDay.id,
-          dayName: activeDay.name,
-          type: activeDay.type,
-          xp: gained,
-          setsDone: entries.length,
-          setsTotal: workoutTasks.length,
-          sets: entries.map((e) => ({ ex: e.task.fig, s: e.task.setNumber, r: e.log.reps }))
-        });
+        const rec = buildSessionRecord(activeDay, workoutTasks, session.logs, new Date().toISOString());
+        if (!Tracker.addSession(rec)) {
+          alert('Antrenman kaydedilemedi: telefonun tarayıcı depolaması dolu veya kapalı. Biraz yer açıp tekrar dene.');
+          return;
+        }
+        gained = rec.xp;
       }
-      const after = Tracker.levelInfo(before.xp + (saved ? gained : 0));
-      renderSummaryXp(before, after, saved ? gained : 0, entries.length);
+      stopRest();
+
+      const totalReps = entries.reduce((acc, e) => acc + e.log.reps, 0);
+      const prs = entries.filter((e) => e.log.prev !== null && e.log.prev !== undefined && e.log.reps > e.log.prev).length;
+
+      const after = Tracker.levelInfo(before.xp + gained);
+      renderSummaryXp(before, after, gained, entries.length);
 
       document.getElementById('summaryDesc').textContent =
-        `${activeDay.name} seansında ${entries.length} / ${workoutTasks.length} set kaydedildi.` + (saved ? ' İstatistiklerin ve rekorların güncellendi!' : '');
+        `${activeDay.name} seansında ${entries.length} / ${workoutTasks.length} set kaydedildi.` + (entries.length ? ' İstatistiklerin ve rekorların güncellendi!' : '');
       document.getElementById('statSets').textContent = entries.length;
       document.getElementById('statReps').textContent = totalReps;
       document.getElementById('statPRs').textContent = prs;
@@ -2724,11 +2774,11 @@
         : after.isMax
           ? 'Seviye 100! Zirvedesin.'
           : `Bir sonraki avatar Seviye ${nextTierLevel}'de açılacak.`;
-      levelUpModal.classList.add('open');
+      openModal(levelUpModal, document.getElementById('luCloseBtn'));
       if ('vibrate' in navigator) navigator.vibrate([60, 40, 60, 40, 120]);
     }
-    document.getElementById('luCloseBtn').addEventListener('click', () => levelUpModal.classList.remove('open'));
-    levelUpModal.addEventListener('click', (e) => { if (e.target === levelUpModal) levelUpModal.classList.remove('open'); });
+    document.getElementById('luCloseBtn').addEventListener('click', () => closeModal(levelUpModal));
+    levelUpModal.addEventListener('click', (e) => { if (e.target === levelUpModal) closeModal(levelUpModal); });
 
     /* ================= PROGRESS (İLERLEME) ================= */
     function renderProgress() {
@@ -2808,7 +2858,7 @@
       document.querySelectorAll('[data-range]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.range === exState.range)));
 
       const isBest = exState.metric === 'best';
-      document.getElementById('chartTitle').textContent = isBest ? 'Set başı max tekrar' : 'Seans başına toplam tekrar';
+      document.getElementById('chartTitle').textContent = isBest ? 'Set başı max tekrar' : 'Günlük toplam tekrar';
       const from = exState.range === 'all' ? 0 : Date.now() - Number(exState.range) * 86400000;
       const daily = Tracker.exerciseDaily(list, key).filter((d) => d.t >= from);
       document.getElementById('chartSub').textContent = daily.length
@@ -2817,6 +2867,7 @@
       const points = daily.map((d) => ({ t: d.t, v: isBest ? d.best : d.total, detail: `Setler: ${d.reps.join(' · ')}` }));
       Charts.line(document.getElementById('exChart'), points, {
         unit: 'tekrar',
+        record: isBest ? sm.best : null,
         label: document.getElementById('chartTitle').textContent,
         emptyText: sm.sessions
           ? 'Bu tarih aralığında kayıt yok.'
@@ -2825,6 +2876,8 @@
       document.getElementById('chartNote').textContent = points.length === 1
         ? 'Eğrinin oluşması için en az 2 farklı günde kayıt gerekir.'
         : points.length > 1 ? 'Noktaya dokun veya parmağını kaydır: o günün setleri görünür. ★ = rekor.' : '';
+
+      lastChartW = document.getElementById('exChart').clientWidth;
 
       // Kayıt tablosu (yeniden eskiye)
       const tbody = document.getElementById('exTableBody');
@@ -2840,7 +2893,7 @@
         tbody.appendChild(tr);
       }
       // Rekor ilk ulaşıldığı seansta işaretlenir
-      const prId = [...rows].reverse().find((r) => r.best === sm.best)?.id;
+      const prId = sm.best > 0 ? [...rows].reverse().find((r) => r.best === sm.best)?.id : undefined;
       rows.forEach((r) => {
         const tr = document.createElement('tr');
         const tdDate = document.createElement('td');
@@ -2865,10 +2918,14 @@
     document.querySelectorAll('[data-range]').forEach((b) => b.addEventListener('click', () => { exState.range = b.dataset.range; renderExercise(); }));
     document.getElementById('exBackBtn').addEventListener('click', () => { renderProgress(); showView('progress'); });
 
+    // Sadece genişlik değişince yeniden çiz (adres çubuğu gizlenince oluşan yükseklik değişimi ipucunu kapatmasın)
     let resizeTimer = null;
+    let lastChartW = 0;
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => { if (currentView === 'exercise') renderExercise(); }, 150);
+      resizeTimer = setTimeout(() => {
+        if (currentView === 'exercise' && document.getElementById('exChart').clientWidth !== lastChartW) renderExercise();
+      }, 150);
     });
 
     /* ================= PROFILE ================= */
@@ -2986,26 +3043,36 @@
         avatarCard.style.removeProperty('--gx');
         avatarCard.style.removeProperty('--gy');
       };
+      let dragging = false;
       stage.addEventListener('pointermove', (e) => tilt(e.clientX, e.clientY));
-      stage.addEventListener('pointerdown', (e) => tilt(e.clientX, e.clientY));
-      stage.addEventListener('pointerleave', reset);
-      stage.addEventListener('pointerup', (e) => { if (e.pointerType !== 'mouse') setTimeout(reset, 600); });
-      // Android: telefonu eğince kart da hafifçe eğilir (izin gerektirmez)
-      if (!IS_IOS && 'DeviceOrientationEvent' in window) {
-        window.addEventListener('deviceorientation', (e) => {
-          if (currentView !== 'profile' || e.gamma === null || e.beta === null) return;
-          const gx = Math.max(-1, Math.min(1, e.gamma / 30));
-          const gy = Math.max(-1, Math.min(1, (e.beta - 45) / 30));
-          avatarCard.style.transform = `rotateY(${gx * 12}deg) rotateX(${-gy * 10}deg)`;
-        });
-      }
+      stage.addEventListener('pointerdown', (e) => { dragging = true; tilt(e.clientX, e.clientY); });
+      stage.addEventListener('pointerleave', () => { dragging = false; reset(); });
+      stage.addEventListener('pointercancel', () => { dragging = false; reset(); });
+      stage.addEventListener('pointerup', (e) => {
+        if (e.pointerType !== 'mouse') setTimeout(() => { dragging = false; reset(); }, 600);
+        else dragging = false;
+      });
+      // Android: telefonu eğince kart da hafifçe eğilir (izin gerektirmez); sadece Profil açıkken dinlenir
+      const onOrient = (e) => {
+        if (dragging || e.gamma === null || e.beta === null) return;
+        const gx = Math.max(-1, Math.min(1, e.gamma / 30));
+        const gy = Math.max(-1, Math.min(1, (e.beta - 45) / 30));
+        avatarCard.style.transform = `rotateY(${gx * 12}deg) rotateX(${-gy * 10}deg)`;
+      };
+      let listening = false;
+      window.__syncAvatarTilt = (viewKey) => {
+        const want = viewKey === 'profile' && !IS_IOS && 'DeviceOrientationEvent' in window;
+        if (want && !listening) window.addEventListener('deviceorientation', onOrient);
+        if (!want && listening) { window.removeEventListener('deviceorientation', onOrient); reset(); }
+        listening = want;
+      };
     })();
 
     /* ================= TABS ================= */
     function openTab(tab) {
+      showView(tab); // önce görünür olsun: koleksiyon şeridi doğru konuma kaydırılabilsin
       if (tab === 'progress') renderProgress();
       if (tab === 'profile') renderProfile();
-      showView(tab);
     }
     document.querySelectorAll('.tab-btn').forEach((b) => b.addEventListener('click', () => openTab(b.dataset.tab)));
     const profileMini = document.getElementById('profileMini');
@@ -3051,7 +3118,7 @@
         const ids = new Set(current.map((x) => x.id));
         const added = data.history.filter((x) => !ids.has(x.id));
         if (!confirm(`Yedekte ${data.history.length} antrenman var; ${added.length} tanesi yeni. Mevcut kayıtlarla birleştirilsin mi?`)) return;
-        Tracker.replaceHistory(current.concat(added));
+        if (!Tracker.replaceHistory(current.concat(added))) throw new Error('Kayıt yapılamadı: tarayıcı depolaması dolu veya kapalı.');
         if (data.records) lsSet(OVERLOAD_STORAGE_KEY, Object.assign({}, data.records, getSavedRecords()));
         renderProfileMini();
         if (currentView === 'profile') renderProfile();
@@ -3061,6 +3128,43 @@
         alert(e.message || 'Yedek yüklenemedi.');
       }
     });
+
+    /* ================= MODALS & TOAST ================= */
+    // Açık pencere arkadaki içeriği erişilemez yapar (inert), odağı içine alır, Esc ile kapanır
+    const modalStack = [];
+    function openModal(el, focusEl) {
+      if (modalStack.some((m) => m.el === el)) return;
+      modalStack.push({ el, returnFocus: document.activeElement });
+      el.classList.add('open');
+      document.querySelector('.app-container').inert = true;
+      document.getElementById('tabbar').inert = true;
+      modalStack.slice(0, -1).forEach((m) => { m.el.inert = true; });
+      if (focusEl) setTimeout(() => focusEl.focus({ preventScroll: true }), 30);
+    }
+    function closeModal(el) {
+      const idx = modalStack.findIndex((m) => m.el === el);
+      el.classList.remove('open');
+      if (idx < 0) return;
+      const [entry] = modalStack.splice(idx, 1);
+      if (modalStack.length) modalStack[modalStack.length - 1].el.inert = false;
+      else {
+        document.querySelector('.app-container').inert = false;
+        document.getElementById('tabbar').inert = false;
+      }
+      if (entry.returnFocus && entry.returnFocus.focus) entry.returnFocus.focus({ preventScroll: true });
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modalStack.length) closeModal(modalStack[modalStack.length - 1].el);
+    });
+
+    let toastTimer = null;
+    function showToast(text) {
+      const t = document.getElementById('toast');
+      t.textContent = text;
+      t.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { t.hidden = true; }, 4000);
+    }
 
     /* ================= SETTINGS UI ================= */
     const soundToggleBtn = document.getElementById('soundToggleBtn');
@@ -3108,10 +3212,10 @@
 
     function openSettings() {
       renderSettings();
-      settingsSheet.classList.add('open');
+      openModal(settingsSheet, document.getElementById('closeSettingsBtn'));
     }
     function closeSettings() {
-      settingsSheet.classList.remove('open');
+      closeModal(settingsSheet);
     }
 
     async function enableNotifications() {
@@ -3177,6 +3281,12 @@
     function restoreSession() {
       const saved = lsGet(SESSION_KEY, null);
       if (!saved || !saved.ts || Date.now() - saved.ts > SESSION_MAX_AGE) {
+        // 12 saatten uzun yarım kalan antrenman: yapılan setler kaybolmasın, kısmi XP ile kaydedilir
+        const day = saved && WORKOUT_PROGRAM.find((d) => d.id === saved.dayId);
+        if (day && saved.logs && Object.keys(saved.logs).length && saved.ts) {
+          const rec = buildSessionRecord(day, buildTasksForDay(day), saved.logs, new Date(saved.ts).toISOString());
+          if (Tracker.addSession(rec)) setTimeout(() => showToast(`Yarım kalan antrenman kaydedildi: ${rec.setsDone} set, +${rec.xp} XP`), 400);
+        }
         clearSession();
         return false;
       }
