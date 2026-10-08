@@ -48,8 +48,8 @@ parmakla eğilebilen 3D bir kart olarak görünür; tüm formlar "Avatar Koleksi
 |---|---|---|
 | Önerilen ses türü | 🎙️ Kayıtlı ses | 🎙️ Kayıtlı ses |
 | Uygulama açıkken | Uyarıda YouTube Music / Spotify **kısılır**, ses üstte | Uyarı müziğin **üstünde** çalar (iPhone web'e kısma izni vermez) |
-| Uygulama arka planda / telefon kilitli | Süre işler, sesli uyarı çalar, müzik kısılır | Apple web uygulamalarını durdurur → **ntfy** ile kilit ekranı uyarısı |
-| Kilit ekranı | **Antrenman kartı**: set, tekrar, kalan süre, sıradaki hareket; "Dinlenmeyi bitir" ve "+15 sn" düğmeleri | ntfy bildirimi: 1 dk / 30 sn / bitti (±5 sn) + sıradaki set |
+| Uygulama arka planda / telefon kilitli | Süre işler, sesli uyarı çalar, müzik kısılır | Apple web uygulamalarını durdurur → dinlenme bitince **ntfy** bildirimi |
+| Kilit ekranı | **Antrenman kartı**: set, tekrar, kalan süre, sıradaki hareket; "Dinlenmeyi bitir" ve "+15 sn" düğmeleri | ntfy bildirimi: dinlenme bitti (±5 sn) + sıradaki set |
 
 - **Kayıtlı sesler yeniden işlendi:** eski kayıtlar müzikten ~20 dB kısıktı (−23…−38 LUFS); şimdi
   ~−11,5 LUFS, gürültü temizlendi ve sıkıştırıldı. Müzik kısıldığında ses ~16 dB üstte kalır.
@@ -60,13 +60,13 @@ parmakla eğilebilen 3D bir kart olarak görünür; tüm formlar "Avatar Koleksi
   açılır ve işlem kaldığı dinlenmeye uygulanır.
 - **İlk antrenmanda** kilit ekranı kartı için bildirim izni istenir (Ayarlar'dan da açılabilir).
 - **ntfy (isteğe bağlı):** Ayarlar → "Kilit ekranı uyarıları (ntfy)" → ücretsiz ntfy uygulamasını kur,
-  gösterilen konu adına abone ol. Dinlenmedeyken uygulamadan çıkınca 1 dk / 30 sn / bitti uyarıları ntfy.sh
-  üzerinden planlanır; uygulamaya dönünce veya dinlenme bitince silinir. Mesajlar rastgele, gizli bir konu
-  adıyla gönderilir.
-  - **iPhone:** asıl uyarı kanalı. ntfy.sh mesajları 10 sn'lik adımlarla gönderdiği için uyarılar ~5 sn erken
-    planlanır (gerçek süreden ±5 sn sapabilir).
-  - **Android:** sadece yedek. Uyarı 2 sn geç planlanır; uygulama sesi kendisi çalınca ntfy kopyası silinir.
-    Yani ntfy bildirimi yalnızca pil tasarrufu uygulamayı durdurduysa gelir.
+  gösterilen konu adına abone ol. Dinlenmedeyken uygulamadan çıkınca **sadece "dinlenme bitti" bildirimi**
+  ntfy.sh üzerinden dinlenmenin bittiği ana planlanır (1 dk / 30 sn uyarıları ntfy'ye gönderilmez);
+  uygulamaya dönünce silinir. Mesajlar rastgele, gizli bir konu adıyla gönderilir.
+  - **iPhone:** asıl bildirim kanalı. ntfy.sh mesajları 10 sn'lik adımlarla gönderdiği için bildirim ~5 sn erken
+    planlanır (gerçek bitişten ±5 sn sapabilir).
+  - **Android:** sadece yedek. Bildirim 2 sn geç planlanır; uygulama "süre doldu" uyarısını kendisi verince
+    ntfy kopyası silinir. Yani ntfy bildirimi yalnızca pil tasarrufu uygulamayı durdurduysa gelir.
   - İnternet yoksa planlama yapılamaz; uygulamaya dönünce uyarı gösterilir.
 - Ayarlar'daki **"Sesi test et"** ile müzik çalarken deneyebilirsin.
 

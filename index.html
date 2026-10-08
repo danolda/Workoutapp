@@ -2178,13 +2178,14 @@
     };
 
     /* ================= NTFY: KİLİT EKRANI UYARILARI (OPSİYONEL) ================= */
-    // iPhone'da web uygulamaları arka planda çalışamaz. Açılırsa, uygulamadan çıkarken dinlenme uyarıları
-    // ücretsiz ntfy.sh sunucusunda ileri tarihli mesaj olarak planlanır; telefondaki ntfy uygulaması bunları
+    // iPhone'da web uygulamaları arka planda çalışamaz. Açılırsa, uygulamadan çıkarken "dinlenme bitti" bildirimi
+    // ücretsiz ntfy.sh sunucusunda ileri tarihli mesaj olarak planlanır; telefondaki ntfy uygulaması bunu
     // uygulama kapalıyken bile kilit ekranında gösterir. Uygulamaya dönünce / dinlenme bitince silinir.
+    // Sadece dinlenmenin bittiği an gönderilir; 1 dk / 30 sn uyarıları uygulamanın kendi sesli uyarılarıdır.
     //  - iPhone: asıl uyarı kanalı → 5 sn erken planlanır (ntfy.sh 10 sn'lik adımlarla gönderir: 0-10 sn gecikme).
     //  - Android: sadece yedek → 2 sn geç planlanır; uygulama uyarıyı kendisi çalınca ntfy kopyası silinir.
     const NTFY_BASE = 'https://ntfy.sh';
-    const NTFY_CUES = [60, 30, 0];
+    const NTFY_CUES = [0];
     const NTFY_OFFSET_MS = IS_IOS ? -5000 : 2000;
     const NTFY_MIN_LEAD_MS = 11000; // ntfy en az 10 sn sonrası için planlama kabul eder
     const NTFY_RELEASE_MS = 11000;  // zamanı gelen mesaj ntfy.sh'ta ~10 sn daha bekleyebilir
@@ -2279,7 +2280,9 @@
       },
       test() {
         return this.request('PUT', 'aq-test', { title: '✅ Athlete Quest bağlandı', priority: '4' },
-          'Kilit ekranı uyarıları bu telefonda çalışıyor. Dinlenmedeyken uygulamadan çıkınca 1 dk / 30 sn / bitti uyarıları buraya gelir.');
+          IS_IOS
+            ? 'Kilit ekranı bildirimi bu telefonda çalışıyor. Dinlenmedeyken uygulamadan çıkarsan dinlenme bittiği anda bildirim buraya gelir.'
+            : 'Kilit ekranı bildirimi bu telefonda çalışıyor. Uygulama dinlenme bitişini kendisi bildiremezse (pil tasarrufu) bildirim buraya gelir.');
       }
     };
 
@@ -2627,7 +2630,7 @@
       if (IS_IOS) {
         document.getElementById('notifyText').textContent =
           'Uygulamadan çıktığın anda kilit ekranında dinlenmenin bitiş saati, sıradaki set ve tekrarların görünür. ' +
-          "iPhone uygulamayı arka planda durdurduğu için 1 dk / 30 sn / bitti uyarıları için ayrıca Ayarlar → ntfy'yi aç.";
+          "iPhone uygulamayı arka planda durdurduğu için dinlenme bittiğinde bildirim almak istersen ayrıca Ayarlar → ntfy'yi aç.";
       }
       openModal(document.getElementById('notifyModal'), document.getElementById('notifyAllowBtn'));
     }
@@ -2973,7 +2976,7 @@
         if (session.rest.ntfyFailed) {
           session.rest.ntfyFailed = false;
           saveSession();
-          showToast('⚠️ ntfy uyarıları planlanamadı (internet yok veya günlük sınır doldu).');
+          showToast('⚠️ ntfy bildirimi planlanamadı (internet yok veya günlük sınır doldu).');
         }
         Ntfy.cancel();
         restTick();
@@ -2993,7 +2996,7 @@
       if (IS_IOS && !Ntfy.enabled) {
         text = 'iPhone uygulamadan çıkınca uyarıları durdurur. Kilit ekranında uyarı için ';
       } else if (IS_IOS) {
-        text = 'Uygulamadan çıkarsan 1 dk / 30 sn / bitti uyarıları ntfy ile kilit ekranına gelir.';
+        text = 'Uygulamadan çıkarsan dinlenme bittiği anda ntfy ile kilit ekranına bildirim gelir.';
       } else if (!Notify.supported) {
         text = 'Uygulama arka plandayken de süre işler; müzik durmadan sesli uyarı alırsın.';
       } else if (!Notify.enabled) {
@@ -3604,13 +3607,13 @@
         : 'Bu tarayıcı bildirimleri desteklemiyor.';
       else if (Notification.permission === 'denied') nh.textContent = 'Bildirim izni reddedilmiş; telefon ayarlarından izin vermelisin.';
       else nh.textContent = IS_IOS
-        ? 'iPhone uygulamayı arka planda durdurduğu için bu bildirimler sadece çıkış anını gösterir. Kilit ekranında 1 dk / 30 sn / bitti uyarıları için aşağıdaki ntfy seçeneğini aç.'
+        ? 'iPhone uygulamayı arka planda durdurduğu için bu bildirimler sadece çıkış anını gösterir. Dinlenme bittiğinde kilit ekranında bildirim için aşağıdaki ntfy seçeneğini aç.'
         : 'Kilit ekranında set / tekrar kartı ve dinlenme süresi; 1 dk / 30 sn / bitti anlarında uyarı. Karttan dinlenmeyi bitirebilir veya +15 sn ekleyebilirsin.';
 
       const swNtfy = document.getElementById('swNtfy');
       swNtfy.setAttribute('aria-checked', String(Ntfy.enabled));
       document.getElementById('ntfyHelp').textContent = IS_IOS
-        ? 'iPhone için önerilir: uygulama kapalıyken / telefon kilitliyken dinlenme uyarıları ücretsiz ntfy uygulamasıyla bildirim olarak gelir (±5 sn).'
+        ? 'iPhone için önerilir: uygulama kapalıyken / telefon kilitliyken dinlenme bittiği anda ücretsiz ntfy uygulamasıyla bildirim gelir (±5 sn).'
         : 'Gerekmez (Android kartı yeterli). Telefonun pil tasarrufu uygulamayı durdurursa yedek olarak açabilirsin.';
       document.getElementById('ntfySetup').hidden = !Ntfy.enabled;
       document.getElementById('ntfyTopic').textContent = settings.ntfyTopic || '';
