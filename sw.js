@@ -1,5 +1,5 @@
-const CACHE_NAME = 'workout-v9';
-const ASSETS = ['./', './index.html', './figures.js', './tracker.js', './charts.js', './avatar.js', './manifest.json', './icon-192.png', './icon-512.png', './1dk.mp3', './30s.mp3', './15s.mp3', './5s.mp3'];
+const CACHE_NAME = 'workout-v10';
+const ASSETS = ['./', './index.html', './figures.js', './tracker.js', './charts.js', './avatar.js', './manifest.json', './icon-192.png', './icon-512.png', './1dk.mp3?v=2', './30s.mp3?v=2', './15s.mp3?v=2', './5s.mp3?v=2'];
 const NAV_TIMEOUT_MS = 3500;
 
 self.addEventListener('install', (e) => {
@@ -123,7 +123,35 @@ self.addEventListener('message', (e) => {
   if (d.type === 'rest-start') e.waitUntil(startSchedule(d));
   else if (d.type === 'rest-stop') stopSchedule();
   else if (d.type === 'cue-done' && schedule && schedule.id === d.id) schedule.handled.add(d.sec);
+  else if (d.type === 'ntfy-plan' && schedule && schedule.id === d.id) schedule.ntfy = d.cues && d.cues.length ? { topic: d.topic, cues: d.cues } : null;
 });
+
+/* ---- ntfy (sayfa donukken kilit ekranı düğmelerinin ntfy uyarılarını da güncellemesi için) ---- */
+const NTFY_BASE = 'https://ntfy.sh';
+const NTFY_MIN_LEAD_MS = 11000;
+function ntfyReq(method, topic, seq, params, body) {
+  const q = params ? '?' + new URLSearchParams(params).toString() : '';
+  const init = { method, mode: 'cors' };
+  if (body !== undefined) {
+    init.body = body;
+    init.headers = { 'Content-Type': 'text/plain; charset=utf-8' };
+  }
+  return fetch(`${NTFY_BASE}/${encodeURIComponent(topic)}/${seq}${q}`, init).catch(() => null);
+}
+function ntfyShift(n, endAt, deltaMs) {
+  const now = Date.now();
+  return Promise.all(n.cues.map((c) => {
+    c.at += deltaMs;
+    if (c.cue === 0 && endAt > now && c.at - now < NTFY_MIN_LEAD_MS) c.at = now + NTFY_MIN_LEAD_MS;
+    if (c.at - now < NTFY_MIN_LEAD_MS) return null;
+    const body = c.cue === 0 ? c.base : [c.base, 'Bitiş: ' + clockTime(endAt)].filter(Boolean).join('\n');
+    return ntfyReq('PUT', n.topic, c.seq, { title: c.title, priority: c.priority, at: String(Math.ceil(c.at / 1000)) }, body);
+  }));
+}
+function ntfyCancel(n) {
+  const now = Date.now();
+  return Promise.all(n.cues.filter((c) => c.at > now - 11000).map((c) => ntfyReq('DELETE', n.topic, c.seq)));
+}
 
 const clockTime = (t) => {
   const d = new Date(t);
@@ -188,16 +216,33 @@ self.addEventListener('notificationclick', (e) => {
   const restId = e.notification.data && e.notification.data.restId;
   e.waitUntil((async () => {
     const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const restAction = action === 'add15' || action === 'skip-rest';
+    if (restAction && !wins.length) {
+      // Uygulama kapanmış: işlemi açılışta uygula (dinlenme localStorage'dan geri yüklenir)
+      e.notification.close();
+      return self.clients.openWindow(`./index.html?act=${action}&rest=${restId}`);
+    }
     wins.forEach((c) => c.postMessage({ type: 'notif-action', action, restId, at: Date.now() }));
-    if (action === 'add15' && schedule && schedule.id === restId) {
-      // Yedek zamanlayıcıyı da 15 sn kaydır (sayfa donmuş olsa bile uyarılar doğru anda gelsin)
-      const d = Object.assign({}, schedule.data, { endAt: schedule.data.endAt + 15000 });
-      const keep = startSchedule(d);
-      await self.registration.showNotification('⏱ +15 sn eklendi', cardOptions(d, 1, false));
-      return keep;
+    if (action === 'add15') {
+      if (schedule && schedule.id === restId) {
+        // Yedek zamanlayıcıyı (ve varsa ntfy uyarılarını) 15 sn kaydır: sayfa donmuş olsa bile doğru anda gelsin
+        const ntfy = schedule.ntfy;
+        const d = Object.assign({}, schedule.data, { endAt: schedule.data.endAt + 15000 });
+        const keep = startSchedule(d);
+        if (ntfy) {
+          schedule.ntfy = ntfy;
+          await ntfyShift(ntfy, d.endAt, 15000);
+        }
+        await self.registration.showNotification('⏱ +15 sn eklendi', cardOptions(d, 1, false));
+        return keep;
+      }
+      return undefined; // sayfa süreyi uzatır, kartı ve yedek zamanlayıcıyı kendisi yeniler
     }
     e.notification.close();
-    if (action === 'skip-rest') stopSchedule();
+    if (action === 'skip-rest') {
+      if (schedule && schedule.id === restId && schedule.ntfy) await ntfyCancel(schedule.ntfy);
+      stopSchedule();
+    }
     for (const c of wins) {
       if ('focus' in c) return c.focus();
     }

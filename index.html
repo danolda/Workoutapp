@@ -1740,7 +1740,7 @@
     <div class="modal">
       <div style="font-size: 2.4rem; line-height: 1;">🔒</div>
       <h2 id="notifyTitle" style="margin-top: 8px;">Kilit ekranı kartı</h2>
-      <p>Telefon kilitliyken ya da müzik uygulamasındayken <strong>dinlenme süresini, sıradaki seti ve tekrarlarını</strong> kilit ekranında gör; 1 dk / 30 sn / bitti uyarıları bildirim olarak gelsin.</p>
+      <p id="notifyText">Telefon kilitliyken ya da müzik uygulamasındayken <strong>dinlenme süresini, sıradaki seti ve tekrarlarını</strong> kilit ekranında gör; 1 dk / 30 sn / bitti uyarıları bildirim olarak gelsin.</p>
       <div class="modal-actions">
         <button type="button" class="complete-set-btn" id="notifyAllowBtn">🔔 Bildirimlere izin ver</button>
         <button type="button" class="secondary-step-btn" id="notifyLaterBtn">Şimdi değil</button>
@@ -1951,10 +1951,13 @@
       lsGet(SETTINGS_KEY, {})
     );
     const saveSettings = () => lsSet(SETTINGS_KEY, settings);
-    // Kayıtlı sesler müziğin üstünde duyulacak şekilde yeniden işlendi (~20 dB daha yüksek):
-    // iki platformda da varsayılan artık kayıtlı ses (Telefon sesi müziğin altında kalıyordu)
+    // Kayıtlı sesler müziğin üstünde duyulacak şekilde yeniden işlendi (~20 dB daha yüksek).
+    // iPhone'da eski varsayılan "Telefon sesi" idi → kayıtlı sese geçilir. Android'de "Telefon sesi"
+    // ancak kullanıcı seçtiyse kayıtlıdır → seçime dokunulmaz, sadece bir kez bilgi verilir.
+    let showVoiceHint = false;
     if (!settings.audioV2) {
-      settings.voice = 'clip';
+      if (IS_IOS) settings.voice = 'clip';
+      else if (settings.voice === 'tts') showVoiceHint = true;
       settings.audioV2 = true;
       saveSettings();
     }
@@ -1971,7 +1974,9 @@
       5: 'Beş', 4: 'Dört', 3: 'Üç', 2: 'İki', 1: 'Bir',
       0: 'Süre doldu, sıradaki set'
     };
-    const CLIP_FILES = { 60: '1dk.mp3', 30: '30s.mp3', 15: '15s.mp3', 5: '5s.mp3' };
+    // ?v=2: yeniden işlenmiş (yüksek) kayıtlar. Eski servis çalışanı önbellekteki kısık sürümü veremesin diye
+    // dosyalar değişince bu numarayı (ve sw.js'teki ASSETS listesini) artır.
+    const CLIP_FILES = { 60: '1dk.mp3?v=2', 30: '30s.mp3?v=2', 15: '15s.mp3?v=2', 5: '5s.mp3?v=2' };
     const CHIME_RATE = 44100;
 
     function makeChimeSamples() {
@@ -2176,10 +2181,13 @@
     // iPhone'da web uygulamaları arka planda çalışamaz. Açılırsa, uygulamadan çıkarken dinlenme uyarıları
     // ücretsiz ntfy.sh sunucusunda ileri tarihli mesaj olarak planlanır; telefondaki ntfy uygulaması bunları
     // uygulama kapalıyken bile kilit ekranında gösterir. Uygulamaya dönünce / dinlenme bitince silinir.
+    //  - iPhone: asıl uyarı kanalı → 5 sn erken planlanır (ntfy.sh 10 sn'lik adımlarla gönderir: 0-10 sn gecikme).
+    //  - Android: sadece yedek → 2 sn geç planlanır; uygulama uyarıyı kendisi çalınca ntfy kopyası silinir.
     const NTFY_BASE = 'https://ntfy.sh';
     const NTFY_CUES = [60, 30, 0];
-    const NTFY_EARLY_MS = 5000;     // ntfy.sh ileri tarihli mesajları 10 sn'lik adımlarla yollar (0-10 sn gecikme)
+    const NTFY_OFFSET_MS = IS_IOS ? -5000 : 2000;
     const NTFY_MIN_LEAD_MS = 11000; // ntfy en az 10 sn sonrası için planlama kabul eder
+    const NTFY_RELEASE_MS = 11000;  // zamanı gelen mesaj ntfy.sh'ta ~10 sn daha bekleyebilir
     const Ntfy = {
       get enabled() { return !!(settings.ntfy && settings.ntfyTopic); },
       request(method, seq, params, body) {
@@ -2196,39 +2204,89 @@
         session.rest.ntfy = session.rest.ntfy || {};
         return session.rest.ntfy;
       },
+      // Bu dinlenme için gönderilecek uyarılar. Sıra numarası her dinlenmeye özel: ntfy aynı numarayı
+      // "güncelleme" sayar ve sessiz gösterir.
+      plan() {
+        const now = Date.now();
+        const endAt = session.rest.endAt;
+        const out = [];
+        NTFY_CUES.forEach((cue) => {
+          let at = endAt - cue * 1000 + NTFY_OFFSET_MS;
+          // Dinlenmenin son saniyelerinde çıkılsa da "bitti" uyarısı gelsin (ntfy'nin izin verdiği en erken anda)
+          if (cue === 0 && endAt > now && at - now < NTFY_MIN_LEAD_MS) at = now + NTFY_MIN_LEAD_MS;
+          if (at - now < NTFY_MIN_LEAD_MS) return;
+          const m = ntfyMessage(cue);
+          out.push({ cue, seq: `aq-${session.rest.id}-${cue}`, at, title: m.title, priority: m.priority, base: m.base });
+        });
+        return out;
+      },
       // Uygulamadan çıkarken: kalan uyarıları planla (aynı sıra numarası eskisinin yerine geçer)
       schedule() {
         if (!this.enabled || !session || !session.rest) return;
         const now = Date.now();
         const pending = this.pending();
-        NTFY_CUES.forEach((cue) => {
-          const at = session.rest.endAt - cue * 1000 - NTFY_EARLY_MS;
-          if (at - now >= NTFY_MIN_LEAD_MS) {
-            const m = ntfyMessage(cue);
-            this.request('PUT', `aq-${cue}`, { title: m.title, priority: m.priority, at: String(Math.round(at / 1000)) }, m.body);
-            pending[cue] = at;
-          } else if (pending[cue] > now + 1000) {
-            this.request('DELETE', `aq-${cue}`);
-            delete pending[cue];
-          }
+        const plan = this.plan();
+        const planned = new Set(plan.map((p) => String(p.cue)));
+        Object.keys(pending).forEach((cue) => {
+          if (planned.has(cue)) return;
+          if (ntfyAt(pending[cue]) > now - NTFY_RELEASE_MS) this.request('DELETE', ntfySeq(pending[cue], cue));
+          delete pending[cue];
+        });
+        const restId = session.rest.id;
+        plan.forEach((p) => {
+          pending[p.cue] = p;
+          this.request('PUT', p.seq, { title: p.title, priority: p.priority, at: String(Math.ceil(p.at / 1000)) }, ntfyBody(p, session.rest.endAt))
+            .then((res) => {
+              if (res && res.ok) return;
+              // Planlanamadı (internet yok / günlük sınır): kayıttan çıkar, uygulamaya dönünce kullanıcıya söyle
+              if (session && session.rest && session.rest.id === restId && session.rest.ntfy) {
+                delete session.rest.ntfy[p.cue];
+                session.rest.ntfyFailed = true;
+                saveSession();
+              }
+            });
         });
         saveSession();
+        this.syncSw();
       },
-      // Uygulamaya dönünce / dinlenme bitince: henüz gönderilmemiş uyarıları sil
+      // Uygulama uyarıyı kendisi çaldı (Android, arka planda): ntfy yedeğine gerek kalmadı
+      handled(cue) {
+        const p = session && session.rest && session.rest.ntfy && session.rest.ntfy[cue];
+        if (!p) return;
+        this.request('DELETE', ntfySeq(p, cue));
+        delete session.rest.ntfy[cue];
+        saveSession();
+        this.syncSw();
+      },
+      // Uygulamaya dönünce / dinlenme bitince: gönderilmemiş (veya ntfy'de hâlâ bekleyen) uyarıları sil
       cancel() {
         if (!session || !session.rest || !session.rest.ntfy) return;
         const now = Date.now();
+        const had = Object.keys(session.rest.ntfy).length > 0;
         Object.keys(session.rest.ntfy).forEach((cue) => {
-          if (session.rest.ntfy[cue] > now + 1000 && settings.ntfyTopic) this.request('DELETE', `aq-${cue}`);
+          const p = session.rest.ntfy[cue];
+          if (ntfyAt(p) > now - NTFY_RELEASE_MS && settings.ntfyTopic) this.request('DELETE', ntfySeq(p, cue));
         });
         session.rest.ntfy = {};
         saveSession();
+        if (had) this.syncSw();
+      },
+      // Servis çalışanı da planı bilsin: sayfa donukken kilit ekranından "+15 sn" / "bitir" ntfy'yi de güncellesin
+      syncSw() {
+        if (!session || !session.rest) return;
+        const cues = Object.values(session.rest.ntfy || {}).filter((p) => p && typeof p === 'object');
+        Notify.post({ type: 'ntfy-plan', id: session.rest.id, topic: settings.ntfyTopic, cues });
       },
       test() {
         return this.request('PUT', 'aq-test', { title: '✅ Athlete Quest bağlandı', priority: '4' },
           'Kilit ekranı uyarıları bu telefonda çalışıyor. Dinlenmedeyken uygulamadan çıkınca 1 dk / 30 sn / bitti uyarıları buraya gelir.');
       }
     };
+
+    // Eski sürümden kalan kayıtlar sadece zaman (sayı) tutuyordu
+    const ntfyAt = (p) => (typeof p === 'number' ? p : p && p.at) || 0;
+    const ntfySeq = (p, cue) => (p && typeof p === 'object' && p.seq) || `aq-${cue}`;
+    const ntfyBody = (p, endAt) => (p.cue === 0 ? p.base : [p.base, `Bitiş: ${clockTime(endAt)}`].filter(Boolean).join('\n'));
 
     function ntfyMessage(cue) {
       const next = workoutTasks[session.index + 1];
@@ -2238,16 +2296,15 @@
         return {
           title: '✅ Dinlenme bitti — sıradaki set!',
           priority: '5',
-          body: next ? `${next.name} · Set ${next.setNumber}/${next.totalSets}\nHedef: ${next.target}` : 'Sıradaki sete geç.'
+          base: next ? `${next.name} · Set ${next.setNumber}/${next.totalSets}\nHedef: ${next.target}` : 'Sıradaki sete geç.'
         };
       }
       return {
         title: cueTitle(cue),
         priority: '4',
-        body: [
+        base: [
           next ? `Sıradaki: ${next.name} · Set ${next.setNumber}/${next.totalSets}` : '',
-          `${lastLog ? `Son set: ${lastLog.reps} tekrar · ` : ''}✔ ${doneSets}/${workoutTasks.length} set`,
-          `Bitiş: ${clockTime(session.rest.endAt)}`
+          `${lastLog ? `Son set: ${lastLog.reps} tekrar · ` : ''}✔ ${doneSets}/${workoutTasks.length} set`
         ].filter(Boolean).join('\n')
       };
     }
@@ -2329,6 +2386,8 @@
           if (opts.alert) o.vibrate = opts.cue === 0 ? [300, 120, 300] : [200, 100, 200];
           await reg.showNotification(c.title, o);
           this.cardShownAt = Date.now();
+          // Gösterilene kadar uygulamaya dönülmüşse kart bildirim panelinde kalmasın
+          if (document.visibilityState !== 'hidden' || !session) await this.clear();
         } catch (e) {}
       },
       cardShownAt: 0,
@@ -2383,7 +2442,7 @@
         body: [`Toplam set: ${session.index + 1}/${total} · Hedef: ${task.target}`,
           `${prev !== null ? `Önceki: ${prev} tekrar · ` : ''}${progress}`].join('\n'),
         timestamp: Date.now(),
-        actions: [{ action: 'open', title: '✓ Seti kaydet' }]
+        actions: [{ action: 'open', title: '📱 Aç ve kaydet' }]
       };
     }
 
@@ -2565,6 +2624,11 @@
       if (!Notify.supported || settings.notifyAsked || Notification.permission !== 'default') return;
       settings.notifyAsked = true;
       saveSettings();
+      if (IS_IOS) {
+        document.getElementById('notifyText').textContent =
+          'Uygulamadan çıktığın anda kilit ekranında dinlenmenin bitiş saati, sıradaki set ve tekrarların görünür. ' +
+          "iPhone uygulamayı arka planda durdurduğu için 1 dk / 30 sn / bitti uyarıları için ayrıca Ayarlar → ntfy'yi aç.";
+      }
       openModal(document.getElementById('notifyModal'), document.getElementById('notifyAllowBtn'));
     }
 
@@ -2838,6 +2902,7 @@
       if ('vibrate' in navigator) navigator.vibrate(sec === 0 ? [120, 60, 120] : sec <= 5 ? 25 : [60, 40, 60]);
       if (NOTIFY_CUES.includes(sec)) {
         Notify.post({ type: 'cue-done', id: restId, sec });
+        if (!IS_IOS && document.visibilityState === 'hidden' && NTFY_CUES.includes(sec)) Ntfy.handled(sec);
         // Arka plandaysa kilit ekranı kartı uyarıyla güncellenir (ses çaldıysa kart sessiz kalır, sadece titrer)
         if (document.visibilityState === 'hidden') Notify.card({ alert: !played || sec === 0, cue: sec });
       }
@@ -2904,8 +2969,15 @@
         if (session && session.rest) Ntfy.schedule();
         return;
       }
-      if (session && session.rest) Ntfy.cancel();
-      if (session && session.rest) restTick();
+      if (session && session.rest) {
+        if (session.rest.ntfyFailed) {
+          session.rest.ntfyFailed = false;
+          saveSession();
+          showToast('⚠️ ntfy uyarıları planlanamadı (internet yok veya günlük sınır doldu).');
+        }
+        Ntfy.cancel();
+        restTick();
+      }
       Wake.sync();
       Notify.clear();
       if (IS_IOS) Voice.ttsUnlocked = false;
@@ -2922,7 +2994,9 @@
         text = 'iPhone uygulamadan çıkınca uyarıları durdurur. Kilit ekranında uyarı için ';
       } else if (IS_IOS) {
         text = 'Uygulamadan çıkarsan 1 dk / 30 sn / bitti uyarıları ntfy ile kilit ekranına gelir.';
-      } else if (!Notify.enabled && Notify.supported) {
+      } else if (!Notify.supported) {
+        text = 'Uygulama arka plandayken de süre işler; müzik durmadan sesli uyarı alırsın.';
+      } else if (!Notify.enabled) {
         text = 'Kilit ekranında set kartı ve uyarılar için ';
       } else {
         text = 'Telefon kilitliyken de süre işler; müzik durmadan sesli uyarı ve kilit ekranı kartı gelir.';
@@ -3652,7 +3726,17 @@
     });
 
     /* ================= INIT ================= */
+    // Uygulama kapalıyken kilit ekranı kartından gelen işlem (sw.js → ./index.html?act=…&rest=…)
+    function takeUrlAction() {
+      const params = new URLSearchParams(location.search);
+      const act = params.get('act');
+      if (!act) return null;
+      try { history.replaceState(null, '', location.pathname); } catch (e) {}
+      return { act, restId: Number(params.get('rest')) };
+    }
+
     function restoreSession() {
+      const urlAction = takeUrlAction();
       const saved = lsGet(SESSION_KEY, null);
       if (!saved || !saved.ts || Date.now() - saved.ts > SESSION_MAX_AGE) {
         // 12 saatten uzun yarım kalan antrenman: yapılan setler kaybolmasın, kısmi XP ile kaydedilir
@@ -3680,9 +3764,15 @@
           renderRestStatic();
           showView('rest');
           restTick();
+          scheduleNotifications(); // servis çalışanı yeniden başlamış olabilir: yedek zamanlayıcıyı yeniden kur
+          if (urlAction && session.rest && session.rest.id === urlAction.restId) {
+            if (urlAction.act === 'add15') addRestTime(15);
+            else if (urlAction.act === 'skip-rest') finishRestAndProceed();
+          }
           return true;
         }
-        // Dinlenme uygulama kapalıyken bittiyse doğrudan sıradaki sete geç
+        // Dinlenme uygulama kapalıyken bittiyse doğrudan sıradaki sete geç (ntfy'de bekleyen uyarı varsa silinir)
+        Ntfy.cancel();
         session.rest = null;
         session.index++;
       }
@@ -3705,6 +3795,7 @@
     renderMenu();
     renderProfileMini();
     if (!restoreSession()) showView('menu');
+    if (showVoiceHint) setTimeout(() => showToast('🎙️ Kayıtlı sesler artık çok daha yüksek. Müzik açıkken duymak için ⚙️ Ayarlar → Kayıtlı ses.'), 1200);
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

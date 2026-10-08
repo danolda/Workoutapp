@@ -53,12 +53,21 @@ parmakla eğilebilen 3D bir kart olarak görünür; tüm formlar "Avatar Koleksi
 
 - **Kayıtlı sesler yeniden işlendi:** eski kayıtlar müzikten ~20 dB kısıktı (−23…−38 LUFS); şimdi
   ~−11,5 LUFS, gürültü temizlendi ve sıkıştırıldı. Müzik kısıldığında ses ~16 dB üstte kalır.
-- **Android arka plan:** antrenman sırasında uygulama arka plandayken duyulamayacak kadar kısık bir ton
-  çalınır; Chrome sayfayı dondurmaz, uyarılar zamanında çalar. Bu ton ses odağı almaz, müziğin durmaz.
+- **Android arka plan:** dinlenme sırasında uygulama arka plandayken duyulamayacak kadar kısık bir ton
+  çalınır (set sırasında çalınmaz, pil harcamaz); Chrome sayfayı dondurmaz, uyarılar zamanında çalar.
+  Bu ton ses odağı almaz, müziğin durmaz.
+- **Kilit ekranı düğmeleri** ("Dinlenmeyi bitir", "+15 sn") uygulama kapanmış olsa bile çalışır: uygulama
+  açılır ve işlem kaldığı dinlenmeye uygulanır.
 - **İlk antrenmanda** kilit ekranı kartı için bildirim izni istenir (Ayarlar'dan da açılabilir).
-- **iPhone için ntfy (isteğe bağlı):** Ayarlar → "Kilit ekranı uyarıları (ntfy)" → ücretsiz ntfy uygulamasını
-  kur, gösterilen konu adına abone ol. Dinlenmedeyken uygulamadan çıkınca uyarılar ntfy.sh üzerinden
-  planlanır; uygulamaya dönünce iptal edilir. Mesajlar rastgele, gizli bir konu adıyla gönderilir.
+- **ntfy (isteğe bağlı):** Ayarlar → "Kilit ekranı uyarıları (ntfy)" → ücretsiz ntfy uygulamasını kur,
+  gösterilen konu adına abone ol. Dinlenmedeyken uygulamadan çıkınca 1 dk / 30 sn / bitti uyarıları ntfy.sh
+  üzerinden planlanır; uygulamaya dönünce veya dinlenme bitince silinir. Mesajlar rastgele, gizli bir konu
+  adıyla gönderilir.
+  - **iPhone:** asıl uyarı kanalı. ntfy.sh mesajları 10 sn'lik adımlarla gönderdiği için uyarılar ~5 sn erken
+    planlanır (gerçek süreden ±5 sn sapabilir).
+  - **Android:** sadece yedek. Uyarı 2 sn geç planlanır; uygulama sesi kendisi çalınca ntfy kopyası silinir.
+    Yani ntfy bildirimi yalnızca pil tasarrufu uygulamayı durdurduysa gelir.
+  - İnternet yoksa planlama yapılamaz; uygulamaya dönünce uyarı gösterilir.
 - Ayarlar'daki **"Sesi test et"** ile müzik çalarken deneyebilirsin.
 
 ## MP3 Dosyaları
@@ -75,6 +84,9 @@ Bu 4 MP3'ü kendin kaydedip aynı klasöre koy:
 > ⚠️ Her kayıt **5 saniyeden kısa** olmalı. Android Chrome 5 sn'den uzun sesleri "müzik" sayar ve
 > Spotify'ı kısmak yerine durdurur. Yeni kayıt yaparsan müziğin üstünde duyulması için yüksek kaydet
 > (hedef ≈ −12 LUFS, tepe −1 dB).
+>
+> Kayıtları değiştirince telefonların eski sesleri önbellekten çalmaması için `?v=2` numarasını artır
+> (`index.html` → `CLIP_FILES`, `sw.js` → `ASSETS`) ve `sw.js`'teki `CACHE_NAME`'i de bir artır.
 
 ## Dosya Yapısı
 
