@@ -536,6 +536,10 @@
       margin-bottom: 12px;
     }
 
+    .last-time { margin: -6px 0 12px; font-size: 0.75rem; font-weight: 600; color: var(--text-sub); text-align: center; overflow-wrap: anywhere; }
+    .last-time b { color: var(--text-muted); font-weight: 800; }
+    .pm-streak { position: absolute; top: 8px; right: 10px; font-size: 0.72rem; font-weight: 800; color: var(--gold); background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.25); padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+
     .stepper-row {
       display: flex;
       align-items: center;
@@ -1085,6 +1089,7 @@
       margin-bottom: 18px;
       cursor: pointer;
       text-align: left;
+      position: relative;
     }
     .profile-mini .av {
       flex: 0 0 60px;
@@ -1520,6 +1525,7 @@
     <main id="viewMenu" class="view active">
       <div class="profile-mini" id="profileMini" role="button" tabindex="0" aria-label="Profili aç">
         <div class="av" id="pmAvatar"></div>
+        <span class="pm-streak" id="pmStreak" hidden></span>
         <div class="pm-info">
           <div class="pm-level" id="pmLevel">Seviye 0</div>
           <div class="pm-name" id="pmTier">Çaylak</div>
@@ -1579,6 +1585,7 @@
             <span>🔥 Önceki Rekor:</span>
             <strong id="prevRecordText">-- Tekrar</strong>
           </div>
+          <div class="last-time" id="lastTimeText" hidden></div>
           <div class="stepper-row">
             <button class="stepper-btn" id="decRepsBtn" aria-label="Tekrar azalt">-</button>
             <input type="number" id="repsInput" class="reps-input-field" value="10" min="0" max="999" inputmode="numeric" aria-label="Tekrar sayısı">
@@ -2751,6 +2758,17 @@
       prevRecordText.textContent = prevReps !== null && prevReps !== undefined ? `${prevReps} Tekrar` : 'İlk Kez Yapılıyor';
       repsInput.value = logged ? logged.reps : (prevReps !== null && prevReps !== undefined ? prevReps : task.defReps);
 
+      // Bu hareketin yapıldığı son seanstaki setler
+      const lastRow = Tracker.exerciseSessions(Tracker.load(), task.fig).pop();
+      const lastEl = document.getElementById('lastTimeText');
+      lastEl.hidden = !lastRow;
+      if (lastRow) {
+        lastEl.textContent = 'Geçen sefer: ';
+        const b = document.createElement('b');
+        b.textContent = lastRow.reps.join(' · ');
+        lastEl.appendChild(b);
+      }
+
       questSetPills.innerHTML = '';
       for (let s = 1; s <= task.totalSets; s++) {
         const pill = document.createElement('div');
@@ -3215,6 +3233,22 @@
       setXpBar(document.getElementById('pmXpFill'), info);
       document.getElementById('pmXpText').textContent = xpLabel(info);
       document.getElementById('pmNext').textContent = info.isMax ? '👑' : `Lv ${info.level + 1}`;
+      const streak = weekStreak(Tracker.load());
+      const st = document.getElementById('pmStreak');
+      st.hidden = !streak;
+      st.textContent = `🔥 ${streak} hafta`;
+      st.title = 'Üst üste en az bir antrenman yapılan hafta sayısı';
+    }
+
+    // Üst üste (Pzt–Paz) en az bir antrenman olan hafta sayısı; bu hafta boşsa geçen haftadan sayılır
+    function weekStreak(list) {
+      const monday = (t) => { const d = new Date(t); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getTime(); };
+      const weeks = new Set(list.map((x) => monday(Date.parse(x.date))));
+      const d = new Date(monday(Date.now()));
+      if (!weeks.has(d.getTime())) d.setDate(d.getDate() - 7);
+      let n = 0;
+      while (weeks.has(d.getTime())) { n++; d.setDate(d.getDate() - 7); }
+      return n;
     }
 
     function renderSummaryXp(before, after, gained, setsDone) {

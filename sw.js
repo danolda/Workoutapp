@@ -1,4 +1,4 @@
-const CACHE_NAME = 'workout-v11';
+const CACHE_NAME = 'workout-v12';
 const ASSETS = ['./', './index.html', './figures.js', './tracker.js', './cloud.js', './charts.js', './avatar.js', './manifest.json', './icon-192.png', './icon-512.png', './1dk.mp3?v=2', './30s.mp3?v=2', './15s.mp3?v=2', './5s.mp3?v=2'];
 const NAV_TIMEOUT_MS = 3500;
 
