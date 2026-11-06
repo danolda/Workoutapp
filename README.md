@@ -21,7 +21,7 @@
 
 ## Kişisel Takip (📈 İlerleme)
 
-- Her hareket için **set başı max tekrar** ve **toplam tekrar** telefonda (localStorage) saklanır
+- Her hareket için **set başı max tekrar** ve **toplam tekrar** Google hesabına (bulut) kaydedilir; telefondaki kopya önbellektir
 - Harekete dokununca tarihe göre **eğri grafik** (Max / set veya seans toplamı; 30 gün / 90 gün / tümü)
   ve tüm seansların **tablosu** açılır (★ = rekor)
 - Aynı hareket farklı günlerde olsa da (ör. Dips 1. ve 3. gün) tek hareket olarak toplanır
@@ -108,3 +108,11 @@ Bu 4 MP3'ü kendin kaydedip aynı klasöre koy:
 ```
 
 Güncelleme yaptıktan sonra uygulamayı bir-iki kez kapatıp açman yeterli; yeni sürüm otomatik yüklenir.
+
+## Bulut Kaydı (Google ile giriş)
+
+- Profil → **Hesap ve Bulut Kaydı** → *Google ile giriş yap*. Asıl kayıt hesaptadır (Supabase, `workout_*` tabloları);
+  telefondaki localStorage yalnızca önbellek + çevrimdışı kuyruktur. İnternet yokken yapılan antrenmanlar bağlanınca gönderilir.
+- Birleştirme sunucuda yapılır, ilerleme düşmez: antrenmanlar id'ye göre birleşir (hiçbiri silinmez), rekorlarda son değişiklik kazanır.
+- Çıkış yapınca cihazdaki kopya silinir (aynı telefonu başka biri kullanabilsin); tekrar giriş yapınca hepsi geri gelir.
+- Şema ve fonksiyonlar: `tools/supabase-workout.sql` (RLS açık, doğrudan tablo erişimi yok; yalnız `workout_sync` RPC'si, oturum açmış kullanıcının kendi e-postasıyla).

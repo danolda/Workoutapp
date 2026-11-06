@@ -1,5 +1,5 @@
 /* ================= TRACKER & LEVELS =================
-   Antrenman geçmişi (yerel), hareket istatistikleri ve seviye sistemi.
+   Antrenman geçmişi (yerel önbellek; asıl kayıt cloud.js ile buluttadır), hareket istatistikleri ve seviye sistemi.
    DOM kullanmaz; tüm hesaplar saf fonksiyonlardır. */
 (function (root) {
   'use strict';
@@ -84,6 +84,8 @@
     if (!ls) return false;
     try {
       ls.setItem(HISTORY_KEY, JSON.stringify(list));
+      // Bulut kaydı (cloud.js) değişikliği kuyruğa alsın
+      if (root.WCloud) { try { root.WCloud.touch(); } catch (e) {} }
       return true;
     } catch (e) {
       return false;

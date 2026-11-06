@@ -13,6 +13,8 @@
   <meta name="apple-mobile-web-app-title" content="Workout">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+  <script>/* Google girişinden dönüş: #access_token=… / ?error=… yakala, adresi temizle (cloud.js işler) */
+  (function(){try{var h=location.hash.replace(/^#/,''),q=location.search.replace(/^\?/,''),src=/(^|&)(access_token|error)=/.test(h)?h:/(^|&)error=/.test(q)?q:'';if(!src)return;var o={};src.split('&').forEach(function(kv){var i=kv.indexOf('=');if(i>0)o[decodeURIComponent(kv.slice(0,i))]=decodeURIComponent(kv.slice(i+1).replace(/\+/g,' '))});delete o.provider_token;delete o.provider_refresh_token;localStorage.setItem('aq_auth_new',JSON.stringify(o));history.replaceState(null,'',location.pathname)}catch(e){}})();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" crossorigin="anonymous">
@@ -838,7 +840,7 @@
       font-variant-numeric: tabular-nums;
     }
     .stat-tile span {
-      font-size: 0.66rem;
+      font-size: 0.7rem;
       font-weight: 700;
       color: var(--text-sub);
       text-transform: uppercase;
@@ -1120,15 +1122,70 @@
       display: flex;
       justify-content: space-between;
       gap: 8px;
-      font-size: 0.7rem;
+      font-size: 0.74rem;
       font-weight: 700;
       color: var(--text-sub);
       margin-top: 5px;
     }
     .xp-text strong { color: var(--text-muted); }
 
+    /* ================= HESAP / BULUT ================= */
+    .cloud-nudge {
+      display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+      background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.28);
+      border-radius: 16px; padding: 12px 14px; margin: -6px 0 18px; color: var(--text); cursor: pointer;
+    }
+    .cloud-nudge b { display: block; font-size: 0.9rem; font-weight: 800; }
+    .cloud-nudge small { display: block; font-size: 0.76rem; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+    .cloud-nudge .cn-arrow { margin-left: auto; font-size: 1.4rem; color: var(--primary); font-weight: 800; }
+    .g-logo { flex: 0 0 34px; height: 34px; border-radius: 10px; background: #fff; display: flex; align-items: center; justify-content: center; }
+    .acct-card {
+      background: var(--card); border: 1px solid var(--card-border); border-radius: 16px;
+      padding: 14px; margin-bottom: 22px; text-align: left;
+    }
+    .acct-top { display: flex; gap: 12px; align-items: flex-start; }
+    .acct-top b { display: block; font-size: 0.95rem; font-weight: 800; overflow-wrap: anywhere; }
+    .acct-top small { display: block; font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; margin-top: 3px; }
+    .acct-id { min-width: 0; }
+    .acct-id small { margin: 0 0 2px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; font-size: 0.66rem; color: var(--text-sub); }
+    .acct-ico {
+      flex: 0 0 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      background: rgba(99, 102, 241, 0.14); font-size: 1.2rem;
+    }
+    .acct-ico.ok { background: rgba(16, 185, 129, 0.16); color: var(--primary); font-weight: 900; }
+    .google-btn {
+      width: 100%; margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: #fff; color: #1f1f1f; border: none; border-radius: 14px; padding: 13px;
+      font-size: 0.95rem; font-weight: 800; cursor: pointer;
+    }
+    .google-btn:active { transform: scale(0.98); }
+    .acct-sync { font-size: 0.78rem; font-weight: 700; margin: 12px 0 0; line-height: 1.45; }
+    .acct-sync.ok { color: #6ee7b7; }
+    .acct-sync.busy { color: var(--text-muted); }
+    .acct-sync.warn { color: #fbbf24; }
+    .acct-err { font-size: 0.76rem; color: #fbbf24; margin-top: 10px; }
+    .acct-actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 10px; align-items: stretch; }
+    .acct-actions .test-btn { margin: 0; }
+    .acct-actions .test-btn:disabled { opacity: 0.5; }
+    .acct-actions .secondary-step-btn { flex: none; padding: 11px 18px; }
+
     /* ================= PROGRESS (İLERLEME) ================= */
     .stat-row.spaced { margin-bottom: 18px; }
+    .week-card {
+      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); border-radius: 16px;
+      padding: 12px 12px 10px; margin: -6px 0 20px;
+    }
+    .week-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .week-head b { font-size: 0.82rem; font-weight: 800; }
+    .week-head span { font-size: 0.78rem; font-weight: 800; color: var(--primary); }
+    .week-bars { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; height: 92px; margin-top: 10px; }
+    .wk { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; min-width: 0; }
+    .wk em { font-style: normal; font-size: 0.7rem; font-weight: 800; color: var(--text-muted); height: 14px; }
+    .wk i { display: block; width: 100%; max-width: 26px; border-radius: 6px 6px 3px 3px; background: rgba(99, 102, 241, 0.55); min-height: 3px; }
+    .wk.full i { background: var(--primary); }
+    .wk.now i { box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35); }
+    .wk small { font-size: 0.62rem; font-weight: 700; color: var(--text-sub); margin-top: 5px; white-space: nowrap; }
+    .wk.now small { color: var(--text); }
     .ex-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
     .ex-row {
       display: flex;
@@ -1321,7 +1378,7 @@
     .tier-name { font-size: 1.45rem; font-weight: 900; letter-spacing: -0.4px; margin: 2px 0 2px; }
     .next-unlock { font-size: 0.76rem; color: var(--text-muted); margin-top: 10px; line-height: 1.5; }
     .next-unlock strong { color: var(--text); }
-    .split-note { font-size: 0.74rem; color: var(--text-sub); text-align: center; margin: -8px 0 18px; }
+    .split-note { font-size: 0.78rem; color: var(--text-sub); text-align: center; margin: -8px 0 18px; }
     .tier-strip {
       display: flex;
       gap: 8px;
@@ -1366,7 +1423,7 @@
     .history-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
     .history-item .log-ex-name small { display: block; font-size: 0.68rem; color: var(--text-sub); font-weight: 600; }
     .xp-pill { color: var(--gold); font-weight: 900; white-space: nowrap; font-size: 0.82rem; }
-    .rule-note { font-size: 0.7rem; color: var(--text-sub); line-height: 1.55; margin-top: 4px; text-align: center; }
+    .rule-note { font-size: 0.76rem; color: var(--text-sub); line-height: 1.55; margin-top: 4px; text-align: center; }
 
     /* ================= SUMMARY XP + MODALS ================= */
     .xp-gain-card {
@@ -1470,6 +1527,11 @@
           <div class="xp-text"><span id="pmXpText">0 / 200 XP</span><span id="pmNext">Lv 1</span></div>
         </div>
       </div>
+      <button type="button" class="cloud-nudge" id="cloudNudge" hidden>
+        <span class="g-logo" aria-hidden="true"></span>
+        <span><b>Google ile giriş yap</b><small>İstatistiklerin hesabına kaydedilsin, hiç kaybolmasın.</small></span>
+        <span class="cn-arrow" aria-hidden="true">›</span>
+      </button>
       <div class="section-title">Haftalık Program</div>
       <div class="day-grid" id="dayMenuGrid"></div>
       <button type="button" class="tip-card" id="menuTip">
@@ -1627,6 +1689,10 @@
         <div class="stat-tile"><strong id="pgSets">0</strong><span>Set</span></div>
         <div class="stat-tile"><strong id="pgReps">0</strong><span>Tekrar</span></div>
       </div>
+      <div class="week-card" id="weekCard">
+        <div class="week-head"><b>Son 8 Hafta</b><span id="weekNow"></span></div>
+        <div class="week-bars" id="weekBars" role="img" aria-label="Son 8 haftada haftalık antrenman sayısı"></div>
+      </div>
       <div id="progressGroups"></div>
     </main>
 
@@ -1702,6 +1768,9 @@
         <div class="stat-tile"><strong id="profReps">0</strong><span>Tekrar</span></div>
       </div>
       <p class="split-note" id="profSplit"></p>
+
+      <div class="section-title">Hesap ve Bulut Kaydı</div>
+      <div class="acct-card" id="acctCard"></div>
 
       <div class="section-title">Avatar Koleksiyonu</div>
       <div class="tier-strip" id="tierStrip"></div>
@@ -1827,7 +1896,7 @@
       <div class="set-row" style="display: block;">
         <div class="set-row-text">
           <b>Verileri yedekle</b>
-          <small>Geçmiş, rekorlar ve seviye bu telefonda saklanır. Telefon değiştirirken veya tarayıcı verisini silmeden önce yedek al.</small>
+          <small id="backupHelp">Google ile giriş yaptıysan geçmiş, rekorlar ve seviye hesabında (bulutta) saklanır. Dosya yedeği isteğe bağlıdır.</small>
         </div>
         <div class="backup-row">
           <button type="button" class="test-btn" id="exportBtn">⬇️ Yedek indir</button>
@@ -1842,6 +1911,7 @@
 
   <script src="figures.js"></script>
   <script src="tracker.js"></script>
+  <script src="cloud.js"></script>
   <script src="charts.js"></script>
   <script src="avatar.js"></script>
   <script>
@@ -1940,7 +2010,10 @@
       }
     }
     function lsSet(key, value) {
+      const before = key === 'athlete_quest_overload_records_v1' ? lsGet(key, {}) : null;
       try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+      // Rekorlar buluta da gitsin (cloud.js: değişen anahtarları kuyruğa alır)
+      if (before && window.WCloud) WCloud.recordsChanged(before, value);
     }
 
     /* ================= SETTINGS ================= */
@@ -3191,12 +3264,35 @@
     levelUpModal.addEventListener('click', (e) => { if (e.target === levelUpModal) closeModal(levelUpModal); });
 
     /* ================= PROGRESS (İLERLEME) ================= */
+    // Haftalık antrenman sayısı (Pazartesi başlangıçlı, son 8 hafta). Program haftada 4 gün.
+    function renderWeeks(list) {
+      const WEEKLY_GOAL = WORKOUT_PROGRAM.length;
+      const monday = (t) => { const d = new Date(t); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getTime(); };
+      const thisWeek = monday(Date.now());
+      const weeks = [];
+      for (let i = 7; i >= 0; i--) { const d = new Date(thisWeek); d.setDate(d.getDate() - 7 * i); weeks.push({ start: d.getTime(), n: 0 }); }
+      list.forEach((sx) => {
+        const w = weeks.find((x) => x.start === monday(Date.parse(sx.date)));
+        if (w) w.n++;
+      });
+      const max = Math.max(WEEKLY_GOAL, ...weeks.map((w) => w.n));
+      const cur = weeks[weeks.length - 1].n;
+      document.getElementById('weekNow').textContent = `Bu hafta ${cur} / ${WEEKLY_GOAL}${cur >= WEEKLY_GOAL ? ' 🔥' : ''}`;
+      document.getElementById('weekBars').innerHTML = weeks.map((w, i) => {
+        const d = new Date(w.start);
+        const lab = i === weeks.length - 1 ? 'Bu hf' : `${d.getDate()}.${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const h = w.n ? Math.max(10, Math.round((w.n / max) * 100)) : 0;
+        return `<div class="wk${i === weeks.length - 1 ? ' now' : ''}${w.n >= WEEKLY_GOAL ? ' full' : ''}"><em>${w.n || ''}</em><i style="height:${h}%"></i><small>${lab}</small></div>`;
+      }).join('');
+    }
+
     function renderProgress() {
       const list = Tracker.load();
       const ov = Tracker.overall(list);
       document.getElementById('pgSessions').textContent = fmtNum(ov.sessions);
       document.getElementById('pgSets').textContent = fmtNum(ov.sets);
       document.getElementById('pgReps').textContent = fmtNum(ov.reps);
+      renderWeeks(list);
 
       const wrap = document.getElementById('progressGroups');
       wrap.innerHTML = '';
@@ -3793,11 +3889,86 @@
       if (session) KeepAlive.prepare();
     }, { passive: true });
 
+    /* ================= HESAP / BULUT ================= */
+    const G_SVG = '<svg viewBox="0 0 48 48" width="20" height="20"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>';
+    document.querySelectorAll('.g-logo').forEach((el) => { el.innerHTML = G_SVG; });
+    const escHtml = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    function syncLabel(st) {
+      if (st.state === 'syncing') return { cls: 'busy', text: '⏳ Eşitleniyor…' };
+      if (st.state === 'offline') return { cls: 'warn', text: `📴 İnternet yok${st.dirty ? ' · değişiklikler telefonda bekliyor, bağlanınca gönderilecek' : ''}` };
+      if (st.state === 'error') return { cls: 'warn', text: `⚠️ Eşitlenemedi${st.dirty ? ' · değişiklikler telefonda bekliyor' : ''}; birazdan yeniden denenecek` };
+      if (st.dirty) return { cls: 'busy', text: '⏳ Gönderilmeyi bekleyen değişiklik var' };
+      if (st.last) {
+        const d = new Date(st.last);
+        const same = d.toDateString() === new Date().toDateString();
+        const t = d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        return { cls: 'ok', text: `✅ Bulutla eşit · son eşitleme ${same ? t : d.toLocaleDateString('tr-TR') + ' ' + t}` };
+      }
+      return { cls: 'busy', text: '⏳ Eşitleniyor…' };
+    }
+
+    function renderAccount() {
+      const card = document.getElementById('acctCard');
+      const nudge = document.getElementById('cloudNudge');
+      const signed = WCloud.signedIn();
+      nudge.hidden = signed;
+      if (!signed) {
+        const st = WCloud.status();
+        card.innerHTML = `
+          <div class="acct-top"><div class="acct-ico">☁️</div><div><b>Bulut kaydı kapalı</b>
+          <small>Şu an antrenmanların yalnızca bu cihazda. Google ile giriş yap: istatistiklerin hesabına kaydedilir; telefon değişse, uygulama silinse ya da Safari verileri temizlense bile geri gelir.</small></div></div>
+          ${st.error ? `<p class="acct-err">${escHtml(st.error)}</p>` : ''}
+          <button type="button" class="google-btn" id="acctSignIn">${G_SVG}<span>Google ile giriş yap</span></button>`;
+        document.getElementById('acctSignIn').addEventListener('click', () => WCloud.signIn());
+        return;
+      }
+      const st = WCloud.status();
+      const lab = syncLabel(st);
+      card.innerHTML = `
+        <div class="acct-top"><div class="acct-ico ok">✓</div><div class="acct-id"><small>Giriş yapıldı</small><b>${escHtml(WCloud.email())}</b></div></div>
+        <p class="acct-sync ${lab.cls}">${escHtml(lab.text)}</p>
+        <div class="acct-actions">
+          <button type="button" class="test-btn" id="acctSyncBtn" ${st.busy ? 'disabled' : ''}>🔄 Şimdi eşitle</button>
+          <button type="button" class="secondary-step-btn danger" id="acctOutBtn">Çıkış</button>
+        </div>`;
+      document.getElementById('acctSyncBtn').addEventListener('click', () => WCloud.sync());
+      document.getElementById('acctOutBtn').addEventListener('click', async () => {
+        if (!confirm('Çıkış yapılsın mı?\n\nVerilerin hesabında güvende kalır; bu cihazdaki kopya silinir ve tekrar giriş yapınca geri gelir.')) return;
+        if (await WCloud.signOut()) showToast('Çıkış yapıldı. Tekrar giriş yapınca istatistiklerin geri gelir.');
+      });
+    }
+    document.getElementById('cloudNudge').addEventListener('click', () => WCloud.signIn());
+
+    let lastDataSig = '';
+    WCloud.onChange(() => {
+      renderAccount();
+      // Buluttan yeni veri geldiyse ekranları tazele (antrenman sırasında dokunma)
+      const list = Tracker.load();
+      const sig = list.length + ':' + Tracker.totalXp(list);
+      if (sig === lastDataSig) return;
+      lastDataSig = sig;
+      if (currentView === 'menu') renderProfileMini();
+      else if (currentView === 'profile') renderProfile();
+      else if (currentView === 'progress') renderProgress();
+    });
+
     Voice.init();
     renderSettings();
     renderMenu();
     renderProfileMini();
-    if (!restoreSession()) showView('menu');
+    const authBoot = WCloud.init();
+    lastDataSig = (() => { const l = Tracker.load(); return l.length + ':' + Tracker.totalXp(l); })();
+    renderAccount();
+    if (!restoreSession()) {
+      showView('menu');
+      if (authBoot.result || authBoot.ret === 'profile') openTab('profile');
+    }
+    if (authBoot.result) {
+      setTimeout(() => showToast(authBoot.result.ok
+        ? '✅ Giriş yapıldı · istatistiklerin buluta kaydediliyor'
+        : `⚠️ Google ile giriş yapılamadı${authBoot.result.msg ? ': ' + authBoot.result.msg : ''}`), 500);
+    }
     if (showVoiceHint) setTimeout(() => showToast('🎙️ Kayıtlı sesler artık çok daha yüksek. Müzik açıkken duymak için ⚙️ Ayarlar → Kayıtlı ses.'), 1200);
 
     if ('serviceWorker' in navigator) {
