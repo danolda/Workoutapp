@@ -1509,6 +1509,35 @@
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       animation: sheetUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
+    .heat-card { margin-top: -10px; }
+    .heat { display: grid; grid-template-columns: 16px repeat(16, minmax(0, 1fr)); gap: 3px; margin-top: 10px; }
+    .heat .hm { grid-row: 1; font-size: 0.6rem; color: var(--text-muted, #a1a1aa); white-space: nowrap; overflow: visible; height: 12px; line-height: 12px; }
+    .heat .hd { grid-column: 1; font-size: 0.56rem; color: var(--text-muted, #a1a1aa); line-height: 1; align-self: center; }
+    .heat .hc { aspect-ratio: 1; border-radius: 3px; background: rgba(255, 255, 255, 0.06); }
+    .heat .hc.l1 { background: rgba(16, 185, 129, 0.45); }
+    .heat .hc.l2 { background: rgba(16, 185, 129, 0.75); }
+    .heat .hc.l3 { background: #10b981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.6); }
+    .heat .hc.fut { background: transparent; }
+    .heat .hc.today { outline: 1px solid rgba(255, 255, 255, 0.55); outline-offset: -1px; }
+    .heat-legend { display: flex; justify-content: flex-end; align-items: center; gap: 3px; margin-top: 8px; font-size: 0.62rem; color: var(--text-muted, #a1a1aa); }
+    .heat-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+    .pr-toast {
+      position: fixed; left: 50%; top: calc(14px + env(safe-area-inset-top, 0px)); z-index: 70;
+      transform: translateX(-50%); max-width: calc(100% - 32px);
+      background: linear-gradient(135deg, #78350f, #b45309); border: 1px solid rgba(245, 158, 11, 0.7);
+      color: #fff7ed; font-size: 0.9rem; font-weight: 800; padding: 10px 16px; border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(245, 158, 11, 0.35); pointer-events: none; text-align: center;
+      animation: prIn 2.5s ease forwards;
+    }
+    @keyframes prIn {
+      0% { opacity: 0; transform: translate(-50%, -20px) scale(0.85); }
+      12% { opacity: 1; transform: translate(-50%, 0) scale(1.06); }
+      20% { transform: translate(-50%, 0) scale(1); }
+      85% { opacity: 1; transform: translate(-50%, 0); }
+      100% { opacity: 0; transform: translate(-50%, -10px); }
+    }
+    @media (prefers-reduced-motion: reduce) { .pr-toast { animation: prFade 2.5s linear forwards; } }
+    @keyframes prFade { 0%, 90% { opacity: 1; } 100% { opacity: 0; } }
     @keyframes luPop { from { transform: scale(0.6) rotate(-6deg); opacity: 0; } to { transform: none; opacity: 1; } }
   </style>
 </head>
@@ -1704,6 +1733,11 @@
       <div class="week-card" id="weekCard">
         <div class="week-head"><b>Son 8 Hafta</b><span id="weekNow"></span></div>
         <div class="week-bars" id="weekBars" role="img" aria-label="Son 8 haftada haftalık antrenman sayısı"></div>
+      </div>
+      <div class="week-card heat-card" id="heatCard">
+        <div class="week-head"><b>Antrenman Takvimi</b><span id="heatNow"></span></div>
+        <div class="heat" id="heatGrid" role="img" aria-label="Son 16 haftada günlük antrenman takvimi"></div>
+        <div class="heat-legend">Az <i style="background:rgba(255,255,255,0.06)"></i><i style="background:rgba(16,185,129,0.45)"></i><i style="background:rgba(16,185,129,0.75)"></i><i style="background:#10b981"></i> Çok</div>
       </div>
       <div id="progressGroups"></div>
     </main>
@@ -2824,6 +2858,29 @@
       }
     });
 
+    // Kişisel rekor: bu set, hareketin geçmişteki en iyi setini geçerse (antrenman başına hareket başına bir kez)
+    function checkPersonalRecord(task, reps) {
+      if (!session || !task || !task.fig || !reps) return;
+      session.prShown = session.prShown || {};
+      if (session.prShown[task.fig]) return;
+      let best = 0;
+      try { best = Tracker.exerciseSummary(Tracker.load(), task.fig).best || 0; } catch (e) { return; }
+      if (!best || reps <= best) return;
+      session.prShown[task.fig] = true;
+      saveSession();
+      const name = (typeof EXERCISES !== 'undefined' && EXERCISES[task.fig] && EXERCISES[task.fig].name) || task.name;
+      const old = document.getElementById('prToast');
+      if (old) old.remove();
+      const el = document.createElement('div');
+      el.id = 'prToast';
+      el.className = 'pr-toast';
+      el.setAttribute('role', 'status');
+      el.textContent = `🏆 Yeni rekor! ${name} ${reps} tekrar`;
+      document.body.appendChild(el);
+      if ('vibrate' in navigator) navigator.vibrate([30, 40, 60]);
+      setTimeout(() => el.remove(), 2600);
+    }
+
     /* Complete Set Button Action */
     document.getElementById('completeSetBtn').addEventListener('click', () => {
       if (!session || !views.workout.classList.contains('active')) return;
@@ -2836,6 +2893,7 @@
 
       saveExerciseReps(finishedTask.taskKey, performedReps);
       session.logs[session.index] = { reps: performedReps, prev };
+      checkPersonalRecord(finishedTask, performedReps);
 
       if (isLastTask()) {
         finishWorkout();
@@ -3340,6 +3398,37 @@
       }).join('');
     }
 
+    // GitHub tarzı antrenman takvimi: son 16 hafta, sütun = hafta (Pzt–Paz), renk = o günkü antrenman sayısı
+    function renderHeat(list) {
+      const WEEKS = 16;
+      const AYLAR = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+      const key = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      const counts = {};
+      list.forEach((sx) => { const t = Date.parse(sx.date); if (Number.isFinite(t)) { const k = key(new Date(t)); counts[k] = (counts[k] || 0) + 1; } });
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const start = new Date(today); start.setDate(start.getDate() - ((start.getDay() + 6) % 7) - 7 * (WEEKS - 1));
+      let html = '', active = 0;
+      for (let w = 0; w < WEEKS; w++) {
+        const ws = new Date(start); ws.setDate(ws.getDate() + 7 * w);
+        // Ay etiketi: haftanın ilk günü yeni bir aya geçtiyse (ilk sütunda ay yeterince uzunsa)
+        const prev = new Date(ws); prev.setDate(prev.getDate() - 7);
+        const ahead = new Date(ws); ahead.setDate(ahead.getDate() + 14);
+        const lab = (w === 0 ? ahead.getMonth() === ws.getMonth() : prev.getMonth() !== ws.getMonth()) ? AYLAR[ws.getMonth()] : '';
+        html += `<span class="hm" style="grid-column:${w + 2}">${lab}</span>`;
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(ws); d.setDate(d.getDate() + i);
+          const n = counts[key(d)] || 0;
+          if (n && d <= today) active++;
+          const lv = n >= 3 ? 3 : n;
+          const cls = d > today ? ' fut' : (lv ? ` l${lv}` : '') + (d.getTime() === today.getTime() ? ' today' : '');
+          html += `<i class="hc${cls}" style="grid-column:${w + 2};grid-row:${i + 2}" title="${d.getDate()} ${AYLAR[d.getMonth()]}: ${n} antrenman"></i>`;
+        }
+      }
+      ['Pt', '', 'Ça', '', 'Cu', '', 'Pz'].forEach((t, i) => { html += `<span class="hd" style="grid-row:${i + 2}">${t}</span>`; });
+      document.getElementById('heatGrid').innerHTML = html;
+      document.getElementById('heatNow').textContent = `${active} gün aktif`;
+    }
+
     function renderProgress() {
       const list = Tracker.load();
       const ov = Tracker.overall(list);
@@ -3347,6 +3436,7 @@
       document.getElementById('pgSets').textContent = fmtNum(ov.sets);
       document.getElementById('pgReps').textContent = fmtNum(ov.reps);
       renderWeeks(list);
+      renderHeat(list);
 
       const wrap = document.getElementById('progressGroups');
       wrap.innerHTML = '';
