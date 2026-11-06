@@ -1,11 +1,14 @@
-const CACHE_NAME = 'workout-v12';
+const CACHE_NAME = 'workout-v13';
 const ASSETS = ['./', './index.html', './figures.js', './tracker.js', './cloud.js', './charts.js', './avatar.js', './manifest.json', './icon-192.png', './icon-512.png', './1dk.mp3?v=2', './30s.mp3?v=2', './15s.mp3?v=2', './5s.mp3?v=2'];
+const AVATARS = ['melih', 'mert'].flatMap((s) => Array.from({ length: 11 }, (_, i) => `./avatars/${s}/${i}.webp`));
 const NAV_TIMEOUT_MS = 3500;
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME)
-      .then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' }))))
+      .then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' })))
+        // Avatar resimleri: biri eksik olsa da kurulum bozulmasın
+        .then(() => Promise.all(AVATARS.map((u) => c.add(new Request(u, { cache: 'reload' })).catch(() => {})))))
       .then(() => self.skipWaiting())
   );
 });

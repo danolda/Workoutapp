@@ -865,6 +865,7 @@
     TIERS: 11,
     tierForLevel: function (level) { return Math.min(10, Math.floor(Math.max(0, +level || 0) / 10)); },
     name: function (tier) { return NAMES[Math.max(0, Math.min(10, Math.floor(+tier || 0)))]; },
-    svg: svg
+    svg: svg,
+    frame: function (tier) { return FRAMES[Math.max(0, Math.min(10, Math.floor(+tier || 0)))]; }
   };
 })();

@@ -1099,6 +1099,8 @@
       background: #18181b;
     }
     .profile-mini .av svg, .tier-item .av svg, .lu-avatar svg, .summary-avatar svg { width: 100%; height: 100%; display: block; }
+    .av-img { width: 100%; height: 100%; display: block; overflow: hidden; position: relative; aspect-ratio: 4 / 5; border-radius: inherit; }
+    .av-img img { width: 100%; height: 100%; object-fit: cover; display: block; padding: 3px; box-sizing: border-box; border-radius: inherit; }
     .pm-info { flex: 1; min-width: 0; }
     .pm-level {
       font-size: 0.7rem;
@@ -1354,6 +1356,8 @@
     }
     .avatar-card > div:first-child, .avatar-card > div:first-child svg { width: 100%; height: 100%; display: block; border-radius: 26px; overflow: hidden; }
     .avatar-card.locked-preview > div:first-child svg { filter: grayscale(1) brightness(0.3); }
+    .avatar-card > div:first-child .av-img { border-radius: 26px; }
+    .avatar-card.locked-preview > div:first-child .av-img img { filter: brightness(0); opacity: 0.4; }
     .avatar-glare {
       position: absolute;
       inset: 0;
@@ -1413,6 +1417,7 @@
       background: #18181b;
     }
     .tier-item.locked .av svg { filter: grayscale(1) brightness(0.32); }
+    .tier-item.locked .av .av-img img { filter: brightness(0); opacity: 0.35; }
     .tier-item.locked .av::after {
       content: '🔒';
       position: absolute;
@@ -3205,6 +3210,21 @@
 
     // Avatar SVG'si (avatar.js yüklenemezse sade bir yedek gösterilir)
     function avatarSvg(tier) {
+      // Hesaba özel avatar seti varsa (avatars/<set>/<tier>.webp) resmi göster; yüklenemezse SVG'ye dön
+      let set = '';
+      try { set = window.WCloud && WCloud.avatarSet ? WCloud.avatarSet() : ''; } catch (e) {}
+      if (set) {
+        let bg = '#18181b', ln = 'rgba(255,255,255,0.12)';
+        try { const F = AvatarArt.frame(tier); bg = `linear-gradient(${F.bg1}, ${F.bg2})`; ln = F.m[1]; } catch (e) {}
+        return `<div class="av-img" style="background:${bg};box-shadow:inset 0 0 0 2px ${ln}"><img src="avatars/${set}/${tier}.webp" alt="" decoding="async" onerror="avatarImgFail(this, ${tier})"></div>`;
+      }
+      return avatarSvgOnly(tier);
+    }
+    window.avatarImgFail = function (img, tier) {
+      const box = img.parentNode;
+      if (box && box.parentNode) box.outerHTML = avatarSvgOnly(tier);
+    };
+    function avatarSvgOnly(tier) {
       try { if (window.AvatarArt && AvatarArt.svg) return AvatarArt.svg(tier, {}); } catch (e) {}
       return `<svg viewBox="0 0 240 300" xmlns="http://www.w3.org/2000/svg"><rect width="240" height="300" fill="#18181b"/><text x="120" y="165" font-size="90" text-anchor="middle">💪</text><text x="120" y="250" font-size="22" fill="#f59e0b" text-anchor="middle" font-weight="800">${tier * 10}+</text></svg>`;
     }
@@ -3224,9 +3244,9 @@
     function renderProfileMini() {
       const info = currentLevel();
       const av = document.getElementById('pmAvatar');
-      if (av.dataset.tier !== String(info.tier)) {
+      if (av.dataset.tier !== String(info.tier) + (window.WCloud && WCloud.avatarSet ? WCloud.avatarSet() : '')) {
         av.innerHTML = avatarSvg(info.tier);
-        av.dataset.tier = String(info.tier);
+        av.dataset.tier = String(info.tier) + (window.WCloud && WCloud.avatarSet ? WCloud.avatarSet() : '');
       }
       document.getElementById('pmLevel').textContent = `Seviye ${info.level}`;
       document.getElementById('pmTier').textContent = tierName(info.tier);
@@ -3979,8 +3999,10 @@
       renderAccount();
       // Buluttan yeni veri geldiyse ekranları tazele (antrenman sırasında dokunma)
       const list = Tracker.load();
-      const sig = list.length + ':' + Tracker.totalXp(list);
+      const avSet = WCloud.avatarSet ? WCloud.avatarSet() : '';
+      const sig = list.length + ':' + Tracker.totalXp(list) + ':' + avSet;
       if (sig === lastDataSig) return;
+      if (lastDataSig && lastDataSig.split(':')[2] !== avSet) { const pm = document.getElementById('pmAvatar'); if (pm) delete pm.dataset.tier; }
       lastDataSig = sig;
       if (currentView === 'menu') renderProfileMini();
       else if (currentView === 'profile') renderProfile();

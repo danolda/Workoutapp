@@ -13,8 +13,10 @@ create table if not exists public.workout_profiles (
   records_t jsonb not null default '{}'::jsonb,   -- { taskKey: ms }  (anahtar başına son değişiklik zamanı)
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  last_sync_at timestamptz
+  last_sync_at timestamptz,
+  avatar_set text check (avatar_set is null or avatar_set ~ '^[a-z0-9_-]+$')  -- avatars/<set>/<tier>.webp (melih | mert)
 );
+alter table public.workout_profiles add column if not exists avatar_set text check (avatar_set is null or avatar_set ~ '^[a-z0-9_-]+$');
 
 -- Değişiklikten önceki hâlin yedeği (kopyalama/geri yükleme gibi toplu işlemlerde)
 create table if not exists public.workout_backups (
@@ -154,7 +156,8 @@ begin
   end loop;
 
   return jsonb_build_object('email', p.email, 'name', p.display_name, 'history', p.history,
-    'records', p.records, 'records_t', p.records_t, 'updated_at', p.updated_at, 'seeded', to_jsonb(seeded));
+    'records', p.records, 'records_t', p.records_t, 'updated_at', p.updated_at, 'seeded', to_jsonb(seeded),
+    'avatar_set', p.avatar_set);
 end $$;
 
 revoke all on function public.workout_merge_history(jsonb, jsonb) from public, anon, authenticated;
@@ -168,6 +171,10 @@ insert into public.workout_profiles (email, display_name) values
   ('merterenkarakose@gmail.com', 'Mert Eren'),
   ('m.emrekarakose55@gmail.com', 'Melih Emre')
 on conflict (email) do nothing;
+
+-- Kişiye özel seviye avatarları (2026-11-07)
+update public.workout_profiles set avatar_set = 'melih' where email = 'm.emrekarakose55@gmail.com';
+update public.workout_profiles set avatar_set = 'mert' where email = 'merterenkarakose@gmail.com';
 
 -- Melih'in verisi ilk geldiğinde bir kez Mert'in profiline de kopyalanır (2026-11-06 isteği)
 insert into public.workout_seeds (source_email, target_email, note) values

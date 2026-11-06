@@ -20,6 +20,7 @@
     dirty: 'aq_cloud_dirty',     // buluta gönderilmemiş değişiklik sayısı
     rt: 'aq_records_t',          // rekor anahtarı başına son değişiklik zamanı
     last: 'aq_cloud_last',       // son başarılı eşitleme (ms)
+    avatar: 'aq_avatar_set',     // hesaba özel avatar seti (melih | mert), sunucudan gelir
     stash: 'aq_cloud_stash_'     // başka hesaba ait, gönderilmemiş veri (kaybolmasın diye)
   };
   const REC_KEY = 'athlete_quest_overload_records_v1';
@@ -197,6 +198,7 @@
         });
       }
       writeLocal(res);
+      if (res.avatar_set && /^[a-z0-9_-]+$/.test(res.avatar_set)) jset(K.avatar, res.avatar_set); else jdel(K.avatar);
       jset(K.owner, email);
       if (changedMeanwhile) again = true; else jdel(K.dirty);
       jset(K.last, Date.now());
@@ -229,6 +231,7 @@
     });
     const s = sess();
     jdel(K.auth);
+    jdel(K.avatar);
     if (unsynced && s) jset(K.stash + s.email, localData());
     clearLocal();
     state = 'idle'; lastError = '';
@@ -279,6 +282,7 @@
     signedIn,
     email: () => (sess() || {}).email || '',
     status: () => ({ state, dirty: dirtyCount(), last: +jget(K.last, 0) || 0, error: lastError, busy }),
+    avatarSet: () => { const v = jget(K.avatar, null); return typeof v === 'string' && /^[a-z0-9_-]+$/.test(v) ? v : ''; },
     onChange: (f) => listeners.push(f),
     _cfg: CFG
   };
