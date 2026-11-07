@@ -1,6 +1,6 @@
-const CACHE_NAME = 'workout-v16';
+const CACHE_NAME = 'workout-v17';
 const ASSETS = ['./', './index.html', './figures.js', './tracker.js', './cloud.js', './charts.js', './avatar.js', './manifest.json', './icon-192.png', './icon-512.png', './1dk.mp3?v=2', './30s.mp3?v=2', './15s.mp3?v=2', './5s.mp3?v=2'];
-const AVATARS = ['melih', 'mert'].flatMap((s) => Array.from({ length: 11 }, (_, i) => `./avatars/${s}/${i}.webp?v=3`));
+const AVATARS = ['melih', 'mert'].flatMap((s) => Array.from({ length: 11 }, (_, i) => `./avatars/${s}/${i}.webp?v=4`));
 const NAV_TIMEOUT_MS = 3500;
 
 self.addEventListener('install', (e) => {
