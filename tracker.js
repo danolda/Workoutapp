@@ -5,7 +5,8 @@
   'use strict';
 
   const HISTORY_KEY = 'athlete_quest_history_v1';
-  const XP_BY_TYPE = { upper: 450, lower: 550 };
+  // core: sabah karın programı, üst vücut günüyle aynı XP
+  const XP_BY_TYPE = { upper: 450, lower: 550, core: 450 };
   const MAX_LEVEL = 100;
   const TIER_EVERY = 10;
   const MAX_TIER = MAX_LEVEL / TIER_EVERY;
@@ -52,8 +53,9 @@
   }
 
   /* ---------- Geçmiş (localStorage) ----------
-     Kayıt: { id, date: ISO, dayId, dayName, type: 'upper'|'lower', xp, setsDone, setsTotal,
-              sets: [{ ex: 'pullup', s: 1, r: 8 }, ...] } */
+     Kayıt: { id, date: ISO, dayId, dayName, type: 'upper'|'lower'|'core', xp, setsDone, setsTotal,
+              sets: [{ ex: 'pullup', s: 1, r: 8 }, { ex: 'activePlank', s: 1, r: 75, u: 's' }, ...] }
+     u: 's' → r saniyedir (plank, esneme gibi süreli hareketler). */
   function storage() {
     try { return root.localStorage || null; } catch (e) { return null; }
   }
@@ -160,14 +162,17 @@
   }
 
   function overall(list) {
-    const upper = list.filter((s) => s.type === 'upper').length;
-    const lower = list.filter((s) => s.type === 'lower').length;
+    const count = (type) => list.filter((s) => s.type === type).length;
+    const isSec = (x) => x.u === 's';
     return {
       sessions: list.length,
-      upper,
-      lower,
+      upper: count('upper'),
+      lower: count('lower'),
+      core: count('core'),
       sets: sum(list.map((s) => s.sets.length)),
-      reps: sum(list.map((s) => sum(s.sets.map((x) => x.r)))),
+      // Süreli setler (saniye) tekrar toplamına karışmaz
+      reps: sum(list.map((s) => sum(s.sets.filter((x) => !isSec(x)).map((x) => x.r)))),
+      secs: sum(list.map((s) => sum(s.sets.filter(isSec).map((x) => x.r)))),
       xp: totalXp(list)
     };
   }

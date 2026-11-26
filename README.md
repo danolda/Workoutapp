@@ -9,10 +9,13 @@
 
 ## Özellikler
 
-- **4 antrenman günü** (dinlenme/off günleri listede yok)
+- **4 antrenman günü** (dinlenme/off günleri listede yok) + **☀️ Sabah Karın Programı** (haftada 4 gün, aç karnına)
 - Üst barda **toplam set sayacı** (ör. `Toplam Set 5 / 17`)
 - Her egzersiz için **animasyonlu hareket görseli**; çalışan kas bölgesi yeşil gösterilir (`figures.js`)
-- Önceki rekor takibi, antrenman sonunda set / tekrar / rekor özeti
+- Önceki rekor takibi, antrenman sonunda set / tekrar / süre / rekor özeti
+- **Süreli hareketler** (plank, mide vakumu, esneme): "Süreyi Başlat" → 5 sn hazırlan → geri sayım
+  (bitince set otomatik kaydedilir) ya da maksimum süre için kronometre ("Bitir & Kaydet").
+  Sağ / Sol esnemelerde ikinci taraf kendiliğinden başlar; plankın 2. turunda toplam süre önceki seansla karşılaştırılır
 - Dinlenme sayacı **bitiş zamanına göre** hesaplanır: uygulama arka plana atılsa, telefon kilitlense
   ya da uygulama kapanıp açılsa bile süre doğru devam eder; dinlenme bittiyse sıradaki sete geçilir
 - Sesli uyarılar: 1 dk, 30 sn, 15 sn ve 5-4-3-2-1 geri sayım — **Spotify'ı durdurmaz**
@@ -25,6 +28,7 @@
 - Harekete dokununca tarihe göre **eğri grafik** (Max / set veya seans toplamı; 30 gün / 90 gün / tümü)
   ve tüm seansların **tablosu** açılır (★ = rekor)
 - Aynı hareket farklı günlerde olsa da (ör. Dips 1. ve 3. gün) tek hareket olarak toplanır
+- Süreli hareketler saniye olarak tutulur ve tekrar toplamına karışmaz (grafikte "Set başı max süre")
 
 ## Seviye ve Avatar (👤 Profil)
 
@@ -32,6 +36,7 @@
 |---|---|
 | Üst vücut günü | **450 XP** |
 | Alt vücut günü | **550 XP** |
+| Sabah karın günü | **450 XP** (üst vücut günüyle aynı) |
 | Yarım bırakılan antrenman | Yapılan set oranında XP (ör. 17 setin 2'si → 53 XP) |
 | Seviye 1 | 200 XP |
 | Her seviye | bir öncekinden ~12 XP daha fazla ister |
