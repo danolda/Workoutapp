@@ -1,11 +1,14 @@
-const CACHE_NAME = 'workout-v8';
-const ASSETS = ['./', './index.html', './figures.js', './tracker.js', './charts.js', './avatar.js', './manifest.json', './icon-192.png', './icon-512.png', './1dk.mp3', './30s.mp3', './15s.mp3', './5s.mp3'];
+const CACHE_NAME = 'workout-v18';
+const ASSETS = ['./', './index.html', './figures.js', './tracker.js', './cloud.js', './charts.js', './avatar.js', './manifest.json', './icon-192.png', './icon-512.png', './1dk.mp3?v=2', './30s.mp3?v=2', './15s.mp3?v=2', './5s.mp3?v=2'];
+const AVATARS = ['melih', 'mert'].flatMap((s) => Array.from({ length: 11 }, (_, i) => `./avatars/${s}/${i}.webp?v=4`));
 const NAV_TIMEOUT_MS = 3500;
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME)
-      .then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' }))))
+      .then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' })))
+        // Avatar resimleri: biri eksik olsa da kurulum bozulmasın
+        .then(() => Promise.all(AVATARS.map((u) => c.add(new Request(u, { cache: 'reload' })).catch(() => {})))))
       .then(() => self.skipWaiting())
   );
 });
@@ -116,12 +119,66 @@ async function rangeFromCache(req) {
 const GRACE_MS = 1500;
 let schedule = null;
 
+const CARD_TAG = 'workout-card';
+
 self.addEventListener('message', (e) => {
   const d = e.data || {};
   if (d.type === 'rest-start') e.waitUntil(startSchedule(d));
   else if (d.type === 'rest-stop') stopSchedule();
   else if (d.type === 'cue-done' && schedule && schedule.id === d.id) schedule.handled.add(d.sec);
+  else if (d.type === 'ntfy-plan' && schedule && schedule.id === d.id) schedule.ntfy = d.cues && d.cues.length ? { topic: d.topic, cues: d.cues } : null;
 });
+
+/* ---- ntfy (sayfa donukken kilit ekranı düğmelerinin ntfy uyarılarını da güncellemesi için) ---- */
+const NTFY_BASE = 'https://ntfy.sh';
+const NTFY_MIN_LEAD_MS = 11000;
+function ntfyReq(method, topic, seq, params, body) {
+  const q = params ? '?' + new URLSearchParams(params).toString() : '';
+  const init = { method, mode: 'cors' };
+  if (body !== undefined) {
+    init.body = body;
+    init.headers = { 'Content-Type': 'text/plain; charset=utf-8' };
+  }
+  return fetch(`${NTFY_BASE}/${encodeURIComponent(topic)}/${seq}${q}`, init).catch(() => null);
+}
+function ntfyShift(n, endAt, deltaMs) {
+  const now = Date.now();
+  return Promise.all(n.cues.map((c) => {
+    c.at += deltaMs;
+    if (c.cue === 0 && endAt > now && c.at - now < NTFY_MIN_LEAD_MS) c.at = now + NTFY_MIN_LEAD_MS;
+    if (c.at - now < NTFY_MIN_LEAD_MS) return null;
+    const body = c.cue === 0 ? c.base : [c.base, 'Bitiş: ' + clockTime(endAt)].filter(Boolean).join('\n');
+    return ntfyReq('PUT', n.topic, c.seq, { title: c.title, priority: c.priority, at: String(Math.ceil(c.at / 1000)) }, body);
+  }));
+}
+function ntfyCancel(n) {
+  const now = Date.now();
+  return Promise.all(n.cues.filter((c) => c.at > now - 11000).map((c) => ntfyReq('DELETE', n.topic, c.seq)));
+}
+
+const clockTime = (t) => {
+  const d = new Date(t);
+  return [d.getHours(), d.getMinutes(), d.getSeconds()].map((n) => String(n).padStart(2, '0')).join(':');
+};
+const cueTitle = (sec) => (sec === 0 ? '✅ Dinlenme bitti!' : sec === 60 ? '⏱ 1 dakika kaldı' : `⏱ ${sec} saniye kaldı`);
+
+// Sayfa donmuşken kartı servis çalışanı günceller (sıradaki set + bitiş saati)
+function cardOptions(d, sec, alert) {
+  const o = {
+    body: [d.next ? 'Sıradaki: ' + d.next : '', d.progress || '', sec === 0 ? '' : 'Bitiş: ' + clockTime(d.endAt)].filter(Boolean).join('\n'),
+    tag: CARD_TAG,
+    renotify: !!alert,
+    silent: !alert,
+    requireInteraction: true,
+    icon: 'icon-192.png',
+    badge: 'icon-192.png',
+    timestamp: d.endAt,
+    actions: sec === 0 ? [{ action: 'open', title: '▶ Sete başla' }] : [{ action: 'skip-rest', title: '⏭ Dinlenmeyi bitir' }, { action: 'add15', title: '+15 sn' }],
+    data: { kind: 'card', restId: d.id }
+  };
+  if (alert) o.vibrate = sec === 0 ? [300, 120, 300] : [200, 100, 200];
+  return o;
+}
 
 function stopSchedule() {
   if (!schedule) return;
@@ -133,12 +190,12 @@ function stopSchedule() {
 function startSchedule(d) {
   stopSchedule();
   return new Promise((resolve) => {
-    const s = { id: d.id, handled: new Set(), timers: [], resolve };
+    const s = { id: d.id, handled: new Set(), timers: [], resolve, data: d };
     schedule = s;
     const now = Date.now();
     (d.cues || []).forEach((sec) => {
       const delay = d.endAt - sec * 1000 - now + GRACE_MS;
-      if (delay > 0) s.timers.push(setTimeout(() => fallbackCue(s, sec, d.next), delay));
+      if (delay > 0) s.timers.push(setTimeout(() => fallbackCue(s, sec), delay));
     });
     s.timers.push(setTimeout(() => {
       if (schedule === s) schedule = null;
@@ -147,27 +204,48 @@ function startSchedule(d) {
   });
 }
 
-async function fallbackCue(s, sec, next) {
+async function fallbackCue(s, sec) {
   if (schedule !== s || s.handled.has(sec)) return;
   try {
     const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     if (wins.some((c) => c.visibilityState === 'visible')) return;
-    const title = sec === 0 ? '✅ Dinlenme bitti!' : sec === 60 ? '⏱ 1 dakika kaldı' : `⏱ ${sec} saniye kaldı`;
-    await self.registration.showNotification(title, {
-      body: next ? 'Sıradaki: ' + next : '',
-      tag: 'rest-timer',
-      renotify: true,
-      icon: 'icon-192.png',
-      badge: 'icon-192.png',
-      vibrate: sec === 0 ? [300, 120, 300] : [200, 100, 200]
-    });
+    await self.registration.showNotification(cueTitle(sec), cardOptions(s.data, sec, true));
   } catch (err) { /* izin geri alınmış olabilir */ }
 }
 
+// Kart düğmeleri: kilit ekranından dinlenmeyi bitir / +15 sn / uygulamayı aç
 self.addEventListener('notificationclick', (e) => {
-  e.notification.close();
+  const action = e.action || 'open';
+  const restId = e.notification.data && e.notification.data.restId;
   e.waitUntil((async () => {
     const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const restAction = action === 'add15' || action === 'skip-rest';
+    if (restAction && !wins.length) {
+      // Uygulama kapanmış: işlemi açılışta uygula (dinlenme localStorage'dan geri yüklenir)
+      e.notification.close();
+      return self.clients.openWindow(`./index.html?act=${action}&rest=${restId}`);
+    }
+    wins.forEach((c) => c.postMessage({ type: 'notif-action', action, restId, at: Date.now() }));
+    if (action === 'add15') {
+      if (schedule && schedule.id === restId) {
+        // Yedek zamanlayıcıyı (ve varsa ntfy uyarılarını) 15 sn kaydır: sayfa donmuş olsa bile doğru anda gelsin
+        const ntfy = schedule.ntfy;
+        const d = Object.assign({}, schedule.data, { endAt: schedule.data.endAt + 15000 });
+        const keep = startSchedule(d);
+        if (ntfy) {
+          schedule.ntfy = ntfy;
+          await ntfyShift(ntfy, d.endAt, 15000);
+        }
+        await self.registration.showNotification('⏱ +15 sn eklendi', cardOptions(d, 1, false));
+        return keep;
+      }
+      return undefined; // sayfa süreyi uzatır, kartı ve yedek zamanlayıcıyı kendisi yeniler
+    }
+    e.notification.close();
+    if (action === 'skip-rest') {
+      if (schedule && schedule.id === restId && schedule.ntfy) await ntfyCancel(schedule.ntfy);
+      stopSchedule();
+    }
     for (const c of wins) {
       if ('focus' in c) return c.focus();
     }

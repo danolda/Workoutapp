@@ -18,13 +18,13 @@
   Sağ / Sol esnemelerde ikinci taraf kendiliğinden başlar; plankın 2. turunda toplam süre önceki seansla karşılaştırılır
 - Dinlenme sayacı **bitiş zamanına göre** hesaplanır: uygulama arka plana atılsa, telefon kilitlense
   ya da uygulama kapanıp açılsa bile süre doğru devam eder; dinlenme bittiyse sıradaki sete geçilir
-- Sesli uyarılar: 1 dk, 30 sn, 15 sn ve 5-4-3-2-1 geri sayım — **Spotify'ı durdurmaz**
+- Sesli uyarılar: 1 dk, 30 sn, 15 sn ve 5-4-3-2-1 geri sayım — **müziği durdurmaz**
 - ⚙️ Ayarlar: ses türü (telefon sesi / kayıtlı ses), ses testi, kilit ekranı bildirimi, ekranı açık tutma,
   verileri yedekle / geri yükle
 
 ## Kişisel Takip (📈 İlerleme)
 
-- Her hareket için **set başı max tekrar** ve **toplam tekrar** telefonda (localStorage) saklanır
+- Her hareket için **set başı max tekrar** ve **toplam tekrar** Google hesabına (bulut) kaydedilir; telefondaki kopya önbellektir
 - Harekete dokununca tarihe göre **eğri grafik** (Max / set veya seans toplamı; 30 gün / 90 gün / tümü)
   ve tüm seansların **tablosu** açılır (★ = rekor)
 - Aynı hareket farklı günlerde olsa da (ör. Dips 1. ve 3. gün) tek hareket olarak toplanır
@@ -47,22 +47,33 @@ Formül: `n. seviye için toplam XP = 200·n + round(200·n·(n−1) / 33)`
 Her 10 seviyede avatar daha kaslı bir forma geçer (11 form: Çaylak → Yenilmez). Profilde avatar kartı
 parmakla eğilebilen 3D bir kart olarak görünür; tüm formlar "Avatar Koleksiyonu"nda listelenir.
 
-## Arka planda sesli uyarı (müzik açıkken)
+## Müzik açıkken sesli uyarı ve kilit ekranı
 
 | | Android (Chrome) | iPhone (Safari) |
 |---|---|---|
-| Önerilen ses türü | 🎙️ Kayıtlı ses | 🗣️ Telefon sesi |
-| Spotify | Uyarı sırasında **kısılır**, durmaz | Uyarı sırasında **kısılır**, durmaz |
-| Uygulama arka planda | Süre işler, sesli uyarı verir | Apple web uygulamalarını duraklatır |
-| Kilit ekranı | Bildirim izni verilirse "30 saniye kaldı" bildirimi | Ekran açık kalır (otomatik) |
+| Önerilen ses türü | 🎙️ Kayıtlı ses | 🎙️ Kayıtlı ses |
+| Uygulama açıkken | Uyarıda YouTube Music / Spotify **kısılır**, ses üstte | Uyarı müziğin **üstünde** çalar (iPhone web'e kısma izni vermez) |
+| Uygulama arka planda / telefon kilitli | Süre işler, sesli uyarı çalar, müzik kısılır | Apple web uygulamalarını durdurur → dinlenme bitince **ntfy** bildirimi |
+| Kilit ekranı | **Antrenman kartı**: set, tekrar, kalan süre, sıradaki hareket; "Dinlenmeyi bitir" ve "+15 sn" düğmeleri | ntfy bildirimi: dinlenme bitti (±5 sn) + sıradaki set |
 
-- **Android:** Uygulama arka plandayken de sayar ve uyarıyı çalar. Bildirim izni verirsen
-  (Ayarlar → Kilit ekranı bildirimi) uyarılar kilit ekranında da görünür; pil tasarrufu uygulamayı
-  dondurursa bildirimi service worker yedek olarak gönderir.
-- **iPhone:** Apple, ana ekrana eklenen web uygulamalarının arka planda kod çalıştırmasına izin vermiyor.
-  Bu yüzden antrenman sırasında ekran açık tutulur. Telefonu kilitlersen geri döndüğünde süre doğru
-  yerden devam eder ama kilitliyken sesli uyarı gelmez.
-- Ayarlar'daki **"Sesi test et"** butonuyla Spotify çalarken nasıl davrandığını deneyebilirsin.
+- **Kayıtlı sesler yeniden işlendi:** eski kayıtlar müzikten ~20 dB kısıktı (−23…−38 LUFS); şimdi
+  ~−11,5 LUFS, gürültü temizlendi ve sıkıştırıldı. Müzik kısıldığında ses ~16 dB üstte kalır.
+- **Android arka plan:** dinlenme sırasında uygulama arka plandayken duyulamayacak kadar kısık bir ton
+  çalınır (set sırasında çalınmaz, pil harcamaz); Chrome sayfayı dondurmaz, uyarılar zamanında çalar.
+  Bu ton ses odağı almaz, müziğin durmaz.
+- **Kilit ekranı düğmeleri** ("Dinlenmeyi bitir", "+15 sn") uygulama kapanmış olsa bile çalışır: uygulama
+  açılır ve işlem kaldığı dinlenmeye uygulanır.
+- **İlk antrenmanda** kilit ekranı kartı için bildirim izni istenir (Ayarlar'dan da açılabilir).
+- **ntfy (isteğe bağlı):** Ayarlar → "Kilit ekranı uyarıları (ntfy)" → ücretsiz ntfy uygulamasını kur,
+  gösterilen konu adına abone ol. Dinlenmedeyken uygulamadan çıkınca **sadece "dinlenme bitti" bildirimi**
+  ntfy.sh üzerinden dinlenmenin bittiği ana planlanır (1 dk / 30 sn uyarıları ntfy'ye gönderilmez);
+  uygulamaya dönünce silinir. Mesajlar rastgele, gizli bir konu adıyla gönderilir.
+  - **iPhone:** asıl bildirim kanalı. ntfy.sh mesajları 10 sn'lik adımlarla gönderdiği için bildirim ~5 sn erken
+    planlanır (gerçek bitişten ±5 sn sapabilir).
+  - **Android:** sadece yedek. Bildirim 2 sn geç planlanır; uygulama "süre doldu" uyarısını kendisi verince
+    ntfy kopyası silinir. Yani ntfy bildirimi yalnızca pil tasarrufu uygulamayı durdurduysa gelir.
+  - İnternet yoksa planlama yapılamaz; uygulamaya dönünce uyarı gösterilir.
+- Ayarlar'daki **"Sesi test et"** ile müzik çalarken deneyebilirsin.
 
 ## MP3 Dosyaları
 
@@ -76,7 +87,11 @@ Bu 4 MP3'ü kendin kaydedip aynı klasöre koy:
 | 5s.mp3    | "Beş, dört, üç, iki, bir"       |
 
 > ⚠️ Her kayıt **5 saniyeden kısa** olmalı. Android Chrome 5 sn'den uzun sesleri "müzik" sayar ve
-> Spotify'ı kısmak yerine durdurur.
+> Spotify'ı kısmak yerine durdurur. Yeni kayıt yaparsan müziğin üstünde duyulması için yüksek kaydet
+> (hedef ≈ −12 LUFS, tepe −1 dB).
+>
+> Kayıtları değiştirince telefonların eski sesleri önbellekten çalmaması için `?v=2` numarasını artır
+> (`index.html` → `CLIP_FILES`, `sw.js` → `ASSETS`) ve `sw.js`'teki `CACHE_NAME`'i de bir artır.
 
 ## Dosya Yapısı
 
@@ -98,3 +113,11 @@ Bu 4 MP3'ü kendin kaydedip aynı klasöre koy:
 ```
 
 Güncelleme yaptıktan sonra uygulamayı bir-iki kez kapatıp açman yeterli; yeni sürüm otomatik yüklenir.
+
+## Bulut Kaydı (Google ile giriş)
+
+- Profil → **Hesap ve Bulut Kaydı** → *Google ile giriş yap*. Asıl kayıt hesaptadır (Supabase, `workout_*` tabloları);
+  telefondaki localStorage yalnızca önbellek + çevrimdışı kuyruktur. İnternet yokken yapılan antrenmanlar bağlanınca gönderilir.
+- Birleştirme sunucuda yapılır, ilerleme düşmez: antrenmanlar id'ye göre birleşir (hiçbiri silinmez), rekorlarda son değişiklik kazanır.
+- Çıkış yapınca cihazdaki kopya silinir (aynı telefonu başka biri kullanabilsin); tekrar giriş yapınca hepsi geri gelir.
+- Şema ve fonksiyonlar: `tools/supabase-workout.sql` (RLS açık, doğrudan tablo erişimi yok; yalnız `workout_sync` RPC'si, oturum açmış kullanıcının kendi e-postasıyla).
