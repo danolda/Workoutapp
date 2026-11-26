@@ -1,6 +1,6 @@
-const CACHE_NAME = 'workout-v19';
+const CACHE_NAME = 'workout-v20';
 // JS dosyaları index.html'deki gibi ?v=<sürüm> ile istenir (eski script yeni sayfayla karışmasın)
-const JS_V = '?v=19';
+const JS_V = '?v=20';
 const ASSETS = ['./', './index.html', ...['figures', 'tracker', 'cloud', 'charts', 'avatar'].map((f) => `./${f}.js${JS_V}`), './manifest.json', './icon-192.png', './icon-512.png', './1dk.mp3?v=2', './30s.mp3?v=2', './15s.mp3?v=2', './5s.mp3?v=2'];
 const AVATARS = ['melih', 'mert'].flatMap((s) => Array.from({ length: 11 }, (_, i) => `./avatars/${s}/${i}.webp?v=4`));
 const NAV_TIMEOUT_MS = 3500;

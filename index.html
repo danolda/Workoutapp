@@ -414,20 +414,21 @@
       display: inline-block;
     }
 
-    .ex-fig .fg { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 8.5; }
-    .ex-fig .fg-near { stroke: var(--fig-near); }
-    .ex-fig .fg-far { stroke: var(--fig-far); }
-    .ex-fig .fg-hl.fg-near { stroke: var(--fig-hl); }
-    .ex-fig .fg-hl.fg-far { stroke: var(--fig-hl-far); }
-    .ex-fig .fg-torso { stroke-width: 15; }
-    .ex-fig .fg-torso-front { stroke-width: 8; fill: var(--fig-near); }
-    .ex-fig .fg-torso-front.fg-hl { fill: var(--fig-hl); }
-    .ex-fig .fg-neck { stroke-width: 7; }
-    .ex-fig .fg-head { fill: var(--fig-near); }
-    .ex-fig .fg-trap { fill: none; stroke: var(--fig-hl); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
-    .ex-fig .fg-delt { fill: var(--fig-hl); }
-    .ex-fig .db { fill: #27272a; stroke: #a1a1aa; stroke-width: 3; }
+    /* Figür: dolgulu gövde/uzuvlar (renk gradyanı figures.js içinde), ince koyu kontur ile parçalar ayrışır */
+    .ex-fig .fb { stroke: #0b0b0e; stroke-width: 1.1; stroke-linejoin: round; }
+    .ex-fig .fb.far { stroke: #060608; }
+    .ex-fig .hair { fill: #3f3f46; stroke: #0b0b0e; stroke-width: 1.1; }
+    .ex-fig .shoe { fill: #5b5b66; stroke: #0b0b0e; stroke-width: 1.1; stroke-linejoin: round; }
+    .ex-fig .shoe.far { fill: #36363d; }
+    .ex-fig .fg-shadow { fill: #000; }
+    /* Çalışan kas: yeşil dolgu + hafif hale */
+    .ex-fig .fm { stroke: none; }
+    .ex-fig .fh { fill: none; stroke: var(--fig-hl); stroke-width: 4; stroke-linejoin: round; opacity: 0.3; }
+    .ex-fig .fh.far { opacity: 0.12; }
+    .ex-fig .fm-lines { fill: none; stroke: #065f46; stroke-width: 1.3; stroke-linecap: round; }
+    .ex-fig .db { fill: #27272a; stroke: #a1a1aa; stroke-width: 2.6; }
     .ex-fig .db-far { stroke: #52525b; }
+    .ex-fig .db-in { fill: #a1a1aa; }
     .ex-fig .eq { fill: none; stroke: #3f3f46; stroke-width: 5; stroke-linecap: round; }
     .ex-fig .eq-far { stroke: #2e2e33; }
     .ex-fig .eq-bar.eq-bar-far { fill: none; stroke: #63636b; }
@@ -438,17 +439,13 @@
     .ex-fig .eq-plate { fill: #27272a; stroke: #a1a1aa; stroke-width: 4; }
     .ex-fig .eq-plate-hole { fill: #52525b; }
     .ex-fig .eq-mat { fill: rgba(99, 102, 241, 0.10); stroke: rgba(99, 102, 241, 0.28); stroke-width: 2; }
-    .ex-fig .fg-abs { fill: none; stroke: var(--fig-hl); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
-    .ex-fig .fg-abs-front { fill: var(--fig-hl); stroke: var(--fig-hl); stroke-width: 4; stroke-linejoin: round; }
-    .ex-fig .fg-abs-lines { fill: none; stroke: #065f46; stroke-width: 1.6; stroke-linecap: round; }
-    /* İzometrik tutuş (plank, esneme): çalışan bölge nabız gibi parlar */
-    .ex-fig.is-hold.playing .fg-hl.fg-near,
-    .ex-fig.is-hold.playing .fg-abs { animation: holdPulse 1.5s ease-in-out infinite; }
-    .ex-fig.is-hold.playing .fg-abs-front { animation: holdPulseFill 1.5s ease-in-out infinite; }
-    @keyframes holdPulse { 50% { stroke: #6ee7b7; } }
-    @keyframes holdPulseFill { 50% { stroke: #6ee7b7; fill: #6ee7b7; } }
+    /* İzometrik tutuş (plank, esneme): çalışan kas nabız gibi parlar */
+    .ex-fig.is-hold.playing .fm { animation: musPulse 1.5s ease-in-out infinite; }
+    .ex-fig.is-hold.playing .fh { animation: haloPulse 1.5s ease-in-out infinite; }
+    @keyframes musPulse { 50% { opacity: 0.62; } }
+    @keyframes haloPulse { 50% { opacity: 0.6; stroke-width: 6; } }
     @media (prefers-reduced-motion: reduce) {
-      .ex-fig.is-hold.playing .fg-hl.fg-near, .ex-fig.is-hold.playing .fg-abs, .ex-fig.is-hold.playing .fg-abs-front { animation: none; }
+      .ex-fig.is-hold.playing .fm, .ex-fig.is-hold.playing .fh { animation: none; }
     }
 
     .set-indicator-pills {
@@ -2070,11 +2067,11 @@
   </div>
 
   <!-- ?v=: sürüm numarası. Yeni sayfa önbellekteki eski scriptle karışmasın diye her güncellemede sw.js ile birlikte artır -->
-  <script src="figures.js?v=19"></script>
-  <script src="tracker.js?v=19"></script>
-  <script src="cloud.js?v=19"></script>
-  <script src="charts.js?v=19"></script>
-  <script src="avatar.js?v=19"></script>
+  <script src="figures.js?v=20"></script>
+  <script src="tracker.js?v=20"></script>
+  <script src="cloud.js?v=20"></script>
+  <script src="charts.js?v=20"></script>
+  <script src="avatar.js?v=20"></script>
   <script>
     /* ================= PREVENT ACCIDENTAL ZOOM ================= */
     // iOS Safari jest yakınlaştırmalarını ve çift dokunma zoom'unu iptal eder

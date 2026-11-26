@@ -11,7 +11,9 @@
 
 - **4 antrenman günü** (dinlenme/off günleri listede yok) + **☀️ Sabah Karın Programı** (haftada 4 gün, aç karnına)
 - Üst barda **toplam set sayacı** (ör. `Toplam Set 5 / 17`)
-- Her egzersiz için **animasyonlu hareket görseli**; çalışan kas bölgesi yeşil gösterilir (`figures.js`)
+- Her egzersiz için **animasyonlu hareket görseli** (`figures.js`): kas hatlı, gölgeli manken; çalışan kas grubu
+  (göğüs, sırt, karın, kalça, ön/arka bacak, baldır, pazu, arka kol, omuz, trapez, boyun) yeşil parlar.
+  Plank ve esneme gibi tutuşlarda çalışan kas nabız gibi yanıp söner
 - Önceki rekor takibi, antrenman sonunda set / tekrar / süre / rekor özeti
 - **Süreli hareketler** (plank, mide vakumu, esneme): "Süreyi Başlat" → 5 sn hazırlan → geri sayım
   (bitince set otomatik kaydedilir) ya da maksimum süre için kronometre ("Bitir & Kaydet").
@@ -113,6 +115,8 @@ Bu 4 MP3'ü kendin kaydedip aynı klasöre koy:
 ```
 
 Güncelleme yaptıktan sonra uygulamayı bir-iki kez kapatıp açman yeterli; yeni sürüm otomatik yüklenir.
+Kod güncellerken `index.html`'deki `?v=` sürüm numarasını ve `sw.js`'teki `CACHE_NAME` / `JS_V` değerlerini birlikte artır
+(yeni sayfa önbellekteki eski scriptle karışmasın).
 
 ## Bulut Kaydı (Google ile giriş)
 
