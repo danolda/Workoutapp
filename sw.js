@@ -1,5 +1,7 @@
-const CACHE_NAME = 'workout-v18';
-const ASSETS = ['./', './index.html', './figures.js', './tracker.js', './cloud.js', './charts.js', './avatar.js', './manifest.json', './icon-192.png', './icon-512.png', './1dk.mp3?v=2', './30s.mp3?v=2', './15s.mp3?v=2', './5s.mp3?v=2'];
+const CACHE_NAME = 'workout-v19';
+// JS dosyaları index.html'deki gibi ?v=<sürüm> ile istenir (eski script yeni sayfayla karışmasın)
+const JS_V = '?v=19';
+const ASSETS = ['./', './index.html', ...['figures', 'tracker', 'cloud', 'charts', 'avatar'].map((f) => `./${f}.js${JS_V}`), './manifest.json', './icon-192.png', './icon-512.png', './1dk.mp3?v=2', './30s.mp3?v=2', './15s.mp3?v=2', './5s.mp3?v=2'];
 const AVATARS = ['melih', 'mert'].flatMap((s) => Array.from({ length: 11 }, (_, i) => `./avatars/${s}/${i}.webp?v=4`));
 const NAV_TIMEOUT_MS = 3500;
 
